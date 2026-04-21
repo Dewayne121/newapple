@@ -27,6 +27,10 @@ export const NavigationService = {
 
   get navigator() {
     return _navigation;
+  },
+
+  getRef() {
+    return _navigation;
   }
 };
 

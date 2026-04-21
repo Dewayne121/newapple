@@ -151,8 +151,6 @@ export default function WorkoutSubmitScreen({ navigation }) {
   const [permission, requestPermission] = useCameraPermissions();
   const [micPermission, requestMicPermission] = useMicrophonePermissions();
   const [videoSource, setVideoSource] = useState('camera'); // 'camera' or 'gallery'
-  const [blurFaces, setBlurFaces] = useState(false);
-  const [blurring, setBlurring] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
   const [cameraError, setCameraError] = useState('');
   const [cameraKey, setCameraKey] = useState(0);
@@ -293,7 +291,7 @@ export default function WorkoutSubmitScreen({ navigation }) {
 
   const points = useMemo(() => calcPoints(exercise, reps, weight, user?.streak || 0), [exercise, reps, weight, user]);
   const canSubmitVideo = hasRecording && !!recordingUri && recordSeconds >= 5 && hasValidWeight;
-  const isSubmitDisabled = isSubmitting || blurring || (reps <= 0 && exercise.name !== 'Run (Km)') || !canSubmitVideo;
+  const isSubmitDisabled = isSubmitting || (reps <= 0 && exercise.name !== 'Run (Km)') || !canSubmitVideo;
 
   const adjustReps = (delta) => {
     setReps((prev) => Math.max(0, prev + delta));
@@ -605,29 +603,6 @@ export default function WorkoutSubmitScreen({ navigation }) {
           console.log('[WORKOUT SUBMIT] ✓ Step 1 complete - Video uploaded successfully');
           console.log('[WORKOUT SUBMIT] serverVideoUrl:', serverVideoUrl);
 
-          // Step 1.5: Blur faces if enabled
-          if (blurFaces) {
-            console.log('[WORKOUT SUBMIT] Blurring faces...');
-            setBlurring(true);
-
-            try {
-              const blurResponse = await api.blurVideo(serverVideoUrl);
-
-              if (!blurResponse.success || !blurResponse.data?.blurredVideoUrl) {
-                throw new Error(blurResponse.error || 'Face blur failed. Video was not submitted.');
-              }
-
-              originalVideoUrl = blurResponse.data.originalVideoUrl || serverVideoUrl;
-              serverVideoUrl = blurResponse.data.blurredVideoUrl;
-              console.log('[WORKOUT SUBMIT] Faces blurred:', blurResponse.data.facesFound || blurResponse.data.facesDetected);
-            } catch (blurError) {
-              console.warn('[WORKOUT SUBMIT] Blur error:', blurError.message);
-              throw blurError;
-            } finally {
-              setBlurring(false);
-            }
-          }
-
           // Step 2: Submit video metadata with the server URL
           console.log('[WORKOUT SUBMIT] Step 2: Submitting video metadata...', {
             exercise: exercise.name,
@@ -666,9 +641,7 @@ export default function WorkoutSubmitScreen({ navigation }) {
         });
         showAlert({
           title: 'Video Upload Error',
-          message: blurFaces
-            ? (err.message || 'Face blur failed. The workout was saved, but video was not submitted for verification.')
-            : (err.message || 'Video upload failed. The workout was saved locally.'),
+          message: err.message || 'Video upload failed. The workout was saved locally.',
           icon: 'warning',
           buttons: [{ text: 'OK', style: 'default' }]
         });
@@ -870,37 +843,6 @@ export default function WorkoutSubmitScreen({ navigation }) {
            'RECORD OR UPLOAD (MIN 5s)'}
         </Text>
 
-        {/* Blur faces toggle */}
-        {hasRecording && (
-          <TouchableOpacity
-            onPress={() => setBlurFaces(!blurFaces)}
-            disabled={isSubmitting}
-            style={[
-              styles.blurToggleButton,
-              blurFaces && styles.blurToggleActive
-            ]}
-          >
-            <Ionicons
-              name={blurFaces ? "eye-off" : "eye"}
-              size={18}
-              color={blurFaces ? theme.bgDeep : theme.textMuted}
-            />
-            <Text style={[
-              styles.blurToggleText,
-              blurFaces && styles.blurToggleTextActive
-            ]}>
-              {blurFaces ? "FACE BLUR: ON" : "FACE BLUR: OFF"}
-            </Text>
-            {blurring && (
-              <ActivityIndicator
-                size="small"
-                color={theme.bgDeep}
-                style={{ marginLeft: 8 }}
-              />
-            )}
-          </TouchableOpacity>
-        )}
-
         {/* Submit button */}
         <TouchableOpacity
           onPress={submit}
@@ -912,7 +854,7 @@ export default function WorkoutSubmitScreen({ navigation }) {
           disabled={isSubmitDisabled}
         >
           <Text style={styles.submitText}>
-            {isSubmitting || blurring ? 'TRANSMITTING...' :
+            {isSubmitting ? 'TRANSMITTING...' :
              !recordingUri ? 'RECORD REQUIRED (5s MIN)' :
              !canSubmitVideo ? `KEEP RECORDING (${5 - recordSeconds}s)` :
              'TRANSMIT LOG'}
@@ -986,7 +928,7 @@ function createStyles(theme, isDark) {
     cameraErrorButton: {
       paddingHorizontal: 16,
       paddingVertical: 10,
-      borderRadius: 10,
+      borderRadius: 12,
       backgroundColor: theme.primary,
     },
     cameraErrorButtonText: {
@@ -998,7 +940,7 @@ function createStyles(theme, isDark) {
     cameraErrorButtonAlt: {
       paddingHorizontal: 16,
       paddingVertical: 10,
-      borderRadius: 10,
+      borderRadius: 12,
       backgroundColor: theme.shadow,
       borderWidth: 1,
       borderColor: theme.border,
@@ -1014,7 +956,7 @@ function createStyles(theme, isDark) {
       paddingHorizontal: 24,
       paddingVertical: 12,
       backgroundColor: theme.primary,
-      borderRadius: 8,
+      borderRadius: 12,
     },
     permissionButtonText: {
       color: theme.textMain,
@@ -1026,7 +968,7 @@ function createStyles(theme, isDark) {
       marginTop: 10,
       paddingHorizontal: 20,
       paddingVertical: 10,
-      borderRadius: 8,
+      borderRadius: 12,
       borderWidth: 1,
       borderColor: theme.border,
       backgroundColor: theme.shadow,
@@ -1162,7 +1104,7 @@ function createStyles(theme, isDark) {
       backgroundColor: theme.primary,
       paddingHorizontal: 8,
       paddingVertical: 2,
-      borderRadius: 4,
+      borderRadius: 12,
     },
     unitText: {
       fontSize: 9,
@@ -1234,7 +1176,7 @@ function createStyles(theme, isDark) {
       backgroundColor: theme.bgPanel,
       borderWidth: 1,
       borderColor: theme.textMuted,
-      borderRadius: 10,
+      borderRadius: 12,
       paddingVertical: 10,
       paddingHorizontal: 16,
       marginBottom: 12,

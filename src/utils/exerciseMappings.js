@@ -21,6 +21,7 @@ export const LOCATION_OPTIONS = [
 const HOME_EXERCISE_IDS = new Set([
   // Bodyweight exercises
   'pushups',
+  'incline_pushup',
   'dips',
   'pullups',
   'chin_ups',
@@ -29,6 +30,9 @@ const HOME_EXERCISE_IDS = new Set([
   'bulgarian_split',
   'glute_bridge',
   'step_ups',
+  'goblet_squat',
+  'bodyweight_squat',
+  'romanian_deadlift',
   'situps',
   'crunches',
   'plank',
@@ -43,8 +47,6 @@ const HOME_EXERCISE_IDS = new Set([
   'sumo_squat',
   'sissy_squat',
   'calf_raise',
-  // Core
-  // 'hanging_leg_raise', // Requires bar
   // Cardio
   'run',
 ]);
@@ -148,4 +150,27 @@ export function getWorkoutName(muscleGroup, location) {
     return `${muscleName} (Gym)`;
   }
   return `${muscleName} (${locationName})`;
+}
+
+// Gender-specific recommended exercises by location
+const GENDER_GYM_EXERCISES = {
+  male: ['bench_press', 'deadlift', 'barbell_row', 'overhead_press', 'squat'],
+  female: ['deadlift', 'squat', 'hip_thrust', 'lat_pulldown', 'bench_press'],
+};
+
+const GENDER_HOME_EXERCISES = {
+  male: ['pullups', 'pushups', 'plank', 'bodyweight_squat'],
+  female: ['goblet_squat', 'romanian_deadlift', 'incline_pushup', 'step_ups', 'plank'],
+};
+
+export function getRecommendedExercises(gender, location) {
+  const g = (gender || 'male').toLowerCase().startsWith('f') ? 'female' : 'male';
+  if (isHomeLocation(location)) {
+    return GENDER_HOME_EXERCISES[g]
+      .map(id => EXERCISES.find(ex => ex.id === id))
+      .filter(Boolean);
+  }
+  return GENDER_GYM_EXERCISES[g]
+    .map(id => EXERCISES.find(ex => ex.id === id))
+    .filter(Boolean);
 }

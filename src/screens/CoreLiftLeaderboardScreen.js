@@ -60,6 +60,7 @@ export default function CoreLiftLeaderboardScreen({ route }) {
         weightClass: selectedWeightClass,
         region: selectedRegion,
         locationType: selectedLocation,
+        gender: user?.gender,
         limit: 100,
       };
 
@@ -75,7 +76,7 @@ export default function CoreLiftLeaderboardScreen({ route }) {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [selectedLift, selectedWeightClass, selectedRegion, selectedLocation]);
+  }, [selectedLift, selectedWeightClass, selectedRegion, selectedLocation, user]);
 
   useEffect(() => {
     fetchLeaderboard();
@@ -262,7 +263,7 @@ export default function CoreLiftLeaderboardScreen({ route }) {
                     </View>
                     <Text style={styles.podiumName} numberOfLines={1}>{item.name}</Text>
                     <Text style={styles.podium1RM}>{format1RM(item.estimated1RM)}</Text>
-                    <View style={[styles.locationBadge, { backgroundColor: item.locationType === 'home' ? '#9b2c2c' : '#3a3a3a' }]}>
+                    <View style={[styles.locationBadge, { backgroundColor: item.locationType === 'home' ? '#ff2d55' : '#27272a' }]}>
                       <Text style={styles.locationBadgeText}>{item.locationType === 'home' ? 'HOME' : 'GYM'}</Text>
                     </View>
                   </View>
@@ -318,7 +319,7 @@ export default function CoreLiftLeaderboardScreen({ route }) {
               </View>
 
               <View style={styles.locationCol}>
-                <View style={[styles.locBadge, { backgroundColor: item.locationType === 'home' ? '#9b2c2c' : '#3a3a3a' }]}>
+                <View style={[styles.locBadge, { backgroundColor: item.locationType === 'home' ? '#ff2d55' : '#27272a' }]}>
                   <Text style={styles.locBadgeText}>{item.locationType === 'home' ? 'H' : 'G'}</Text>
                 </View>
               </View>
@@ -336,7 +337,7 @@ export default function CoreLiftLeaderboardScreen({ route }) {
 
         {entries.length === 0 && (
           <View style={styles.emptyState}>
-            <Ionicons name="barbell-outline" size={48} color="#555" />
+            <Ionicons name="barbell-outline" size={48} color="#a1a1aa" />
             <Text style={styles.emptyText}>NO RECORDS YET</Text>
             <Text style={styles.emptySubtext}>Submit a verified lift to rank!</Text>
           </View>
@@ -383,28 +384,28 @@ const getRankColor = (rank) => {
   if (rank === 1) return '#FFD700';
   if (rank === 2) return '#C0C0C0';
   if (rank === 3) return '#CD7F32';
-  if (rank <= 10) return '#888888';
-  return '#555555';
+  if (rank <= 10) return '#a1a1aa';
+  return '#a1a1aa';
 };
 
 function createStyles(theme, insets) {
   return StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: '#050505',
+      backgroundColor: '#09090b',
     },
     loadingContainer: {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: '#050505',
+      backgroundColor: '#09090b',
     },
     header: {
       paddingHorizontal: 16,
       paddingBottom: 16,
       borderBottomWidth: 1,
-      borderBottomColor: '#121212',
-      backgroundColor: '#0a0a0a',
+      borderBottomColor: '#121214',
+      backgroundColor: '#121214',
     },
     headerLeft: {
       flexDirection: 'row',
@@ -413,8 +414,8 @@ function createStyles(theme, insets) {
     iconBox: {
       width: 48,
       height: 48,
-      borderRadius: 14,
-      backgroundColor: '#1a0e0e',
+      borderRadius: 16,
+      backgroundColor: 'rgba(255, 45, 85, 0.08)',
       borderWidth: 2,
       alignItems: 'center',
       justifyContent: 'center',
@@ -425,68 +426,68 @@ function createStyles(theme, insets) {
     headerTitle: {
       fontSize: 18,
       fontWeight: '900',
-      color: '#ffffff',
+      color: '#fafafa',
       letterSpacing: 1,
     },
     headerSubtitle: {
       fontSize: 10,
       fontWeight: '800',
-      color: '#666666',
+      color: '#a1a1aa',
       letterSpacing: 1.5,
       marginTop: 2,
     },
     liftBadge: {
-      backgroundColor: 'rgba(155, 44, 44, 0.15)',
+      backgroundColor: 'rgba(255, 45, 85, 0.12)',
       paddingHorizontal: 12,
       paddingVertical: 6,
-      borderRadius: 8,
+      borderRadius: 12,
       borderWidth: 1,
-      borderColor: '#9b2c2c',
+      borderColor: '#ff2d55',
     },
     liftBadgeText: {
       fontSize: 10,
       fontWeight: '900',
-      color: '#ffffff',
+      color: '#fafafa',
       letterSpacing: 1,
     },
     filtersContainer: {
-      backgroundColor: '#050505',
+      backgroundColor: '#09090b',
       zIndex: 10,
     },
     filterSection: {
       paddingHorizontal: 16,
       paddingVertical: 8,
       borderBottomWidth: 1,
-      borderBottomColor: '#0f0f0f',
+      borderBottomColor: '#18181b',
     },
     filterLabel: {
       fontSize: 10,
       fontWeight: '900',
-      color: '#555555',
+      color: '#a1a1aa',
       letterSpacing: 2,
       marginBottom: 6,
     },
     filterButton: {
       paddingHorizontal: 14,
       paddingVertical: 8,
-      borderRadius: 10,
-      backgroundColor: '#161616',
+      borderRadius: 12,
+      backgroundColor: '#121214',
       marginRight: 6,
       borderWidth: 1,
-      borderColor: '#1a1a1a',
+      borderColor: '#1e1e20',
     },
     filterButtonActive: {
-      backgroundColor: 'rgba(155, 44, 44, 0.15)',
-      borderColor: '#9b2c2c',
+      backgroundColor: 'rgba(255, 45, 85, 0.12)',
+      borderColor: '#ff2d55',
     },
     filterButtonText: {
       fontSize: 11,
       fontWeight: '800',
-      color: '#666666',
+      color: '#a1a1aa',
       letterSpacing: 0.5,
     },
     filterButtonTextActive: {
-      color: '#ffffff',
+      color: '#fafafa',
     },
     content: {
       flex: 1,
@@ -498,7 +499,7 @@ function createStyles(theme, insets) {
     podiumLabel: {
       fontSize: 10,
       fontWeight: '900',
-      color: '#555555',
+      color: '#a1a1aa',
       letterSpacing: 2,
       marginBottom: 12,
     },
@@ -509,8 +510,8 @@ function createStyles(theme, insets) {
     },
     podiumCard: {
       flex: 1,
-      backgroundColor: '#161616',
-      borderRadius: 14,
+      backgroundColor: '#121214',
+      borderRadius: 16,
       borderTopWidth: 3,
       padding: 12,
       alignItems: 'center',
@@ -532,16 +533,16 @@ function createStyles(theme, insets) {
       marginBottom: 8,
     },
     podiumAvatarFallback: {
-      backgroundColor: '#1a1a1a',
+      backgroundColor: '#1e1e20',
       justifyContent: 'center',
       alignItems: 'center',
       borderWidth: 2,
-      borderColor: '#333333',
+      borderColor: '#27272a',
     },
     podiumAvatarText: {
       fontSize: 14,
       fontWeight: '900',
-      color: '#dddddd',
+      color: '#fafafa',
     },
     podiumRankBadge: {
       width: 24,
@@ -560,24 +561,24 @@ function createStyles(theme, insets) {
     podiumName: {
       fontSize: 12,
       fontWeight: '900',
-      color: '#ffffff',
+      color: '#fafafa',
       marginBottom: 4,
     },
     podium1RM: {
       fontSize: 15,
       fontWeight: '900',
-      color: '#dddddd',
+      color: '#fafafa',
       marginBottom: 4,
     },
     locationBadge: {
       paddingHorizontal: 6,
       paddingVertical: 2,
-      borderRadius: 4,
+      borderRadius: 12,
     },
     locationBadgeText: {
       fontSize: 8,
       fontWeight: '800',
-      color: '#ffffff',
+      color: '#fafafa',
       letterSpacing: 0.5,
     },
     rankRow: {
@@ -586,16 +587,16 @@ function createStyles(theme, insets) {
       paddingVertical: 12,
       paddingHorizontal: 12,
       marginBottom: 4,
-      backgroundColor: '#0a0a0a',
-      borderRadius: 12,
+      backgroundColor: '#121214',
+      borderRadius: 14,
     },
     rankRowTopTen: {
-      backgroundColor: '#0f0f0f',
+      backgroundColor: '#18181b',
     },
     rankRowCurrentUser: {
       borderLeftWidth: 3,
-      borderLeftColor: '#9b2c2c',
-      backgroundColor: 'rgba(155, 44, 44, 0.1)',
+      borderLeftColor: '#ff2d55',
+      backgroundColor: 'rgba(255, 45, 85, 0.08)',
     },
     rankNum: {
       width: 32,
@@ -613,23 +614,23 @@ function createStyles(theme, insets) {
     avatar: {
       width: 36,
       height: 36,
-      borderRadius: 10,
+      borderRadius: 12,
       marginRight: 10,
     },
     avatarFallback: {
       width: 36,
       height: 36,
-      borderRadius: 10,
-      backgroundColor: '#161616',
+      borderRadius: 12,
+      backgroundColor: '#121214',
       justifyContent: 'center',
       alignItems: 'center',
       borderWidth: 2,
-      borderColor: '#2a2a2a',
+      borderColor: '#27272a',
     },
     avatarText: {
       fontSize: 11,
       fontWeight: '900',
-      color: '#555555',
+      color: '#a1a1aa',
     },
     nameContainer: {
       marginLeft: 10,
@@ -638,19 +639,19 @@ function createStyles(theme, insets) {
     name: {
       fontSize: 14,
       fontWeight: '900',
-      color: '#ffffff',
+      color: '#fafafa',
     },
     youBadge: {
       paddingHorizontal: 6,
       paddingVertical: 2,
-      borderRadius: 6,
+      borderRadius: 12,
       marginTop: 4,
       alignSelf: 'flex-start',
     },
     youBadgeText: {
       fontSize: 8,
       fontWeight: '900',
-      color: '#ffffff',
+      color: '#fafafa',
       letterSpacing: 1,
     },
     classCol: {
@@ -660,7 +661,7 @@ function createStyles(theme, insets) {
     classText: {
       fontSize: 12,
       fontWeight: '800',
-      color: '#888888',
+      color: '#a1a1aa',
     },
     bwCol: {
       width: 50,
@@ -669,7 +670,7 @@ function createStyles(theme, insets) {
     bwText: {
       fontSize: 11,
       fontWeight: '700',
-      color: '#888888',
+      color: '#a1a1aa',
     },
     locationCol: {
       width: 40,
@@ -678,14 +679,14 @@ function createStyles(theme, insets) {
     locBadge: {
       width: 24,
       height: 24,
-      borderRadius: 6,
+      borderRadius: 12,
       justifyContent: 'center',
       alignItems: 'center',
     },
     locBadgeText: {
       fontSize: 9,
       fontWeight: '800',
-      color: '#ffffff',
+      color: '#fafafa',
     },
     liftCol: {
       flex: 1,
@@ -694,14 +695,14 @@ function createStyles(theme, insets) {
     liftPill: {
       paddingHorizontal: 12,
       paddingVertical: 6,
-      borderRadius: 10,
+      borderRadius: 12,
       borderWidth: 1,
-      borderColor: '#333333',
+      borderColor: '#27272a',
     },
     liftPillText: {
       fontSize: 13,
       fontWeight: '900',
-      color: '#e5e5e5',
+      color: '#fafafa',
     },
     emptyState: {
       alignItems: 'center',
@@ -711,23 +712,23 @@ function createStyles(theme, insets) {
     emptyText: {
       fontSize: 14,
       fontWeight: '900',
-      color: '#666666',
+      color: '#a1a1aa',
       letterSpacing: 2,
       marginBottom: 8,
     },
     emptySubtext: {
       fontSize: 11,
       fontWeight: '800',
-      color: '#444444',
+      color: '#a1a1aa',
     },
     stickyRank: {
       position: 'absolute',
       bottom: 0,
       left: 0,
       right: 0,
-      backgroundColor: '#050505',
-      borderTopWidth: 2,
-      borderTopColor: '#1a1a1a',
+      backgroundColor: '#09090b',
+      borderTopWidth: 1,
+      borderTopColor: '#1e1e20',
       zIndex: 20,
     },
     dividerContainer: {
@@ -739,7 +740,7 @@ function createStyles(theme, insets) {
     dividerLine: {
       flex: 1,
       height: 1,
-      backgroundColor: '#333333',
+      backgroundColor: '#27272a',
     },
     dividerText: {
       fontSize: 9,

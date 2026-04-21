@@ -301,7 +301,7 @@ export default function OnboardingScreen({ navigation }) {
               </View>
               {active && (
                 <View style={[styles.fitnessCheck, { backgroundColor: theme.primary }]}>
-                  <Ionicons name="checkmark" size={16} color={isDark ? theme.bgDeep : '#fff'} />
+                  <Ionicons name="checkmark" size={16} color={isDark ? theme.bgDeep : '#fafafa'} />
                 </View>
               )}
             </TouchableOpacity>
@@ -356,7 +356,7 @@ export default function OnboardingScreen({ navigation }) {
                   { backgroundColor: active ? theme.primary : theme.bgCard, borderColor: theme.border },
                 ]}
               >
-                <Text style={[styles.dayText, { color: active ? (isDark ? theme.bgDeep : '#fff') : theme.textMain }]}>{day}</Text>
+                <Text style={[styles.dayText, { color: active ? (isDark ? theme.bgDeep : '#fafafa') : theme.textMain }]}>{day}</Text>
               </TouchableOpacity>
             );
           })}
@@ -384,7 +384,7 @@ export default function OnboardingScreen({ navigation }) {
             activeOpacity={0.8}
             style={[styles.notificationToggle, { backgroundColor: notificationsEnabled ? theme.primary : theme.border }]}
           >
-            <Text style={[styles.toggleText, { color: notificationsEnabled ? (isDark ? theme.bgDeep : '#fff') : theme.textMuted }]}>
+            <Text style={[styles.toggleText, { color: notificationsEnabled ? (isDark ? theme.bgDeep : '#fafafa') : theme.textMuted }]}>
               {notificationsEnabled ? 'Enabled' : 'Disabled'}
             </Text>
           </TouchableOpacity>
@@ -499,7 +499,7 @@ export default function OnboardingScreen({ navigation }) {
             </TouchableOpacity>
 
             {/* Progress Bar */}
-            <View style={[styles.progressTrack, { backgroundColor: theme.bgPanel }]}>
+            <View style={[styles.progressTrack]}>
               <Animated.View style={[styles.progressFill, { width: `${progress}%`, backgroundColor: theme.primary }]} />
             </View>
             <Text style={[styles.stepCounter, { color: theme.textMuted }]}>
@@ -533,14 +533,14 @@ export default function OnboardingScreen({ navigation }) {
             ]}
           >
             {loading ? (
-              <Text style={[styles.nextButtonText, { color: isDark ? theme.bgDeep : '#fff' }]}>Setting up...</Text>
+              <Text style={[styles.nextButtonText, { color: isDark ? theme.bgDeep : '#fafafa' }]}>Setting up...</Text>
             ) : (
               <>
-                <Text style={[styles.nextButtonText, { color: isDark ? theme.bgDeep : '#fff' }]}>
+                <Text style={[styles.nextButtonText, { color: isDark ? theme.bgDeep : '#fafafa' }]}>
                   {step === steps.length - 1 ? 'Enter The Arena' : 'Continue'}
                 </Text>
                 {step < steps.length - 1 && (
-                  <Ionicons name="chevron-forward" size={20} color={isDark ? theme.bgDeep : '#fff'} />
+                  <Ionicons name="chevron-forward" size={20} color={isDark ? theme.bgDeep : '#fafafa'} />
                 )}
               </>
             )}
@@ -559,12 +559,14 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(0,0,0,0.05)',
+    backgroundColor: '#121214',
+    borderWidth: 1,
+    borderColor: '#27272a',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
   },
-  progressTrack: { height: 4, borderRadius: 2, overflow: 'hidden', marginBottom: 12 },
+  progressTrack: { height: 4, borderRadius: 99, overflow: 'hidden', marginBottom: 12, backgroundColor: '#27272a' },
   progressFill: { height: '100%' },
   stepCounter: { fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1 },
   heroTitle: { fontSize: 26, fontWeight: '800', marginBottom: 8 },
@@ -714,7 +716,7 @@ const styles = StyleSheet.create({
   dayCard: {
     width: (300 - 60) / 7,
     aspectRatio: 1,
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

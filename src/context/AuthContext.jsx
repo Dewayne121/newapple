@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
-import { AppState } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import api from '../services/api';
 import {
   resetOnboardingForNewUser,
@@ -28,12 +29,22 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState(null);
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
+  const [appleAuthAvailable, setAppleAuthAvailable] = useState(false);
   const appState = useRef(AppState.currentState);
   const hasHandledBackground = useRef(false);
 
   // Initialize app and check for existing user
   useEffect(() => {
     loadUserData();
+    // Check Apple auth availability
+    (async () => {
+      try {
+        const available = Platform.OS === 'ios' && await AppleAuthentication.isAvailableAsync();
+        setAppleAuthAvailable(available);
+      } catch {
+        setAppleAuthAvailable(false);
+      }
+    })();
   }, []);
 
   // Register refreshUser callback for StreamlinedOnboardingContext
@@ -217,8 +228,9 @@ export function AuthProvider({ children }) {
       if (response.success && response.data?.user) {
         const userData = response.data.user;
 
-        // Check if user has already completed onboarding (has name, region, goal)
-        const hasProfile = userData.name && userData.region && userData.goal;
+        // Check if user has completed onboarding with a real (non-placeholder) name
+        const isPlaceholder = !userData.name || userData.name === 'Athlete' || userData.name === 'Grinder';
+        const hasProfile = !isPlaceholder && userData.name && userData.region && userData.goal;
 
         // Set loading to true to keep splash screen visible during state transition
         setLoading(true);
@@ -306,9 +318,68 @@ export function AuthProvider({ children }) {
   };
 
   const signInWithApple = async () => {
-    const message = 'Apple sign-in is not available yet. Please use email/password or continue anonymously.';
-    setAuthError(message);
-    return { success: false, error: message };
+    setAuthError(null);
+    try {
+      const available = await AppleAuthentication.isAvailableAsync();
+      if (!available) {
+        const message = 'Apple Sign In is not available on this device';
+        setAuthError(message);
+        return { success: false, error: message };
+      }
+
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      const { user: appleUserId, email, fullName, identityToken } = credential;
+      const displayName = fullName
+        ? [fullName.givenName, fullName.familyName].filter(Boolean).join(' ')
+        : null;
+
+      const response = await api.signInWithApple({
+        appleId: appleUserId,
+        email: email || undefined,
+        fullName: displayName || undefined,
+        identityToken,
+      });
+
+      if (response.success && response.data?.user) {
+        const userData = response.data.user;
+        const isNewAppleUser = response.data.isNewUser;
+        const isPlaceholder = !userData.name || userData.name === 'Athlete' || userData.name === 'Grinder';
+        const hasProfile = !isNewAppleUser && !isPlaceholder && userData.name && userData.region && userData.goal;
+
+        setLoading(true);
+
+        if (hasProfile) {
+          await AsyncStorage.setItem(LS_HAS_SEEN_ONBOARDING, 'true');
+        } else {
+          await resetOnboardingForNewUser();
+        }
+        await saveUserData(userData);
+
+        if (hasProfile) {
+          setOnboardingCompleted(true);
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 50));
+        setLoading(false);
+
+        return { success: true, user: userData };
+      }
+
+      throw new Error('Apple sign-in failed');
+    } catch (error) {
+      if (error.code === 'ERR_CANCELED') {
+        return { success: false, error: 'Sign in was canceled' };
+      }
+      const message = error.message || 'Apple sign-in failed';
+      setAuthError(message);
+      return { success: false, error: message };
+    }
   };
 
   const signInAnonymous = async () => {
@@ -456,7 +527,7 @@ export function AuthProvider({ children }) {
     hasSeenOnboarding,
     onboardingCompleted,
     isAuthenticated: !!user,
-    appleAuthAvailable: false,
+    appleAuthAvailable,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

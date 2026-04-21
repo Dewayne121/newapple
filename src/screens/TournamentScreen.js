@@ -82,7 +82,7 @@ export default function TournamentScreen({ navigation }) {
           blurRadius={3}
         />
         <LinearGradient
-          colors={['transparent', '#050505']}
+          colors={['transparent', '#09090b']}
           style={styles.gradientOverlay}
         />
         
@@ -154,7 +154,7 @@ export default function TournamentScreen({ navigation }) {
             end={{ x: 1, y: 1 }}
             style={styles.actionButtonGradient}
           >
-            <Ionicons name="videocam" size={24} color="#fff" style={{ marginRight: 10 }} />
+            <Ionicons name="videocam" size={24} color="#fafafa" style={{ marginRight: 10 }} />
             <Text style={styles.actionButtonText}>LOG OFFICIAL ATTEMPT</Text>
           </LinearGradient>
         </TouchableOpacity>
@@ -310,7 +310,7 @@ function createStyles(theme, insets) {
   return StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: '#050505',
+      backgroundColor: '#09090b',
     },
     headerContainer: {
       height: HEADER_HEIGHT,
@@ -364,7 +364,7 @@ function createStyles(theme, insets) {
     titleBig: {
       fontSize: 48,
       fontWeight: '900',
-      color: '#fff',
+      color: '#fafafa',
       letterSpacing: -2,
       lineHeight: 48,
       textShadowColor: 'rgba(0,0,0,0.8)',
@@ -387,7 +387,7 @@ function createStyles(theme, insets) {
       padding: 12,
       borderRadius: 16,
       borderWidth: 1,
-      borderColor: 'rgba(255,255,255,0.1)',
+      borderColor: '#27272a',
     },
     timerBox: {
       alignItems: 'center',
@@ -396,26 +396,26 @@ function createStyles(theme, insets) {
     timerValue: {
       fontSize: 20,
       fontWeight: '800',
-      color: '#fff',
+      color: '#fafafa',
       fontVariant: ['tabular-nums'],
     },
     timerLabel: {
       fontSize: 9,
       fontWeight: '700',
-      color: '#888',
+      color: '#a1a1aa',
       marginTop: 2,
     },
     timerColon: {
       fontSize: 20,
       fontWeight: '800',
-      color: '#444',
+      color: '#a1a1aa',
       marginHorizontal: 8,
       marginBottom: 12,
     },
     sheetContainer: {
       flex: 1,
       marginTop: HEADER_HEIGHT - 40,
-      backgroundColor: '#050505',
+      backgroundColor: '#09090b',
       borderTopLeftRadius: 30,
       borderTopRightRadius: 30,
       overflow: 'hidden',
@@ -423,7 +423,7 @@ function createStyles(theme, insets) {
     tabBar: {
       flexDirection: 'row',
       borderBottomWidth: 1,
-      borderBottomColor: 'rgba(255,255,255,0.1)',
+      borderBottomColor: '#27272a',
       paddingHorizontal: 16,
     },
     tabItem: {
@@ -437,11 +437,11 @@ function createStyles(theme, insets) {
     tabText: {
       fontSize: 12,
       fontWeight: '700',
-      color: '#666',
+      color: '#a1a1aa',
       letterSpacing: 1,
     },
     tabTextActive: {
-      color: '#fff',
+      color: '#fafafa',
     },
     activeIndicator: {
       position: 'absolute',
@@ -459,11 +459,11 @@ function createStyles(theme, insets) {
       gap: 20,
     },
     card: {
-      backgroundColor: '#111',
+      backgroundColor: '#121214',
       borderRadius: 20,
       padding: 20,
       borderWidth: 1,
-      borderColor: '#222',
+      borderColor: '#27272a',
     },
     cardHeader: {
       flexDirection: 'row',
@@ -473,20 +473,20 @@ function createStyles(theme, insets) {
     cardTitle: {
       fontSize: 14,
       fontWeight: '800',
-      color: '#fff',
+      color: '#fafafa',
       marginLeft: 10,
       letterSpacing: 1,
     },
     cardBody: {
       fontSize: 15,
-      color: '#ccc',
+      color: '#a1a1aa',
       lineHeight: 24,
       marginBottom: 20,
     },
     statGrid: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: 'rgba(255,255,255,0.03)',
+      backgroundColor: '#121214',
       borderRadius: 12,
       padding: 16,
     },
@@ -497,18 +497,18 @@ function createStyles(theme, insets) {
     miniStatValue: {
       fontSize: 18,
       fontWeight: '800',
-      color: '#fff',
+      color: '#fafafa',
     },
     miniStatLabel: {
       fontSize: 9,
       fontWeight: '700',
-      color: '#666',
+      color: '#a1a1aa',
       marginTop: 4,
     },
     miniStatDivider: {
       width: 1,
       height: 24,
-      backgroundColor: 'rgba(255,255,255,0.1)',
+      backgroundColor: '#27272a',
     },
     ruleList: {
       gap: 12,
@@ -520,14 +520,14 @@ function createStyles(theme, insets) {
     ruleNum: {
       fontSize: 14,
       fontWeight: '800',
-      color: '#444',
+      color: '#a1a1aa',
       width: 30,
       marginTop: 2,
     },
     ruleText: {
       flex: 1,
       fontSize: 14,
-      color: '#ccc',
+      color: '#a1a1aa',
       lineHeight: 20,
     },
     leaderboardHeader: {
@@ -539,7 +539,7 @@ function createStyles(theme, insets) {
     leaderboardSubtitle: {
       fontSize: 12,
       fontWeight: '800',
-      color: '#666',
+      color: '#a1a1aa',
       letterSpacing: 1,
     },
     linkText: {
@@ -551,12 +551,12 @@ function createStyles(theme, insets) {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      backgroundColor: '#111',
+      backgroundColor: '#121214',
       padding: 16,
       borderRadius: 16,
       marginBottom: 8,
       borderWidth: 1,
-      borderColor: '#222',
+      borderColor: '#27272a',
     },
     leaderLeft: {
       flexDirection: 'row',
@@ -565,8 +565,8 @@ function createStyles(theme, insets) {
     rankBadge: {
       width: 24,
       height: 24,
-      borderRadius: 8,
-      backgroundColor: '#222',
+      borderRadius: 12,
+      backgroundColor: '#121214',
       alignItems: 'center',
       justifyContent: 'center',
       marginRight: 12,
@@ -574,32 +574,32 @@ function createStyles(theme, insets) {
     rankText: {
       fontSize: 12,
       fontWeight: '800',
-      color: '#888',
+      color: '#a1a1aa',
     },
     avatar: {
       width: 40,
       height: 40,
       borderRadius: 20,
-      backgroundColor: '#222',
+      backgroundColor: '#121214',
       alignItems: 'center',
       justifyContent: 'center',
       marginRight: 12,
       borderWidth: 1,
-      borderColor: '#333',
+      borderColor: '#27272a',
     },
     avatarText: {
       fontSize: 14,
       fontWeight: '700',
-      color: '#fff',
+      color: '#fafafa',
     },
     leaderName: {
       fontSize: 14,
       fontWeight: '700',
-      color: '#fff',
+      color: '#fafafa',
     },
     leaderSub: {
       fontSize: 11,
-      color: '#666',
+      color: '#a1a1aa',
     },
     leaderRight: {
       alignItems: 'flex-end',
@@ -611,7 +611,7 @@ function createStyles(theme, insets) {
     },
     leaderUnit: {
       fontSize: 10,
-      color: '#666',
+      color: '#a1a1aa',
     },
     rewardHero: {
       alignItems: 'center',
@@ -633,7 +633,7 @@ function createStyles(theme, insets) {
     },
     rewardSubtitle: {
       fontSize: 14,
-      color: '#888',
+      color: '#a1a1aa',
     },
     rewardGrid: {
       gap: 12,
@@ -641,11 +641,11 @@ function createStyles(theme, insets) {
     rewardItem: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: '#111',
+      backgroundColor: '#121214',
       padding: 16,
       borderRadius: 16,
       borderWidth: 1,
-      borderColor: '#222',
+      borderColor: '#27272a',
     },
     rewardIconBg: {
       width: 44,
@@ -656,17 +656,17 @@ function createStyles(theme, insets) {
       alignItems: 'center',
       justifyContent: 'center',
       marginRight: 16,
-      backgroundColor: 'rgba(255,255,255,0.03)',
+      backgroundColor: '#121214',
     },
     rewardItemTitle: {
       flex: 1,
       fontSize: 16,
       fontWeight: '700',
-      color: '#fff',
+      color: '#fafafa',
     },
     rewardItemDesc: {
       fontSize: 12,
-      color: '#888',
+      color: '#a1a1aa',
       fontWeight: '600',
     },
     fabContainer: {
@@ -693,7 +693,7 @@ function createStyles(theme, insets) {
     actionButtonText: {
       fontSize: 16,
       fontWeight: '900',
-      color: '#fff',
+      color: '#fafafa',
       letterSpacing: 1,
     },
   });

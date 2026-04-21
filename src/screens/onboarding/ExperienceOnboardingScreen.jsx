@@ -151,13 +151,13 @@ export default function ExperienceOnboardingScreen({ navigation }) {
             !selectedLevel && styles.continueButtonDisabled,
           ]}
         >
-          <Text style={[styles.continueButtonText, { color: isDark ? theme.bgDeep : '#fff' }]}>
+          <Text style={[styles.continueButtonText, { color: isDark ? theme.bgDeep : '#fafafa' }]}>
             Continue
           </Text>
           <Ionicons
             name="chevron-forward"
             size={20}
-            color={isDark ? theme.bgDeep : '#fff'}
+            color={isDark ? theme.bgDeep : '#fafafa'}
           />
         </TouchableOpacity>
       </View>
@@ -259,13 +259,13 @@ const styles = StyleSheet.create({
   },
   experienceBar: {
     height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(0,0,0,0.1)',
+    borderRadius: 99,
+    backgroundColor: '#27272a',
     overflow: 'hidden',
   },
   experienceFill: {
     height: '100%',
-    borderRadius: 2,
+    borderRadius: 99,
   },
   infoCard: {
     flexDirection: 'row',

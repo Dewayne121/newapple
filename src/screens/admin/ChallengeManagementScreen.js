@@ -304,6 +304,12 @@ export default function ChallengeManagementScreen({ navigation }) {
                 <Ionicons name="barbell" size={12} color={C.accent} />
                 <Text style={styles.liftBadgeText}>{liftName.toUpperCase()}</Text>
               </View>
+              {challenge.gender && (
+                <View style={styles.genderBadge}>
+                  <Ionicons name={challenge.gender === 'male' ? 'male' : 'female'} size={10} color={C.info} />
+                  <Text style={styles.genderBadgeText}>{challenge.gender.toUpperCase()}</Text>
+                </View>
+              )}
               <Text style={styles.cardTitle}>{challenge.title}</Text>
             </View>
             <View style={[styles.statusBadge, { backgroundColor: getStatusColor(statusLabel) }]}>
@@ -905,6 +911,23 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: '800',
     color: C.accent,
+    letterSpacing: 0.5,
+  },
+  genderBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: C.info + '15',
+    borderRadius: R.xs,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    alignSelf: 'flex-start',
+    marginBottom: 6,
+    gap: 3,
+  },
+  genderBadgeText: {
+    fontSize: 8,
+    fontWeight: '800',
+    color: C.info,
     letterSpacing: 0.5,
   },
   cardTitle: {

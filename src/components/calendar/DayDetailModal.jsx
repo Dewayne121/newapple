@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContainer: {
-    backgroundColor: '#0a0a0a', // bgPanel
+    backgroundColor: '#121214', // bgPanel
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     height: '85%',
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
   
   // Reflection Styles
   reflectionCard: {
-    backgroundColor: '#161616',
+    backgroundColor: '#121214',
     borderRadius: 16,
     padding: 20,
     borderWidth: 1,
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
 
   // Exercise Cards
   exerciseCard: {
-    backgroundColor: '#161616',
+    backgroundColor: '#121214',
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,

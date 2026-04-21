@@ -20,6 +20,7 @@ export const EXERCISES = [
   { id: 'chest_fly', name: 'Chest Fly', intensity: 0.8, category: 'chest' },
   { id: 'cable_crossover', name: 'Cable Crossover', intensity: 0.8, category: 'chest' },
   { id: 'pushups', name: 'Pushups', intensity: 0.5, category: 'chest' },
+  { id: 'incline_pushup', name: 'Incline Push Up', intensity: 0.4, category: 'chest' },
   { id: 'dips', name: 'Dips', intensity: 1.0, category: 'chest' },
   { id: 'pec_deck', name: 'Pec Deck', intensity: 0.7, category: 'chest' },
 
@@ -60,6 +61,7 @@ export const EXERCISES = [
 
   // Legs
   { id: 'squat', name: 'Squat', intensity: 1.5, category: 'legs' },
+  { id: 'bodyweight_squat', name: 'Bodyweight Squat', intensity: 0.6, category: 'legs' },
   { id: 'front_squat', name: 'Front Squat', intensity: 1.4, category: 'legs' },
   { id: 'hack_squat', name: 'Hack Squat', intensity: 1.3, category: 'legs' },
   { id: 'leg_press', name: 'Leg Press', intensity: 1.2, category: 'legs' },

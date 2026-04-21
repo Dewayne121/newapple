@@ -11,8 +11,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useWorkout } from '../context/WorkoutContext';
 import { useApp, EXERCISES } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
-import { SKINS } from '../constants/colors';
-import ScreenHeader from '../components/ScreenHeader';
 import CustomAlert, { useCustomAlert } from '../components/CustomAlert';
 
 export default function SessionDetailScreen({ navigation, route }) {
@@ -21,6 +19,7 @@ export default function SessionDetailScreen({ navigation, route }) {
   const { sessions, deleteSession } = useWorkout();
   const { weightUnit } = useApp();
   const { alertConfig, showAlert, hideAlert } = useCustomAlert();
+  const styles = createStyles(insets);
 
   const sessionId = route.params?.sessionId;
   const session = sessions.find(s => s.id === sessionId);
@@ -28,15 +27,19 @@ export default function SessionDetailScreen({ navigation, route }) {
 
   if (!session) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top }]}>
-        <ScreenHeader
-          title="SESSION NOT FOUND"
-          showBackButton
-          onBackPress={() => navigation.goBack()}
-        />
+      <View style={[styles.page, { paddingTop: insets.top }]}>
+        <View style={styles.header}>
+          <View style={styles.headerRow}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBack}>
+              <Ionicons name="arrow-back" size={20} color="#fafafa" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>NOT FOUND</Text>
+            <View style={styles.headerSpacer} />
+          </View>
+        </View>
         <View style={styles.emptyState}>
-          <Ionicons name="alert-circle-outline" size={64} color="#666" />
-          <Text style={styles.emptyText}>Session not found</Text>
+          <Ionicons name="alert-circle-outline" size={32} color="#52525b" />
+          <Text style={styles.emptyTitle}>SESSION NOT FOUND</Text>
         </View>
       </View>
     );
@@ -103,7 +106,7 @@ export default function SessionDetailScreen({ navigation, route }) {
             navigation.goBack();
           },
         },
-      ]
+      ],
     });
   };
 
@@ -111,75 +114,77 @@ export default function SessionDetailScreen({ navigation, route }) {
     return EXERCISES.find(e => e.id === exerciseId);
   };
 
-  const styles = createStyles(theme);
-
   return (
-    <View style={styles.container}>
-      <ScreenHeader
-        title="SESSION DETAILS"
-        showBackButton
-        onBackPress={() => navigation.goBack()}
-        rightAction={
-          <TouchableOpacity onPress={handleDelete} style={styles.deleteButton}>
-            <Ionicons name="trash-outline" size={24} color="#ff003c" />
+    <View style={styles.page}>
+      {/* Header */}
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+        <View style={styles.headerRow}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBack}>
+            <Ionicons name="arrow-back" size={20} color="#fafafa" />
           </TouchableOpacity>
-        }
-      />
+          <Text style={styles.headerTitle}>SESSION DETAILS</Text>
+          <TouchableOpacity onPress={handleDelete} style={styles.headerDelete}>
+            <Ionicons name="trash-outline" size={18} color="#DC2626" />
+          </TouchableOpacity>
+        </View>
+      </View>
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-        {/* Session Header */}
-        <View style={styles.sessionHeader}>
-          <Text style={styles.sessionName}>{session.name}</Text>
-          <Text style={styles.sessionDate}>{formatDate(session.finishedAt)}</Text>
-          <View style={styles.sessionMetaRow}>
-            <View style={styles.sessionMeta}>
-              <Ionicons name="time-outline" size={16} color="#888" />
-              <Text style={styles.sessionMetaText}>
-                {formatTime(session.startedAt)} - {formatTime(session.finishedAt)}
-              </Text>
-            </View>
-            <View style={styles.sessionMeta}>
-              <Ionicons name="hourglass-outline" size={16} color="#888" />
-              <Text style={styles.sessionMetaText}>
-                {formatDuration(session.startedAt, session.finishedAt)}
-              </Text>
+        {/* Session Info Card */}
+        <View style={styles.infoCard}>
+          <View style={styles.infoBar} />
+          <View style={styles.infoContent}>
+            <Text style={styles.sessionName}>{session.name}</Text>
+            <Text style={styles.sessionDate}>{formatDate(session.finishedAt)}</Text>
+            <View style={styles.metaRow}>
+              <View style={styles.metaItem}>
+                <Ionicons name="time-outline" size={12} color="#71717a" />
+                <Text style={styles.metaText}>
+                  {formatTime(session.startedAt)} – {formatTime(session.finishedAt)}
+                </Text>
+              </View>
+              <View style={styles.metaItem}>
+                <Ionicons name="hourglass-outline" size={12} color="#71717a" />
+                <Text style={styles.metaText}>
+                  {formatDuration(session.startedAt, session.finishedAt)}
+                </Text>
+              </View>
             </View>
           </View>
         </View>
 
-        {/* Stats Cards */}
+        {/* Stats Row */}
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
             <Text style={styles.statValue}>{session.exercises?.length || 0}</Text>
-            <Text style={styles.statLabel}>Exercises</Text>
+            <Text style={styles.statLabel}>EXERCISES</Text>
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statValue}>{calculateSessionStats.completedSets}</Text>
-            <Text style={styles.statLabel}>Completed</Text>
+            <Text style={styles.statLabel}>SETS</Text>
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statValue}>{calculateSessionStats.totalVolume.toLocaleString()}</Text>
-            <Text style={styles.statLabel}>Volume (kg)</Text>
+            <Text style={styles.statLabel}>VOLUME KG</Text>
           </View>
         </View>
 
         {/* Notes */}
         {session.notes && (
-          <View style={styles.notesSection}>
-            <Text style={styles.notesTitle}>NOTES</Text>
+          <View style={styles.notesCard}>
+            <Text style={styles.notesLabel}>NOTES</Text>
             <Text style={styles.notesText}>{session.notes}</Text>
           </View>
         )}
 
         {/* Exercises */}
         <View style={styles.exercisesSection}>
-          <Text style={styles.exercisesTitle}>EXERCISES</Text>
+          <Text style={styles.sectionLabel}>EXERCISES</Text>
 
           {session.exercises?.map((exercise, index) => {
             const exerciseData = getExercise(exercise.exerciseId);
             const isExpanded = expandedExerciseId === exercise.id;
 
-            // Calculate exercise stats
             let exerciseVolume = 0;
             let exerciseCompletedSets = 0;
             exercise.sets?.forEach(set => {
@@ -194,56 +199,55 @@ export default function SessionDetailScreen({ navigation, route }) {
                 <TouchableOpacity
                   style={styles.exerciseHeader}
                   onPress={() => setExpandedExerciseId(isExpanded ? null : exercise.id)}
+                  activeOpacity={0.7}
                 >
                   <View style={styles.exerciseHeaderLeft}>
-                    <Text style={styles.exerciseNumber}>{index + 1}</Text>
-                    <View>
+                    <View style={styles.exerciseNumberBadge}>
+                      <Text style={styles.exerciseNumber}>{index + 1}</Text>
+                    </View>
+                    <View style={styles.exerciseNameWrap}>
                       <Text style={styles.exerciseName}>
                         {exerciseData?.name || exercise.exerciseId}
                       </Text>
                       <Text style={styles.exerciseMeta}>
                         {exerciseCompletedSets}/{exercise.sets?.length || 0} sets
-                        {exerciseVolume > 0 && ` • ${exerciseVolume} kg`}
+                        {exerciseVolume > 0 && ` \u2022 ${exerciseVolume} kg`}
                       </Text>
                     </View>
                   </View>
                   <Ionicons
                     name={isExpanded ? 'chevron-up' : 'chevron-down'}
-                    size={20}
-                    color="#888"
+                    size={18}
+                    color="#71717a"
                   />
                 </TouchableOpacity>
 
                 {isExpanded && exercise.sets && exercise.sets.length > 0 && (
                   <View style={styles.setsContainer}>
-                    {exercise.sets.map((set, setIndex) => (
+                    {exercise.sets.map((set) => (
                       <View key={set.id} style={styles.setRow}>
                         <Text style={styles.setNumber}>{set.setNumber}</Text>
                         <View style={styles.setValues}>
                           {set.reps && set.weight ? (
                             <Text style={styles.setDetail}>
-                              {set.reps} reps × {set.weight} {weightUnit}
+                              {set.reps} reps \u00d7 {set.weight} {weightUnit}
                             </Text>
                           ) : set.durationSeconds ? (
-                            <Text style={styles.setDetail}>
-                              {set.durationSeconds}s
-                            </Text>
+                            <Text style={styles.setDetail}>{set.durationSeconds}s</Text>
                           ) : set.distance ? (
-                            <Text style={styles.setDetail}>
-                              {set.distance}
-                            </Text>
+                            <Text style={styles.setDetail}>{set.distance}</Text>
                           ) : (
                             <Text style={styles.setDetailEmpty}>No data</Text>
                           )}
                         </View>
                         <View style={[
                           styles.setStatus,
-                          set.completed ? styles.setStatusDone : styles.setStatusIncomplete
+                          set.completed ? styles.setStatusDone : styles.setStatusIncomplete,
                         ]}>
                           <Ionicons
                             name={set.completed ? 'checkmark' : 'close'}
-                            size={14}
-                            color="#fff"
+                            size={12}
+                            color="#fafafa"
                           />
                         </View>
                       </View>
@@ -258,134 +262,200 @@ export default function SessionDetailScreen({ navigation, route }) {
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* Custom Alert */}
       <CustomAlert {...alertConfig} onClose={hideAlert} />
     </View>
   );
 }
 
-function createStyles(theme) {
+function createStyles(insets) {
   return StyleSheet.create({
-    container: {
+    page: {
       flex: 1,
-      backgroundColor: '#0a0a0a',
+      backgroundColor: '#09090b',
     },
-    deleteButton: {
-      width: 44,
-      height: 44,
+
+    // --- Header ---
+    header: {
+      paddingHorizontal: 16,
+      paddingBottom: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: '#27272a',
+      backgroundColor: '#09090b',
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    headerBack: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      backgroundColor: '#121214',
+      borderWidth: 1,
+      borderColor: '#27272a',
       justifyContent: 'center',
       alignItems: 'center',
     },
+    headerTitle: {
+      flex: 1,
+      textAlign: 'center',
+      fontSize: 13,
+      fontWeight: '900',
+      fontFamily: 'SpaceGroteskBold',
+      color: '#fafafa',
+      letterSpacing: 1.5,
+    },
+    headerDelete: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      backgroundColor: 'rgba(220, 38, 38, 0.08)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    headerSpacer: {
+      width: 40,
+    },
+
     scroll: {
       flex: 1,
     },
     scrollContent: {
       padding: 16,
     },
+
+    // --- Empty ---
     emptyState: {
       alignItems: 'center',
-      paddingVertical: 64,
+      paddingVertical: 60,
     },
-    emptyText: {
-      fontSize: 16,
-      fontWeight: '700',
-      color: '#888',
-      marginTop: 16,
+    emptyTitle: {
+      fontSize: 12,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#71717a',
+      letterSpacing: 1.5,
+      marginTop: 12,
     },
-    sessionHeader: {
-      backgroundColor: '#1a1a1a',
-      borderRadius: 16,
-      padding: 16,
-      marginBottom: 16,
+
+    // --- Info Card ---
+    infoCard: {
+      backgroundColor: '#121214',
       borderWidth: 1,
-      borderColor: 'rgba(255,255,255,0.05)',
+      borderColor: '#27272a',
+      borderRadius: 12,
+      overflow: 'hidden',
+      marginBottom: 12,
+    },
+    infoBar: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: 4,
+      height: '100%',
+      backgroundColor: '#DC2626',
+    },
+    infoContent: {
+      padding: 16,
+      paddingLeft: 20,
     },
     sessionName: {
       fontSize: 20,
       fontWeight: '700',
-      color: '#fff',
+      fontFamily: 'SpaceGroteskBold',
+      color: '#fafafa',
       marginBottom: 4,
     },
     sessionDate: {
-      fontSize: 14,
-      color: '#888',
+      fontSize: 12,
+      fontFamily: 'SpaceGrotesk',
+      color: '#71717a',
       marginBottom: 12,
     },
-    sessionMetaRow: {
+    metaRow: {
       flexDirection: 'row',
       gap: 16,
     },
-    sessionMeta: {
+    metaItem: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 4,
     },
-    sessionMetaText: {
-      fontSize: 12,
-      color: '#888',
+    metaText: {
+      fontSize: 11,
+      fontFamily: 'SpaceGrotesk',
+      color: '#a1a1aa',
     },
+
+    // --- Stats Row ---
     statsRow: {
       flexDirection: 'row',
-      gap: 12,
+      gap: 8,
       marginBottom: 16,
     },
     statCard: {
       flex: 1,
-      backgroundColor: '#1a1a1a',
-      borderRadius: 12,
-      padding: 16,
-      alignItems: 'center',
+      backgroundColor: '#121214',
       borderWidth: 1,
-      borderColor: 'rgba(255,255,255,0.05)',
+      borderColor: '#27272a',
+      borderRadius: 12,
+      padding: 14,
+      alignItems: 'center',
     },
     statValue: {
       fontSize: 20,
-      fontWeight: '800',
-      color: theme.primary,
+      fontWeight: '700',
+      fontFamily: 'SpaceGroteskBold',
+      color: '#DC2626',
     },
     statLabel: {
-      fontSize: 11,
-      color: '#888',
+      fontSize: 9,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#71717a',
+      letterSpacing: 1,
       marginTop: 4,
-      textTransform: 'uppercase',
     },
-    notesSection: {
-      backgroundColor: '#1a1a1a',
+
+    // --- Notes ---
+    notesCard: {
+      backgroundColor: '#121214',
+      borderWidth: 1,
+      borderColor: '#27272a',
       borderRadius: 12,
       padding: 16,
       marginBottom: 16,
-      borderWidth: 1,
-      borderColor: 'rgba(255,255,255,0.05)',
     },
-    notesTitle: {
-      fontSize: 12,
-      fontWeight: '600',
-      color: '#888',
+    notesLabel: {
+      fontSize: 9,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#71717a',
+      letterSpacing: 1.5,
       marginBottom: 8,
-      textTransform: 'uppercase',
     },
     notesText: {
-      fontSize: 14,
-      color: '#fff',
+      fontSize: 13,
+      fontFamily: 'SpaceGrotesk',
+      color: '#d4d4d8',
       lineHeight: 20,
     },
+
+    // --- Exercises ---
     exercisesSection: {
       marginBottom: 16,
     },
-    exercisesTitle: {
-      fontSize: 14,
-      fontWeight: '700',
-      color: '#fff',
+    sectionLabel: {
+      fontSize: 10,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#71717a',
+      letterSpacing: 1.5,
       marginBottom: 12,
-      letterSpacing: 1,
     },
     exerciseCard: {
-      backgroundColor: '#1a1a1a',
-      borderRadius: 12,
-      marginBottom: 10,
-      overflow: 'hidden',
+      backgroundColor: '#121214',
       borderWidth: 1,
-      borderColor: 'rgba(255,255,255,0.05)',
+      borderColor: '#27272a',
+      borderRadius: 12,
+      overflow: 'hidden',
+      marginBottom: 8,
     },
     exerciseHeader: {
       flexDirection: 'row',
@@ -397,34 +467,45 @@ function createStyles(theme) {
       flexDirection: 'row',
       alignItems: 'center',
       flex: 1,
+      gap: 12,
     },
-    exerciseNumber: {
+    exerciseNumberBadge: {
       width: 28,
       height: 28,
-      borderRadius: 14,
-      backgroundColor: 'rgba(155, 44, 44, 0.15)',
+      borderRadius: 8,
+      backgroundColor: 'rgba(220, 38, 38, 0.1)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    exerciseNumber: {
       fontSize: 12,
       fontWeight: '700',
-      color: '#9b2c2c',
-      textAlign: 'center',
-      lineHeight: 28,
-      marginRight: 12,
+      fontFamily: 'SpaceGroteskBold',
+      color: '#DC2626',
+    },
+    exerciseNameWrap: {
+      flex: 1,
+      minWidth: 0,
     },
     exerciseName: {
-      fontSize: 15,
+      fontSize: 14,
       fontWeight: '600',
-      color: '#fff',
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#fafafa',
     },
     exerciseMeta: {
-      fontSize: 12,
-      color: '#888',
+      fontSize: 11,
+      fontFamily: 'SpaceGrotesk',
+      color: '#71717a',
       marginTop: 2,
     },
+
+    // --- Sets ---
     setsContainer: {
-      padding: 14,
-      paddingTop: 0,
+      paddingHorizontal: 14,
+      paddingBottom: 14,
       borderTopWidth: 1,
-      borderTopColor: 'rgba(255,255,255,0.05)',
+      borderTopColor: '#27272a',
     },
     setRow: {
       flexDirection: 'row',
@@ -432,34 +513,36 @@ function createStyles(theme) {
       paddingVertical: 8,
     },
     setNumber: {
-      width: 28,
-      fontSize: 12,
-      fontWeight: '600',
-      color: '#888',
+      width: 24,
+      fontSize: 11,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#71717a',
     },
     setValues: {
       flex: 1,
     },
     setDetail: {
-      fontSize: 14,
-      color: '#fff',
+      fontSize: 13,
+      fontFamily: 'SpaceGrotesk',
+      color: '#d4d4d8',
     },
     setDetailEmpty: {
-      fontSize: 14,
-      color: '#666',
+      fontSize: 13,
+      fontFamily: 'SpaceGrotesk',
+      color: '#52525b',
     },
     setStatus: {
-      width: 24,
-      height: 24,
-      borderRadius: 12,
+      width: 22,
+      height: 22,
+      borderRadius: 6,
       justifyContent: 'center',
       alignItems: 'center',
     },
     setStatusDone: {
-      backgroundColor: '#4ade80',
+      backgroundColor: '#22c55e',
     },
     setStatusIncomplete: {
-      backgroundColor: '#666',
+      backgroundColor: '#3f3f46',
     },
   });
 }

@@ -13,17 +13,17 @@ const FONT_MONO = Platform.select({
 });
 
 export const ADMIN_COLORS = {
-  bg: '#0A0B0D',
-  panel: '#111319',
-  card: '#141821',
-  surface: '#171B24',
-  border: '#1E2430',
-  borderSoft: '#232A37',
-  text: '#F5F7FA',
-  textMuted: '#A3ABB8',
-  textSubtle: '#7C8493',
-  accent: '#FF003C',
-  accentSoft: 'rgba(255, 0, 60, 0.12)',
+  bg: '#09090b',
+  panel: '#09090b',
+  card: '#121214',
+  surface: '#121214',
+  border: '#27272a',
+  borderSoft: '#27272a',
+  text: '#fafafa',
+  textMuted: '#a1a1aa',
+  textSubtle: '#a1a1aa',
+  accent: '#DC2626',
+  accentSoft: 'rgba(220, 38, 38, 0.12)',
   success: '#14B87A',
   warning: '#F2A900',
   danger: '#FF3B30',
@@ -42,8 +42,8 @@ export const ADMIN_SPACING = {
 };
 
 export const ADMIN_RADIUS = {
-  xs: 6,
-  sm: 10,
+  xs: 12,
+  sm: 12,
   md: 14,
   lg: 18,
   xl: 22,
@@ -52,14 +52,14 @@ export const ADMIN_RADIUS = {
 
 export const ADMIN_TYPOGRAPHY = {
   title: {
-    fontFamily: FONT_SANS,
+    fontFamily: 'SpaceGroteskBold',
     fontSize: 20,
     fontWeight: '700',
     letterSpacing: 0.4,
     color: ADMIN_COLORS.text,
   },
   subtitle: {
-    fontFamily: FONT_SANS,
+    fontFamily: 'SpaceGroteskSemiBold',
     fontSize: 12,
     fontWeight: '600',
     letterSpacing: 1.2,
@@ -67,26 +67,26 @@ export const ADMIN_TYPOGRAPHY = {
     color: ADMIN_COLORS.textSubtle,
   },
   h2: {
-    fontFamily: FONT_SANS,
+    fontFamily: 'SpaceGroteskBold',
     fontSize: 16,
     fontWeight: '700',
     letterSpacing: 0.3,
     color: ADMIN_COLORS.text,
   },
   body: {
-    fontFamily: FONT_SANS,
+    fontFamily: 'SpaceGrotesk',
     fontSize: 14,
     fontWeight: '500',
     color: ADMIN_COLORS.text,
   },
   bodyMuted: {
-    fontFamily: FONT_SANS,
+    fontFamily: 'SpaceGrotesk',
     fontSize: 13,
     fontWeight: '500',
     color: ADMIN_COLORS.textMuted,
   },
   caption: {
-    fontFamily: FONT_SANS,
+    fontFamily: 'SpaceGroteskSemiBold',
     fontSize: 11,
     fontWeight: '600',
     letterSpacing: 0.8,

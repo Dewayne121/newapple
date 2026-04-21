@@ -395,7 +395,7 @@ export default function VideoModerationScreen({ navigation }) {
     }
   };
 
-  const VideoCard = ({ video, onPress }) => {
+  const VideoCard = ({ video, onOpen }) => {
     const userName = String(video.user?.name || 'Unknown');
     const userHandle = video.user?.username ? String(`@${video.user.username}`) : '';
     const exerciseLabel = String(video.exercise || video.challenge?.title || 'Challenge Submission');
@@ -408,17 +408,17 @@ export default function VideoModerationScreen({ navigation }) {
       : 'Unknown date';
 
     return (
-      <TouchableOpacity
-        style={styles.videoCard}
-        onPress={() => onPress(video)}
-        activeOpacity={0.7}
-      >
+      <View style={styles.videoCard}>
         {/* Left Border Accent */}
         <View style={styles.videoCardAccent} />
 
         <View style={styles.videoCardInner}>
-          {/* Thumbnail Section */}
-          <View style={styles.videoThumbnail}>
+          {/* Thumbnail Section - tappable to open detail */}
+          <TouchableOpacity
+            style={styles.videoThumbnail}
+            onPress={() => onOpen(video)}
+            activeOpacity={0.7}
+          >
             <View style={styles.videoPlayIcon}>
               <Ionicons name="play" size={20} color={C.white} />
             </View>
@@ -436,7 +436,7 @@ export default function VideoModerationScreen({ navigation }) {
                 {video.source === 'challenge' ? 'CHALLENGE' : 'WORKOUT'}
               </Text>
             </View>
-          </View>
+          </TouchableOpacity>
 
           {/* Info Section */}
           <View style={styles.videoInfo}>
@@ -478,6 +478,7 @@ export default function VideoModerationScreen({ navigation }) {
               <TouchableOpacity
                 style={[styles.actionButton, styles.approveButton]}
                 onPress={() => handleApprove(video)}
+                activeOpacity={0.7}
               >
                 <Ionicons name="checkmark" size={16} color={C.white} />
                 <Text style={styles.actionButtonText}>APPROVE</Text>
@@ -485,6 +486,7 @@ export default function VideoModerationScreen({ navigation }) {
               <TouchableOpacity
                 style={[styles.actionButton, styles.rejectButton]}
                 onPress={() => handleReject(video)}
+                activeOpacity={0.7}
               >
                 <Ionicons name="close" size={16} color={C.white} />
                 <Text style={styles.actionButtonText}>REJECT</Text>
@@ -494,7 +496,7 @@ export default function VideoModerationScreen({ navigation }) {
             <Text style={styles.videoDate}>{formattedDate.toUpperCase()}</Text>
           </View>
         </View>
-      </TouchableOpacity>
+      </View>
     );
   };
 
@@ -615,7 +617,7 @@ export default function VideoModerationScreen({ navigation }) {
             <VideoCard
               key={video.id}
               video={video}
-              onPress={(v) => setSelectedVideo(v)}
+              onOpen={(v) => setSelectedVideo(v)}
             />
           ))}
           <View style={styles.bottomSpacer} />

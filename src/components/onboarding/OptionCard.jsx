@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     minHeight: OPTION_CARD_HEIGHT,
     overflow: 'hidden',
-    backgroundColor: '#161616',
+    backgroundColor: '#121214',
   },
   selectionBorder: {
     position: 'absolute',

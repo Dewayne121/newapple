@@ -112,9 +112,9 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 16,
     paddingBottom: 20,
-    backgroundColor: '#0a0a0a',
+    backgroundColor: '#121214',
     borderBottomWidth: 2,
-    borderBottomColor: '#1a1a1a',
+    borderBottomColor: '#1e1e20',
   },
   
   // --- Top Row ---
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#333',
     overflow: 'hidden',
-    backgroundColor: '#121212',
+    backgroundColor: '#121214',
     marginRight: 16,
   },
   profilePic: {
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#121212',
+    backgroundColor: '#121214',
   },
   profilePicInitials: {
     fontSize: 16,
@@ -181,9 +181,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 40,
     height: 40,
-    backgroundColor: '#121212',
+    backgroundColor: '#121214',
     borderWidth: 1,
-    borderColor: '#2A2A2A',
+    borderColor: '#27272a',
     borderRadius: 4,
   },
   tierBadgeImage: {
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
   streakBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#121212',
+    backgroundColor: '#121214',
     paddingHorizontal: 8,
     paddingVertical: 8,
     borderRadius: 4,
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
   
   // --- Progress Section ---
   progressContainer: {
-    backgroundColor: '#121212',
+    backgroundColor: '#121214',
     padding: 16,
     borderRadius: 6,
     borderWidth: 1,
@@ -235,14 +235,14 @@ const styles = StyleSheet.create({
   // Industrial Progress Track
   xpTrackOuter: {
     borderWidth: 1,
-    borderColor: '#2A2A2A',
+    borderColor: '#27272a',
     padding: 3,
     borderRadius: 4,
-    backgroundColor: '#0a0a0a',
+    backgroundColor: '#121214',
   },
   xpTrackInner: {
     height: 6,
-    backgroundColor: '#161616',
+    backgroundColor: '#121214',
     borderRadius: 2,
     overflow: 'hidden',
   },

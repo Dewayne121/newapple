@@ -266,7 +266,7 @@ export default function TemplateBuilderScreen({ navigation, route }) {
                     style={styles.deleteButton}
                     onPress={() => handleRemoveExercise(index)}
                   >
-                    <Ionicons name="trash-outline" size={20} color="#ff003c" />
+                    <Ionicons name="trash-outline" size={20} color="#ff2d55" />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -496,7 +496,7 @@ function createStyles(theme, isDark) {
   return StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: '#0a0a0a',
+      backgroundColor: '#121214',
     },
     headerButton: {
       width: 44,
@@ -527,7 +527,7 @@ function createStyles(theme, isDark) {
       letterSpacing: 1,
     },
     input: {
-      backgroundColor: '#1a1a1a',
+      backgroundColor: '#1e1e20',
       borderRadius: 12,
       padding: 16,
       fontSize: 16,
@@ -569,7 +569,7 @@ function createStyles(theme, isDark) {
       color: '#fff',
     },
     emptyState: {
-      backgroundColor: '#1a1a1a',
+      backgroundColor: '#1e1e20',
       borderRadius: 16,
       padding: 32,
       alignItems: 'center',
@@ -591,7 +591,7 @@ function createStyles(theme, isDark) {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      backgroundColor: '#1a1a1a',
+      backgroundColor: '#1e1e20',
       borderRadius: 12,
       padding: 14,
       marginBottom: 10,
@@ -656,7 +656,7 @@ function createStyles(theme, isDark) {
       backgroundColor: 'rgba(0,0,0,0.5)',
     },
     modalContent: {
-      backgroundColor: '#1a1a1a',
+      backgroundColor: '#1e1e20',
       borderTopLeftRadius: 24,
       borderTopRightRadius: 24,
       maxHeight: '80%',
@@ -686,7 +686,7 @@ function createStyles(theme, isDark) {
       paddingHorizontal: 16,
       paddingVertical: 10,
       borderRadius: 20,
-      backgroundColor: '#0a0a0a',
+      backgroundColor: '#121214',
       borderWidth: 1,
       borderColor: 'rgba(255,255,255,0.1)',
     },
@@ -711,7 +711,7 @@ function createStyles(theme, isDark) {
       alignItems: 'center',
       justifyContent: 'space-between',
       padding: 16,
-      backgroundColor: '#0a0a0a',
+      backgroundColor: '#121214',
       borderRadius: 12,
       marginBottom: 10,
       borderWidth: 1,
@@ -733,7 +733,7 @@ function createConfigStyles(theme) {
       backgroundColor: 'rgba(0,0,0,0.5)',
     },
     modalContent: {
-      backgroundColor: '#1a1a1a',
+      backgroundColor: '#1e1e20',
       borderTopLeftRadius: 24,
       borderTopRightRadius: 24,
       maxHeight: '70%',
@@ -766,7 +766,7 @@ function createConfigStyles(theme) {
       letterSpacing: 1,
     },
     input: {
-      backgroundColor: '#0a0a0a',
+      backgroundColor: '#121214',
       borderRadius: 12,
       padding: 16,
       fontSize: 16,
@@ -783,7 +783,7 @@ function createConfigStyles(theme) {
       paddingHorizontal: 14,
       paddingVertical: 10,
       borderRadius: 20,
-      backgroundColor: '#0a0a0a',
+      backgroundColor: '#121214',
       borderWidth: 1,
       borderColor: 'rgba(255,255,255,0.1)',
     },
@@ -807,7 +807,7 @@ function createConfigStyles(theme) {
     },
     restInput: {
       flex: 1,
-      backgroundColor: '#0a0a0a',
+      backgroundColor: '#121214',
       borderRadius: 12,
       padding: 16,
       fontSize: 16,

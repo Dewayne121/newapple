@@ -480,10 +480,10 @@ function createStyles(theme, isDark) {
   return StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: '#0a0a0a',
+      backgroundColor: '#121214',
     },
     header: {
-      backgroundColor: '#1a1a1a',
+      backgroundColor: '#1e1e20',
       borderBottomWidth: 1,
       borderBottomColor: 'rgba(255,255,255,0.05)',
     },
@@ -565,7 +565,7 @@ function createStyles(theme, isDark) {
       color: '#fff',
     },
     exerciseCard: {
-      backgroundColor: '#1a1a1a',
+      backgroundColor: '#1e1e20',
       borderRadius: 14,
       marginBottom: 12,
       overflow: 'hidden',
@@ -641,7 +641,7 @@ function createStyles(theme, isDark) {
     },
     setInput: {
       flex: 1,
-      backgroundColor: '#0a0a0a',
+      backgroundColor: '#121214',
       borderRadius: 8,
       paddingVertical: 10,
       fontSize: 16,
@@ -694,7 +694,7 @@ function createStyles(theme, isDark) {
       gap: 12,
       paddingHorizontal: 16,
       paddingVertical: 16,
-      backgroundColor: '#1a1a1a',
+      backgroundColor: '#1e1e20',
       borderTopWidth: 1,
       borderTopColor: 'rgba(255,255,255,0.05)',
     },
@@ -702,7 +702,7 @@ function createStyles(theme, isDark) {
       flex: 1,
       backgroundColor: 'transparent',
       borderWidth: 1,
-      borderColor: '#ff003c',
+      borderColor: '#ff2d55',
       paddingVertical: 14,
       borderRadius: 12,
       alignItems: 'center',
@@ -710,7 +710,7 @@ function createStyles(theme, isDark) {
     discardButtonText: {
       fontSize: 14,
       fontWeight: '700',
-      color: '#ff003c',
+      color: '#ff2d55',
     },
     finishButton: {
       flex: 2,
@@ -730,7 +730,7 @@ function createStyles(theme, isDark) {
       backgroundColor: 'rgba(0,0,0,0.5)',
     },
     finishModalContent: {
-      backgroundColor: '#1a1a1a',
+      backgroundColor: '#1e1e20',
       borderTopLeftRadius: 24,
       borderTopRightRadius: 24,
       padding: 20,
@@ -760,7 +760,7 @@ function createStyles(theme, isDark) {
       marginTop: 4,
     },
     notesInput: {
-      backgroundColor: '#0a0a0a',
+      backgroundColor: '#121214',
       borderRadius: 12,
       padding: 16,
       fontSize: 14,
@@ -776,7 +776,7 @@ function createStyles(theme, isDark) {
     },
     finishCancelButton: {
       flex: 1,
-      backgroundColor: '#0a0a0a',
+      backgroundColor: '#121214',
       paddingVertical: 14,
       borderRadius: 12,
       alignItems: 'center',

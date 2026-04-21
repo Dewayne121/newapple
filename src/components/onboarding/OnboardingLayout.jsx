@@ -187,13 +187,13 @@ const OnboardingLayout = ({
                 </View>
               ) : (
                 <>
-                  <Text style={[styles.nextButtonText, { color: disableNext ? theme.textMuted : '#fff' }]}>
+                  <Text style={[styles.nextButtonText, { color: disableNext ? theme.textMuted : '#fafafa' }]}>
                     {nextLabel}
                   </Text>
                   <Ionicons
                     name="chevron-forward"
                     size={20}
-                    color={disableNext ? theme.textMuted : '#fff'}
+                    color={disableNext ? theme.textMuted : '#fafafa'}
                   />
                 </>
               )}
@@ -249,16 +249,16 @@ const styles = StyleSheet.create({
   progressBar: {
     flex: 1,
     height: 4,
-    backgroundColor: '#1a1a1a',
-    borderRadius: 2,
+    backgroundColor: '#27272a',
+    borderRadius: 99,
     overflow: 'hidden',
     marginRight: Spacing.md,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: '#27272a',
   },
   progressFill: {
     height: '100%',
-    borderRadius: 2,
+    borderRadius: 99,
   },
   progressText: {
     ...Typography.caption,
@@ -283,12 +283,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     paddingRight: Spacing.md,
     height: 40,
-    borderRadius: 4,
+    borderRadius: 12,
     borderWidth: 1,
-    borderTopWidth: 2,
-    borderLeftWidth: 3,
-    borderColor: '#333',
-    backgroundColor: '#161616',
+    borderColor: '#27272a',
+    backgroundColor: '#121214',
   },
   backButtonText: {
     ...Typography.body,
@@ -346,9 +344,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: Spacing.md,
-    borderRadius: 4,
-    borderTopWidth: 2,
-    borderLeftWidth: 3,
+    borderRadius: 14,
     gap: Spacing.sm,
   },
   nextButtonText: {

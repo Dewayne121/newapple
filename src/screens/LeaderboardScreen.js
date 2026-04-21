@@ -49,10 +49,10 @@ const LOCATION_TYPES = [
 
 const getRankStyle = (rank) => {
   if (rank === 1) return { color: '#FFD700' };
-  if (rank === 2) return { color: '#C0C0C0' };
+  if (rank === 2) return { color: '#C0C0D0' };
   if (rank === 3) return { color: '#CD7F32' };
-  if (rank <= 10) return { color: '#888888' };
-  return { color: '#555555' };
+  if (rank <= 10) return { color: '#a1a1aa' };
+  return { color: '#a1a1aa' };
 };
 
 const formatLoad = (weightKg, unit) => {
@@ -221,6 +221,9 @@ export default function LeaderboardScreen({ route }) {
         }
         if (selectedLocationType) {
           params.locationType = selectedLocationType;
+        }
+        if (user?.gender) {
+          params.gender = user.gender;
         }
 
         const response = await api.getCoreLiftLeaderboard(params);
@@ -503,7 +506,7 @@ export default function LeaderboardScreen({ route }) {
             value={entryWeight}
             onChangeText={(value) => setEntryWeight(value.replace(/[^0-9.,]/g, ''))}
             placeholder={`e.g. ${weightUnit === 'lbs' ? '225' : '100'}`}
-            placeholderTextColor="#555555"
+            placeholderTextColor="#71717a"
             keyboardType="decimal-pad"
             style={styles.entryInput}
             returnKeyType="done"
@@ -515,7 +518,7 @@ export default function LeaderboardScreen({ route }) {
             value={entryReps}
             onChangeText={(value) => setEntryReps(value.replace(/[^0-9]/g, ''))}
             placeholder="e.g. 5"
-            placeholderTextColor="#555555"
+            placeholderTextColor="#71717a"
             keyboardType="number-pad"
             style={styles.entryInput}
             returnKeyType="done"
@@ -556,7 +559,7 @@ export default function LeaderboardScreen({ route }) {
           disabled={submittingCoreLift}
           activeOpacity={0.85}
         >
-          <Ionicons name="videocam-outline" size={14} color="#ffffff" />
+          <Ionicons name="videocam-outline" size={14} color="#fafafa" />
           <Text style={styles.entryVideoActionButtonText}>RECORD</Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -565,7 +568,7 @@ export default function LeaderboardScreen({ route }) {
           disabled={submittingCoreLift}
           activeOpacity={0.85}
         >
-          <Ionicons name="images-outline" size={14} color="#ffffff" />
+          <Ionicons name="images-outline" size={14} color="#fafafa" />
           <Text style={styles.entryVideoActionButtonText}>UPLOAD</Text>
         </TouchableOpacity>
       </View>
@@ -586,7 +589,7 @@ export default function LeaderboardScreen({ route }) {
             disabled={submittingCoreLift}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons name="close-circle" size={16} color="#999999" />
+            <Ionicons name="close-circle" size={16} color="#a1a1aa" />
           </TouchableOpacity>
         </View>
       ) : (
@@ -598,7 +601,7 @@ export default function LeaderboardScreen({ route }) {
         value={entryNotes}
         onChangeText={setEntryNotes}
         placeholder="Any context for this lift..."
-        placeholderTextColor="#555555"
+        placeholderTextColor="#71717a"
         style={[styles.entryInput, styles.entryNotesInput]}
         multiline
         maxLength={120}
@@ -615,10 +618,10 @@ export default function LeaderboardScreen({ route }) {
         activeOpacity={0.85}
       >
         {submittingCoreLift ? (
-          <ActivityIndicator size="small" color="#ffffff" />
+          <ActivityIndicator size="small" color="#DC2626" />
         ) : (
           <>
-            <Ionicons name="barbell-outline" size={14} color="#ffffff" />
+            <Ionicons name="barbell-outline" size={14} color="#fafafa" />
             <Text style={styles.entrySubmitButtonText}>SUBMIT TO LEADERBOARD</Text>
           </>
         )}
@@ -644,7 +647,7 @@ export default function LeaderboardScreen({ route }) {
     );
   }
 
-  if (!user) return <View style={{ flex: 1, backgroundColor: '#050505' }} />;
+  if (!user) return <View style={{ flex: 1, backgroundColor: '#09090b' }} />;
 
   const topThree = entries.slice(0, 3);
   const restEntries = entries.slice(3);
@@ -653,60 +656,47 @@ export default function LeaderboardScreen({ route }) {
 
   return (
     <View style={styles.page}>
-      {/* Tactical HUD Header */}
+      {/* Header */}
       <View style={[styles.headerContainer, { paddingTop: insets.top + 16 }]}>
-        <View style={styles.headerTopRow}>
-          <View style={[styles.headerIconBox, { borderColor: theme.primary + '60' }]}>
-            <Ionicons name={leaderboardType === 'core' ? 'barbell' : 'trophy'} size={20} color={theme.primary} />
-          </View>
-          <View style={styles.headerInfo}>
-            <Text
-              style={styles.headerTitle}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.92}
-              allowFontScaling={false}
-            >
-              LEADERBOARD
-            </Text>
+        <View style={styles.headerRow}>
+          <View style={styles.headerLeft}>
+            <Text style={styles.headerTitle}>LEADERBOARD</Text>
             <Text style={styles.headerSubtitle}>
               {leaderboardType === 'core'
-                ? `${selectedLiftObj.label.toUpperCase()} | ${selectedRegion.toUpperCase()} | ${(selectedLocationType || 'all').toUpperCase()}`
-                : `${selectedChallengeTitle.toUpperCase()} | ${selectedChallengeMetric}`}
+                ? `${selectedLiftObj.label.toUpperCase()}  /  ${selectedRegion.toUpperCase()}  /  ${(selectedLocationType || 'all').toUpperCase()}`
+                : `${selectedChallengeTitle.toUpperCase()}  /  ${selectedChallengeMetric}`}
             </Text>
           </View>
-          <View style={styles.headerStatsRow}>
-            <View style={styles.headerStatBlock}>
-              <Text style={styles.headerStatLabel}>ACTIVE</Text>
-              <Text style={[styles.headerStatValue, { color: '#10B981' }]}>
-                {leaderboardType === 'core'
-                  ? entries.filter((entry) => entry.bestValue > 0).length
-                  : entries.filter((entry) => entry.progress > 0).length}
-              </Text>
-            </View>
-            <View style={styles.headerStatBlock}>
-              <Text style={styles.headerStatLabel}>ATHLETES</Text>
-              <Text style={[styles.headerStatValue, { color: theme.primary }]}>{entries.length}</Text>
-            </View>
+          <View style={styles.headerStats}>
+            <Text style={styles.headerStatValue}>
+              {entries.length}
+            </Text>
+            <Text style={styles.headerStatLabel}>ATHLETES</Text>
           </View>
         </View>
-        {/* Type Toggle Row */}
-        <View style={styles.typeToggleRow}>
+
+        {/* Type Toggle — Underline Tabs */}
+        <View style={styles.typeTabNav}>
           <TouchableOpacity
-            style={[styles.typeButton, leaderboardType === 'core' && styles.typeButtonActive]}
+            style={styles.typeTabBtn}
             onPress={() => setLeaderboardType('core')}
+            activeOpacity={0.7}
           >
-            <Text style={[styles.typeButtonText, leaderboardType === 'core' && styles.typeButtonTextActive]}>
-              CORE LIFTS
+            <Text style={[styles.typeTabText, leaderboardType === 'core' && styles.typeTabTextActive]}>
+              Core Lifts
             </Text>
+            {leaderboardType === 'core' && <View style={styles.typeTabIndicator} />}
           </TouchableOpacity>
+
           <TouchableOpacity
-            style={[styles.typeButton, leaderboardType === 'challenge' && styles.typeButtonActive]}
+            style={styles.typeTabBtn}
             onPress={() => setLeaderboardType('challenge')}
+            activeOpacity={0.7}
           >
-            <Text style={[styles.typeButtonText, leaderboardType === 'challenge' && styles.typeButtonTextActive]}>
-              CHALLENGES
+            <Text style={[styles.typeTabText, leaderboardType === 'challenge' && styles.typeTabTextActive]}>
+              Challenges
             </Text>
+            {leaderboardType === 'challenge' && <View style={styles.typeTabIndicator} />}
           </TouchableOpacity>
         </View>
       </View>
@@ -720,17 +710,17 @@ export default function LeaderboardScreen({ route }) {
                 onPress={() => setShowCoreFilters((prev) => !prev)}
                 activeOpacity={0.85}
               >
-                <Ionicons name={showCoreFilters ? 'options' : 'options-outline'} size={14} color="#ffffff" />
-                <Text style={styles.coreActionButtonText}>{showCoreFilters ? 'HIDE FILTERS' : 'SHOW FILTERS'}</Text>
+                <Ionicons name={showCoreFilters ? 'options' : 'options-outline'} size={14} color="#a1a1aa" />
+                <Text style={styles.coreActionButtonText}>{showCoreFilters ? 'HIDE FILTERS' : 'FILTERS'}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.coreActionButton, { borderColor: theme.primary, backgroundColor: 'rgba(155, 44, 44, 0.18)' }]}
+                style={[styles.coreActionButton, styles.coreActionButtonAccent]}
                 onPress={() => setShowCoreLiftForm(true)}
                 activeOpacity={0.85}
               >
-                <Ionicons name="add-circle-outline" size={14} color={theme.primary} />
-                <Text style={[styles.coreActionButtonText, { color: theme.primary }]}>ADD LIFT</Text>
+                <Ionicons name="add-circle-outline" size={14} color="#DC2626" />
+                <Text style={styles.coreActionButtonAccentText}>ADD LIFT</Text>
               </TouchableOpacity>
             </View>
 
@@ -748,16 +738,16 @@ export default function LeaderboardScreen({ route }) {
                       <TouchableOpacity
                         key={lift.id}
                         style={[
-                          styles.selectorButton,
-                          selectedLift === lift.id && styles.selectorButtonActive,
-                          selectedLift === lift.id && { borderTopColor: theme.primary, borderColor: theme.primary }
+                          styles.selectorPill,
+                          selectedLift === lift.id && styles.selectorPillActive,
+                          selectedLift === lift.id && { borderColor: '#DC2626' }
                         ]}
                         onPress={() => setSelectedLift(lift.id)}
                         activeOpacity={0.85}
                       >
                         <Text style={[
-                          styles.selectorButtonText,
-                          selectedLift === lift.id && styles.selectorButtonTextActive
+                          styles.selectorPillText,
+                          selectedLift === lift.id && styles.selectorPillTextActive
                         ]}>
                           {lift.label}
                         </Text>
@@ -778,16 +768,16 @@ export default function LeaderboardScreen({ route }) {
                       <TouchableOpacity
                         key={wc.id || 'all'}
                         style={[
-                          styles.selectorButton,
-                          selectedWeightClass === wc.id && styles.selectorButtonActive,
-                          selectedWeightClass === wc.id && { borderTopColor: theme.primary, borderColor: theme.primary }
+                          styles.selectorPill,
+                          selectedWeightClass === wc.id && styles.selectorPillActive,
+                          selectedWeightClass === wc.id && { borderColor: '#DC2626' }
                         ]}
                         onPress={() => setSelectedWeightClass(wc.id)}
                         activeOpacity={0.85}
                       >
                         <Text style={[
-                          styles.selectorButtonText,
-                          selectedWeightClass === wc.id && styles.selectorButtonTextActive
+                          styles.selectorPillText,
+                          selectedWeightClass === wc.id && styles.selectorPillTextActive
                         ]}>
                           {wc.label}
                         </Text>
@@ -808,16 +798,16 @@ export default function LeaderboardScreen({ route }) {
                       <TouchableOpacity
                         key={region.id}
                         style={[
-                          styles.selectorButton,
-                          selectedRegion === region.id && styles.selectorButtonActive,
-                          selectedRegion === region.id && { borderTopColor: theme.primary, borderColor: theme.primary }
+                          styles.selectorPill,
+                          selectedRegion === region.id && styles.selectorPillActive,
+                          selectedRegion === region.id && { borderColor: '#DC2626' }
                         ]}
                         onPress={() => setSelectedRegion(region.id)}
                         activeOpacity={0.85}
                       >
                         <Text style={[
-                          styles.selectorButtonText,
-                          selectedRegion === region.id && styles.selectorButtonTextActive
+                          styles.selectorPillText,
+                          selectedRegion === region.id && styles.selectorPillTextActive
                         ]}>
                           {region.label}
                         </Text>
@@ -838,16 +828,16 @@ export default function LeaderboardScreen({ route }) {
                       <TouchableOpacity
                         key={location.id || 'all'}
                         style={[
-                          styles.selectorButton,
-                          selectedLocationType === location.id && styles.selectorButtonActive,
-                          selectedLocationType === location.id && { borderTopColor: theme.primary, borderColor: theme.primary }
+                          styles.selectorPill,
+                          selectedLocationType === location.id && styles.selectorPillActive,
+                          selectedLocationType === location.id && { borderColor: '#DC2626' }
                         ]}
                         onPress={() => setSelectedLocationType(location.id)}
                         activeOpacity={0.85}
                       >
                         <Text style={[
-                          styles.selectorButtonText,
-                          selectedLocationType === location.id && styles.selectorButtonTextActive
+                          styles.selectorPillText,
+                          selectedLocationType === location.id && styles.selectorPillTextActive
                         ]}>
                           {location.label}
                         </Text>
@@ -871,16 +861,16 @@ export default function LeaderboardScreen({ route }) {
                   <TouchableOpacity
                     key={challenge.id}
                     style={[
-                      styles.selectorButton,
-                      selectedChallengeId === challenge.id && styles.selectorButtonActive,
-                      selectedChallengeId === challenge.id && { borderTopColor: theme.primary, borderColor: theme.primary }
+                      styles.selectorPill,
+                      selectedChallengeId === challenge.id && styles.selectorPillActive,
+                      selectedChallengeId === challenge.id && { borderColor: '#DC2626' }
                     ]}
                     onPress={() => setSelectedChallengeId(challenge.id)}
                     activeOpacity={0.85}
                   >
                     <Text style={[
-                      styles.selectorButtonText,
-                      selectedChallengeId === challenge.id && styles.selectorButtonTextActive
+                      styles.selectorPillText,
+                      selectedChallengeId === challenge.id && styles.selectorPillTextActive
                     ]}>
                       {String(challenge.title || 'Challenge').toUpperCase()}
                     </Text>
@@ -899,20 +889,6 @@ export default function LeaderboardScreen({ route }) {
             </View>
           </>
         )}
-
-        <View style={styles.columnHeaderRow}>
-          <Text style={[styles.columnHeaderText, { width: 36 }]}>#</Text>
-          <Text style={[styles.columnHeaderText, { flex: 1.2 }]}>ATHLETE</Text>
-          <Text style={[styles.columnHeaderText, { flex: 0.8, textAlign: 'center' }]}>
-            {leaderboardType === 'core' ? 'CLASS' : 'STATUS'}
-          </Text>
-          <Text style={[styles.columnHeaderText, { flex: 0.8, textAlign: 'center' }]}>
-            {leaderboardType === 'core' ? 'BW' : 'DONE'}
-          </Text>
-          <Text style={[styles.columnHeaderText, { flex: 1, textAlign: 'right' }]}>
-            {leaderboardType === 'core' ? 'BEST' : 'PROGRESS'}
-          </Text>
-        </View>
       </View>
 
       <ScrollView
@@ -926,121 +902,96 @@ export default function LeaderboardScreen({ route }) {
         <View style={styles.listContainer}>
           {entries.length === 0 && (
             <View style={styles.emptyState}>
-              <View style={styles.emptyIconBox}>
-                <Ionicons name="barbell-outline" size={40} color="#555" />
-              </View>
               <Text style={styles.emptyStateText}>NO ENTRIES YET</Text>
               <Text style={styles.emptyStateSubtext}>
                 {leaderboardType === 'core'
-                  ? 'LOG AND SUBMIT A VERIFIED LIFT TO RANK.'
-                  : 'JOIN A CHALLENGE AND SUBMIT AN APPROVED ENTRY TO RANK.'}
+                  ? 'Log and submit a verified lift to rank.'
+                  : 'Join a challenge and submit an approved entry to rank.'}
               </Text>
             </View>
           )}
 
-          {/* Podium Section - Top 3 */}
-          {topThree.length === 3 && (
+          {/* Podium Section — Stacked Cards */}
+          {topThree.length > 0 && (
             <View style={styles.podiumSection}>
               <Text style={styles.podiumLabel}>TOP CONTENDERS</Text>
-              <View style={styles.podiumRow}>
-                {[topThree[1], topThree[0], topThree[2]].map((item) => {
-                  const isFirst = item.rank === 1;
-                  const badgeColor = item.rank === 1 ? '#FFD700' : item.rank === 2 ? '#C0C0C0' : '#CD7F32';
-                  return (
-                    <View
-                      key={item.id}
-                      style={[
-                        styles.podiumCard,
-                        isFirst && styles.podiumCardFirst,
-                        { borderTopColor: badgeColor },
-                      ]}
-                    >
-                      {item.profileImage ? (
-                        <Image source={{ uri: item.profileImage }} style={isFirst ? styles.podiumAvatarLarge : styles.podiumAvatar} />
-                      ) : (
-                        <View style={[isFirst ? styles.podiumAvatarLarge : styles.podiumAvatar, styles.podiumAvatarFallback]}>
-                          <Text style={styles.podiumAvatarText}>{getInitials(item.name)}</Text>
+              {topThree.map((item) => {
+                const medalColor = item.rank === 1 ? '#FFD700' : item.rank === 2 ? '#C0C0D0' : '#CD7F32';
+                return (
+                  <View key={item.id} style={styles.podiumCard}>
+                    <View style={[styles.podiumColorBar, { backgroundColor: medalColor }]} />
+                    <View style={styles.podiumCardContent}>
+                      <Text style={[styles.podiumRankNumber, { color: medalColor }]}>
+                        {item.rank}
+                      </Text>
+                      <View style={styles.podiumInfo}>
+                        <View style={styles.podiumProfileRow}>
+                          {item.profileImage ? (
+                            <Image source={{ uri: item.profileImage }} style={styles.podiumAvatar} />
+                          ) : (
+                            <View style={styles.podiumAvatarFallback}>
+                              <Text style={styles.podiumAvatarText}>{getInitials(item.name)}</Text>
+                            </View>
+                          )}
+                          <Text style={styles.podiumName} numberOfLines={1}>{item.name}</Text>
                         </View>
-                      )}
-                      <View style={[styles.podiumRankBadge, { backgroundColor: badgeColor }]}>
-                        <Text style={styles.podiumRankText}>{item.rank}</Text>
                       </View>
-                      <Text style={styles.podiumName} numberOfLines={1}>{item.name}</Text>
                       <Text style={styles.podiumLiftValue}>
                         {leaderboardType === 'core'
                           ? formatLoad(item.bestValue, weightUnit)
                           : formatChallengeProgress(item.progress, item.target)}
                       </Text>
                     </View>
-                  );
-                })}
-              </View>
+                  </View>
+                );
+              })}
             </View>
           )}
 
           {/* Rank List */}
-          {(topThree.length === 3 ? restEntries : entries).map((item) => {
-            const rankStyle = getRankStyle(item.rank);
+          {(topThree.length >= 3 ? restEntries : entries).map((item) => {
+            const rankColor = getRankStyle(item.rank);
             return (
               <TouchableOpacity
                 key={item.id}
                 onPress={() => handleViewProfile(item.id)}
-                activeOpacity={0.85}
+                activeOpacity={0.7}
                 style={[
-                  styles.rankRow,
-                  item.rank <= 10 && styles.rankRowTopTen,
-                  item.isCurrentUser && styles.rankRowActive,
-                  item.isCurrentUser && { borderLeftColor: theme.primary, backgroundColor: 'rgba(155, 44, 44, 0.1)' }
+                  styles.rankCard,
+                  item.isCurrentUser && styles.rankCardCurrentUser,
                 ]}
               >
-                <View style={styles.rankNumCol}>
-                  <Text style={[styles.rankNumText, { color: rankStyle.color }]}>
-                    {item.rank}
-                  </Text>
-                </View>
+                {/* Subtle left color bar inside card */}
+                <View style={[styles.rankCardBar, { backgroundColor: item.isCurrentUser ? '#DC2626' : '#27272a' }]} />
 
-                <View style={[styles.athleteCol, { flex: 1.2 }]}>
+                <Text style={[styles.rankNumber, { color: rankColor.color }]}>
+                  {item.rank}
+                </Text>
+
+                <View style={styles.rankProfileSection}>
                   {item.profileImage ? (
-                    <Image source={{ uri: item.profileImage }} style={styles.listAvatar} />
+                    <Image source={{ uri: item.profileImage }} style={styles.rankAvatar} />
                   ) : (
-                    <View style={styles.listAvatarFallback}>
-                      <Text style={styles.listAvatarText}>{getInitials(item.name)}</Text>
+                    <View style={styles.rankAvatarFallback}>
+                      <Text style={styles.rankAvatarText}>{getInitials(item.name)}</Text>
                     </View>
                   )}
-                  <View style={styles.nameWrap}>
-                    <Text style={styles.listName} numberOfLines={1}>{item.name}</Text>
+                  <View style={styles.rankNameWrap}>
+                    <Text style={styles.rankName} numberOfLines={1}>{item.name}</Text>
                     {item.isCurrentUser && (
-                      <View style={[styles.youBadge, { backgroundColor: theme.primary }]}>
-                        <Text style={styles.youBadgeText}>YOU</Text>
+                      <View style={styles.youPill}>
+                        <Text style={styles.youPillText}>YOU</Text>
                       </View>
                     )}
                   </View>
                 </View>
 
-                <View style={[styles.classCol, { flex: 0.8 }]}>
-                  <Text style={styles.columnValueText}>
+                <View style={styles.rankValuePill}>
+                  <Text style={[styles.rankValueText, item.isCurrentUser && { color: '#DC2626' }]}>
                     {leaderboardType === 'core'
-                      ? (item.weightClassLabel?.split(' ')[0] || '--')
-                      : (item.completed ? 'DONE' : 'ACTIVE')}
+                      ? formatLoad(item.bestValue, weightUnit)
+                      : formatChallengeProgress(item.progress, item.target)}
                   </Text>
-                </View>
-
-                <View style={[styles.weightCol, { flex: 0.8 }]}>
-                  <Text style={styles.columnValueText}>
-                    {leaderboardType === 'core'
-                      ? formatBodyweight(item.weight, weightUnit)
-                      : (item.completed ? 'YES' : 'NO')}
-                  </Text>
-                </View>
-
-                <View style={[styles.bestCol, { flex: 1 }]}>
-                  <View style={[styles.bestPill, item.isCurrentUser && { borderColor: theme.primary }]}>
-                    <Text style={[styles.bestPillText, item.isCurrentUser && { color: theme.primary }]}>
-                      {leaderboardType === 'core'
-                        ? formatLoad(item.bestValue, weightUnit)
-                        : formatChallengeProgress(item.progress, item.target)}
-                    </Text>
-                  </View>
                 </View>
               </TouchableOpacity>
             );
@@ -1052,49 +1003,34 @@ export default function LeaderboardScreen({ route }) {
       {/* Sticky Current User Rank */}
       {showStickyCurrentUser && (
         <View style={[styles.stickyRankContainer, { paddingBottom: insets.bottom + 10 }]}>
-          <View style={styles.stickyDivider}>
-            <View style={styles.dividerLine} />
-            <Text style={[styles.dividerText, { color: theme.primary }]}>YOUR RANK</Text>
-            <View style={styles.dividerLine} />
+          <View style={styles.stickyDividerRow}>
+            <View style={styles.stickyDividerLine} />
+            <Text style={styles.stickyDividerText}>YOUR RANK</Text>
+            <View style={styles.stickyDividerLine} />
           </View>
           <TouchableOpacity
             onPress={() => handleViewProfile(user.id)}
-            activeOpacity={0.85}
-            style={[styles.rankRow, styles.rankRowActive, { marginHorizontal: 12, borderLeftColor: theme.primary }]}
+            activeOpacity={0.7}
+            style={styles.stickyRankCard}
           >
-            <View style={styles.rankNumCol}>
-              <Text style={[styles.rankNumText, { color: theme.primary }]}>
-                {currentUserRank.rank || '--'}
-              </Text>
-            </View>
-            <View style={[styles.athleteCol, { flex: 1.2 }]}>
-              <View style={[styles.listAvatarFallback, { backgroundColor: theme.primary }]}>
-                <Text style={[styles.listAvatarText, { color: '#fff' }]}>{user.name?.substring(0, 2).toUpperCase()}</Text>
+            <View style={[styles.rankCardBar, { backgroundColor: '#DC2626' }]} />
+            <Text style={[styles.rankNumber, { color: '#DC2626' }]}>
+              {currentUserRank.rank || '--'}
+            </Text>
+            <View style={styles.rankProfileSection}>
+              <View style={[styles.rankAvatarFallback, { backgroundColor: '#DC2626', borderColor: '#DC2626' }]}>
+                <Text style={[styles.rankAvatarText, { color: '#fafafa' }]}>{user.name?.substring(0, 2).toUpperCase()}</Text>
               </View>
-              <View style={styles.nameWrap}>
-                <Text style={styles.listName}>You</Text>
+              <View style={styles.rankNameWrap}>
+                <Text style={styles.rankName}>You</Text>
               </View>
             </View>
-            <View style={[styles.classCol, { flex: 0.8 }]}>
-              <Text style={styles.columnValueText}>
+            <View style={styles.rankValuePill}>
+              <Text style={[styles.rankValueText, { color: '#DC2626' }]}>
                 {leaderboardType === 'core'
-                  ? (getWeightClassLabel(currentUserRank.weightClass)?.split(' ')[0] || '--')
-                  : 'ACTIVE'}
+                  ? (currentUserRank.hasEntry ? formatLoad(currentUserRank.bestValue, weightUnit) : '--')
+                  : formatChallengeProgress(currentUserRank.progress, selectedChallengeTarget)}
               </Text>
-            </View>
-            <View style={[styles.weightCol, { flex: 0.8 }]}>
-              <Text style={styles.columnValueText}>
-                {leaderboardType === 'core' ? formatBodyweight(user.weight, weightUnit) : 'YES'}
-              </Text>
-            </View>
-            <View style={[styles.bestCol, { flex: 1 }]}>
-              <View style={[styles.bestPill, { borderColor: theme.primary }]}>
-                <Text style={[styles.bestPillText, { color: theme.primary }]}>
-                  {leaderboardType === 'core'
-                    ? (currentUserRank.hasEntry ? formatLoad(currentUserRank.bestValue, weightUnit) : '--')
-                    : formatChallengeProgress(currentUserRank.progress, selectedChallengeTarget)}
-                </Text>
-              </View>
             </View>
           </TouchableOpacity>
         </View>
@@ -1106,32 +1042,24 @@ export default function LeaderboardScreen({ route }) {
         animationType="fade"
         onRequestClose={() => setShowCoreLiftForm(false)}
       >
-        <View style={styles.coreLiftModalOverlay}>
-          <View style={styles.coreLiftModalCard}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
             {/* Handle bar */}
-            <View style={styles.coreLiftModalHandle} />
+            <View style={styles.modalHandle} />
 
-            {/* Header with accent */}
-            <View style={styles.coreLiftModalHeader}>
-              <View style={styles.coreLiftModalHeaderLeft}>
-                <View style={[styles.coreLiftModalIconBox, { borderColor: theme.primary + '60' }]}>
-                  <Ionicons name="barbell" size={16} color={theme.primary} />
-                </View>
-                <Text style={styles.coreLiftModalTitle}>SUBMIT LIFT</Text>
-              </View>
+            {/* Header */}
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>SUBMIT LIFT</Text>
               <TouchableOpacity
                 onPress={() => setShowCoreLiftForm(false)}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                style={styles.coreLiftModalCloseBtn}
+                style={styles.modalCloseBtn}
               >
-                <Ionicons name="close" size={18} color="#666666" />
+                <Ionicons name="close" size={20} color="#a1a1aa" />
               </TouchableOpacity>
             </View>
 
-            {/* Accent line */}
-            <View style={[styles.coreLiftModalAccentLine, { backgroundColor: theme.primary }]} />
-
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.coreLiftModalContent}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.modalContent}>
               {renderCoreLiftEntryForm()}
             </ScrollView>
           </View>
@@ -1144,160 +1072,122 @@ export default function LeaderboardScreen({ route }) {
 }
 
 // -------------------------------------------------------------
-// STYLESHEET: Gritty Gym Industrial HUD - Leaderboard
+// STYLESHEET: Zinc Minimal — Leaderboard
 // -------------------------------------------------------------
 function createStyles(theme, insets) {
   return StyleSheet.create({
     page: {
       flex: 1,
-      backgroundColor: '#050505', // Abyss black
+      backgroundColor: '#09090b',
     },
     centered: {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: '#050505',
+      backgroundColor: '#09090b',
     },
     content: {
       flex: 1,
     },
     contentContainer: {
       paddingBottom: 20,
-      },
+    },
 
-    // --- Tactical HUD Header ---
+    // --- Header ---
     headerContainer: {
       paddingHorizontal: 16,
-      paddingBottom: 20,
+      paddingBottom: 0,
       borderBottomWidth: 1,
-      borderBottomColor: '#121212',
-      backgroundColor: '#0a0a0a',
+      borderBottomColor: '#27272a',
+      backgroundColor: '#09090b',
     },
-    headerTopRow: {
+    headerRow: {
       flexDirection: 'row',
-      alignItems: 'center',
-      gap: 14,
+      justifyContent: 'space-between',
+      alignItems: 'flex-end',
+      marginBottom: 20,
     },
-    headerIconBox: {
-      width: 48,
-      height: 48,
-      borderRadius: 14,
-      backgroundColor: '#1a0e0e',
-      borderWidth: 2,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    headerInfo: {
+    headerLeft: {
       flex: 1,
-      minWidth: 0,
-      flexShrink: 1,
     },
     headerTitle: {
-      fontSize: 20,
+      fontSize: 28,
       fontWeight: '900',
-      color: '#ffffff',
-      letterSpacing: 1,
-      paddingRight: 2,
-      flexShrink: 1,
+      fontFamily: 'SpaceGroteskBold',
+      color: '#fafafa',
+      textTransform: 'uppercase',
+      letterSpacing: -0.5,
     },
     headerSubtitle: {
-      fontSize: 10,
-      fontWeight: '800',
-      color: '#666666',
-      letterSpacing: 1.5,
-      marginTop: 2,
+      fontSize: 11,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#71717a',
+      letterSpacing: 1,
+      marginTop: 4,
+      textTransform: 'uppercase',
     },
-    headerStatsRow: {
-      flexDirection: 'row',
-      gap: 16,
+    headerStats: {
+      alignItems: 'flex-end',
     },
-    headerStatBlock: {
-      alignItems: 'center',
-      gap: 2,
+    headerStatValue: {
+      fontSize: 20,
+      fontWeight: '700',
+      fontFamily: 'SpaceGroteskBold',
+      color: '#fafafa',
+      letterSpacing: -0.5,
     },
     headerStatLabel: {
       fontSize: 9,
-      fontWeight: '800',
-      color: '#666666',
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#71717a',
       letterSpacing: 1.5,
-    },
-    headerStatValue: {
-      fontSize: 18,
-      fontWeight: '900',
-      letterSpacing: -0.5,
-    },
-    typeToggleRow: {
-      flexDirection: 'row',
-      marginTop: 16,
-      gap: 8,
-    },
-    typeButton: {
-      flex: 1,
-      paddingVertical: 10,
-      borderRadius: 12,
-      backgroundColor: '#161616',
-      borderWidth: 2,
-      borderColor: '#1a1a1a',
-      alignItems: 'center',
-    },
-    typeButtonActive: {
-      backgroundColor: 'rgba(155, 44, 44, 0.2)',
-      borderColor: '#9b2c2c',
-    },
-    typeButtonText: {
-      fontSize: 11,
-      fontWeight: '800',
-      color: '#666666',
-      letterSpacing: 1,
-    },
-    typeButtonTextActive: {
-      color: '#ffffff',
+      textTransform: 'uppercase',
+      marginTop: 2,
     },
 
-    // --- Selector Sections ---
-    selectorSection: {
+    // --- Type Tab Navigation (underline style) ---
+    typeTabNav: {
+      flexDirection: 'row',
+      marginTop: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: '#27272a',
+    },
+    typeTabBtn: {
+      paddingBottom: 12,
       paddingHorizontal: 16,
-      marginBottom: 12,
-      marginTop: 10,
+      position: 'relative',
+      marginRight: 4,
     },
-    selectorLabel: {
-      fontSize: 10,
-      fontWeight: '900',
-      color: '#555555',
-      letterSpacing: 2,
-      marginBottom: 8,
+    typeTabText: {
+      fontSize: 12,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#71717a',
+      letterSpacing: 0.5,
+      textTransform: 'uppercase',
     },
-    selectorScrollContent: {
-      paddingRight: 20,
-      gap: 8,
+    typeTabTextActive: {
+      color: '#fafafa',
     },
-    selectorButton: {
-      paddingHorizontal: 14,
-      paddingVertical: 10,
-      borderRadius: 12, // Smooth armor curve
-      backgroundColor: '#161616',
-      borderTopWidth: 2,
-      borderTopColor: '#333333',
-      borderWidth: 1,
-      borderColor: '#1a1a1a',
+    typeTabIndicator: {
+      position: 'absolute',
+      bottom: -1,
+      left: 0,
+      right: 0,
+      height: 2,
+      backgroundColor: '#DC2626',
     },
-    selectorButtonActive: {
-      backgroundColor: 'rgba(155, 44, 44, 0.15)',
+
+    // --- Fixed Header / Filter Area ---
+    fixedHeader: {
+      backgroundColor: '#09090b',
     },
-    selectorButtonText: {
-      fontSize: 11,
-      fontWeight: '800',
-      color: '#666666',
-      letterSpacing: 1,
-    },
-    selectorButtonTextActive: {
-      color: '#ffffff',
-    },
+
+    // --- Core Actions Row ---
     coreActionsRow: {
       flexDirection: 'row',
       gap: 8,
       paddingHorizontal: 16,
-      marginTop: 10,
+      marginTop: 12,
       marginBottom: 8,
     },
     coreActionButton: {
@@ -1306,105 +1196,415 @@ function createStyles(theme, insets) {
       alignItems: 'center',
       justifyContent: 'center',
       gap: 6,
-      backgroundColor: '#161616',
+      backgroundColor: '#121214',
       borderWidth: 1,
-      borderColor: '#2a2a2a',
-      borderRadius: 10,
+      borderColor: '#27272a',
+      borderRadius: 12,
       paddingVertical: 10,
     },
     coreActionButtonText: {
       fontSize: 10,
-      fontWeight: '900',
-      color: '#ffffff',
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#a1a1aa',
       letterSpacing: 1,
+      textTransform: 'uppercase',
     },
-    coreLiftModalOverlay: {
+    coreActionButtonAccent: {
+      borderColor: 'rgba(220, 38, 38, 0.3)',
+      backgroundColor: 'rgba(220, 38, 38, 0.08)',
+    },
+    coreActionButtonAccentText: {
+      fontSize: 10,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#DC2626',
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+    },
+
+    // --- Selector Sections (Pills) ---
+    selectorSection: {
+      paddingHorizontal: 16,
+      marginBottom: 10,
+      marginTop: 8,
+    },
+    selectorLabel: {
+      fontSize: 10,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#71717a',
+      letterSpacing: 1.5,
+      textTransform: 'uppercase',
+      marginBottom: 8,
+    },
+    selectorScrollContent: {
+      paddingRight: 20,
+      gap: 8,
+    },
+    selectorPill: {
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: 20,
+      backgroundColor: '#121214',
+      borderWidth: 1,
+      borderColor: '#27272a',
+    },
+    selectorPillActive: {
+      backgroundColor: 'rgba(220, 38, 38, 0.08)',
+    },
+    selectorPillText: {
+      fontSize: 11,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#71717a',
+      letterSpacing: 0.5,
+      textTransform: 'uppercase',
+    },
+    selectorPillTextActive: {
+      color: '#fafafa',
+    },
+    challengeMetaText: {
+      fontSize: 12,
+      fontFamily: 'SpaceGroteskBold',
+      color: '#fafafa',
+      letterSpacing: 0.5,
+      backgroundColor: '#121214',
+      borderWidth: 1,
+      borderColor: '#27272a',
+      borderRadius: 12,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      alignSelf: 'flex-start',
+    },
+
+    // --- List Container ---
+    listContainer: {
+      paddingHorizontal: 16,
+      marginTop: 12,
+      gap: 8,
       flex: 1,
-      backgroundColor: 'rgba(5, 5, 5, 0.92)',
+    },
+
+    // --- Empty State ---
+    emptyState: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 60,
+      paddingHorizontal: 20,
+    },
+    emptyStateText: {
+      fontSize: 12,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#71717a',
+      letterSpacing: 1.5,
+      textTransform: 'uppercase',
+      marginBottom: 8,
+    },
+    emptyStateSubtext: {
+      fontSize: 11,
+      fontFamily: 'SpaceGrotesk',
+      color: '#52525b',
+      letterSpacing: 0.5,
+      textAlign: 'center',
+    },
+
+    // --- Podium Section (Stacked Cards) ---
+    podiumSection: {
+      marginBottom: 8,
+    },
+    podiumLabel: {
+      fontSize: 10,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#71717a',
+      letterSpacing: 1.5,
+      textTransform: 'uppercase',
+      marginBottom: 10,
+    },
+    podiumCard: {
+      backgroundColor: '#121214',
+      borderWidth: 1,
+      borderColor: '#27272a',
+      borderRadius: 12,
+      overflow: 'hidden',
+      marginBottom: 8,
+    },
+    podiumColorBar: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: 4,
+      height: '100%',
+    },
+    podiumCardContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 14,
+      paddingLeft: 18,
+      gap: 12,
+    },
+    podiumRankNumber: {
+      fontSize: 28,
+      fontWeight: '700',
+      fontFamily: 'SpaceGroteskBold',
+      letterSpacing: -1,
+      width: 44,
+    },
+    podiumInfo: {
+      flex: 1,
+      minWidth: 0,
+    },
+    podiumProfileRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    podiumAvatar: {
+      width: 36,
+      height: 36,
+      borderRadius: 10,
+    },
+    podiumAvatarFallback: {
+      width: 36,
+      height: 36,
+      borderRadius: 10,
+      backgroundColor: '#18181b',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: '#27272a',
+    },
+    podiumAvatarText: {
+      fontSize: 12,
+      fontFamily: 'SpaceGroteskBold',
+      color: '#a1a1aa',
+    },
+    podiumName: {
+      fontSize: 14,
+      fontFamily: 'SpaceGroteskBold',
+      color: '#fafafa',
+      flex: 1,
+      minWidth: 0,
+    },
+    podiumLiftValue: {
+      fontSize: 14,
+      fontFamily: 'SpaceGroteskBold',
+      color: '#fafafa',
+      letterSpacing: -0.3,
+    },
+
+    // --- Rank Cards ---
+    rankCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#121214',
+      borderWidth: 1,
+      borderColor: '#27272a',
+      borderRadius: 12,
+      overflow: 'hidden',
+      paddingVertical: 12,
+      paddingRight: 12,
+      gap: 10,
+      position: 'relative',
+    },
+    rankCardCurrentUser: {
+      borderColor: 'rgba(220, 38, 38, 0.2)',
+      backgroundColor: 'rgba(220, 38, 38, 0.04)',
+    },
+    rankCardBar: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: 3,
+      height: '100%',
+      backgroundColor: '#27272a',
+    },
+    rankNumber: {
+      fontSize: 14,
+      fontFamily: 'SpaceGroteskBold',
+      fontWeight: '700',
+      width: 28,
+      textAlign: 'center',
+      marginLeft: 12,
+    },
+    rankProfileSection: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      minWidth: 0,
+    },
+    rankAvatar: {
+      width: 34,
+      height: 34,
+      borderRadius: 10,
+    },
+    rankAvatarFallback: {
+      width: 34,
+      height: 34,
+      borderRadius: 10,
+      backgroundColor: '#18181b',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: '#27272a',
+    },
+    rankAvatarText: {
+      fontSize: 11,
+      fontFamily: 'SpaceGroteskBold',
+      color: '#a1a1aa',
+    },
+    rankNameWrap: {
+      flex: 1,
+      minWidth: 0,
+    },
+    rankName: {
+      fontSize: 13,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#fafafa',
+    },
+    youPill: {
+      backgroundColor: '#DC2626',
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 4,
+      marginTop: 2,
+      alignSelf: 'flex-start',
+    },
+    youPillText: {
+      fontSize: 8,
+      fontFamily: 'SpaceGroteskBold',
+      color: '#fafafa',
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+    },
+    rankValuePill: {
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 8,
+      backgroundColor: 'rgba(255, 255, 255, 0.04)',
+      borderWidth: 1,
+      borderColor: '#27272a',
+    },
+    rankValueText: {
+      fontSize: 12,
+      fontFamily: 'SpaceGroteskBold',
+      color: '#fafafa',
+      letterSpacing: -0.2,
+    },
+
+    // --- Sticky Current User Rank ---
+    stickyRankContainer: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: '#09090b',
+      paddingTop: 10,
+      borderTopWidth: 1,
+      borderTopColor: '#27272a',
+      zIndex: 20,
+    },
+    stickyDividerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 8,
+      paddingHorizontal: 16,
+    },
+    stickyDividerLine: {
+      flex: 1,
+      height: 1,
+      backgroundColor: '#27272a',
+    },
+    stickyDividerText: {
+      fontSize: 9,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#DC2626',
+      marginHorizontal: 10,
+      letterSpacing: 1.5,
+      textTransform: 'uppercase',
+    },
+    stickyRankCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#121214',
+      borderWidth: 1,
+      borderColor: 'rgba(220, 38, 38, 0.2)',
+      borderRadius: 12,
+      overflow: 'hidden',
+      marginHorizontal: 16,
+      paddingVertical: 12,
+      paddingRight: 12,
+      gap: 10,
+      position: 'relative',
+    },
+
+    // --- Core Lift Modal ---
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(9, 9, 11, 0.92)',
       justifyContent: 'center',
       paddingHorizontal: 16,
     },
-    coreLiftModalCard: {
-      backgroundColor: '#0a0a0a',
-      borderRadius: 20,
+    modalCard: {
+      backgroundColor: '#121214',
+      borderRadius: 16,
       borderWidth: 1,
-      borderColor: '#1a1a1a',
+      borderColor: '#27272a',
       maxHeight: '85%',
       overflow: 'hidden',
     },
-    coreLiftModalHandle: {
+    modalHandle: {
       width: 40,
       height: 4,
-      backgroundColor: '#333333',
+      backgroundColor: '#27272a',
       borderRadius: 2,
       alignSelf: 'center',
       marginTop: 12,
       marginBottom: 16,
     },
-    coreLiftModalHeader: {
+    modalHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       paddingHorizontal: 16,
-      paddingBottom: 12,
+      paddingBottom: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: '#27272a',
     },
-    coreLiftModalHeaderLeft: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 12,
+    modalTitle: {
+      fontSize: 13,
+      fontFamily: 'SpaceGroteskBold',
+      color: '#fafafa',
+      letterSpacing: 1.5,
+      textTransform: 'uppercase',
     },
-    coreLiftModalIconBox: {
-      width: 36,
-      height: 36,
-      borderRadius: 10,
-      backgroundColor: 'rgba(155, 44, 44, 0.15)',
-      borderWidth: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    coreLiftModalTitle: {
-      fontSize: 14,
-      fontWeight: '900',
-      color: '#ffffff',
-      letterSpacing: 2,
-    },
-    coreLiftModalCloseBtn: {
+    modalCloseBtn: {
       width: 32,
       height: 32,
       borderRadius: 8,
-      backgroundColor: '#161616',
+      backgroundColor: '#18181b',
       alignItems: 'center',
       justifyContent: 'center',
     },
-    coreLiftModalAccentLine: {
-      height: 2,
-      marginHorizontal: 16,
-      marginBottom: 12,
-      borderRadius: 1,
-    },
-    coreLiftModalContent: {
+    modalContent: {
       paddingHorizontal: 16,
       paddingBottom: 20,
     },
+
+    // --- Entry Form ---
     entryCard: {
-      backgroundColor: '#0f0f0f',
-      borderWidth: 1,
-      borderColor: '#1a1a1a',
-      borderRadius: 14,
-      padding: 16,
+      gap: 0,
     },
     entryCardTitle: {
       fontSize: 13,
-      fontWeight: '900',
-      color: '#ffffff',
-      letterSpacing: 1.5,
-      marginBottom: 6,
+      fontFamily: 'SpaceGroteskBold',
+      color: '#fafafa',
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+      marginBottom: 4,
     },
     entryCardHint: {
-      fontSize: 10,
-      fontWeight: '600',
-      color: '#555555',
-      letterSpacing: 0.5,
+      fontSize: 11,
+      fontFamily: 'SpaceGrotesk',
+      color: '#71717a',
+      letterSpacing: 0.3,
       marginBottom: 16,
     },
     entryInputRow: {
@@ -1416,20 +1616,21 @@ function createStyles(theme, insets) {
       flex: 1,
     },
     entryFieldLabel: {
-      fontSize: 9,
-      fontWeight: '900',
-      color: '#555555',
+      fontSize: 10,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#71717a',
       letterSpacing: 1.5,
+      textTransform: 'uppercase',
       marginBottom: 8,
     },
     entryInput: {
-      backgroundColor: '#050505',
+      backgroundColor: '#18181b',
       borderWidth: 1,
-      borderColor: '#1a1a1a',
+      borderColor: '#27272a',
       borderRadius: 12,
-      color: '#ffffff',
+      color: '#fafafa',
       fontSize: 14,
-      fontWeight: '800',
+      fontFamily: 'SpaceGroteskSemiBold',
       paddingHorizontal: 14,
       paddingVertical: 12,
     },
@@ -1441,24 +1642,25 @@ function createStyles(theme, insets) {
     entryLocationButton: {
       flex: 1,
       borderWidth: 1,
-      borderColor: '#1a1a1a',
+      borderColor: '#27272a',
       borderRadius: 12,
       paddingVertical: 12,
       alignItems: 'center',
-      backgroundColor: '#050505',
+      backgroundColor: '#18181b',
     },
     entryLocationButtonActive: {
-      backgroundColor: 'rgba(155, 44, 44, 0.2)',
-      borderColor: '#9b2c2c',
+      backgroundColor: 'rgba(220, 38, 38, 0.1)',
+      borderColor: '#DC2626',
     },
     entryLocationButtonText: {
       fontSize: 10,
-      fontWeight: '900',
-      color: '#666666',
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#71717a',
       letterSpacing: 1.5,
+      textTransform: 'uppercase',
     },
     entryLocationButtonTextActive: {
-      color: '#ffffff',
+      color: '#fafafa',
     },
     entryVideoActionsRow: {
       flexDirection: 'row',
@@ -1471,17 +1673,18 @@ function createStyles(theme, insets) {
       alignItems: 'center',
       justifyContent: 'center',
       gap: 8,
-      backgroundColor: '#0f0f0f',
+      backgroundColor: '#18181b',
       borderWidth: 1,
-      borderColor: '#1a1a1a',
+      borderColor: '#27272a',
       borderRadius: 12,
       paddingVertical: 12,
     },
     entryVideoActionButtonText: {
       fontSize: 10,
-      fontWeight: '900',
-      color: '#999999',
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#a1a1aa',
       letterSpacing: 1.5,
+      textTransform: 'uppercase',
     },
     entryVideoSelectedRow: {
       flexDirection: 'row',
@@ -1490,22 +1693,22 @@ function createStyles(theme, insets) {
       marginBottom: 12,
       paddingHorizontal: 12,
       paddingVertical: 10,
-      borderRadius: 10,
+      borderRadius: 12,
       borderWidth: 1,
-      borderColor: '#1a3a1a',
-      backgroundColor: 'rgba(34, 197, 94, 0.08)',
+      borderColor: 'rgba(34, 197, 94, 0.2)',
+      backgroundColor: 'rgba(34, 197, 94, 0.06)',
     },
     entryVideoSelectedText: {
       flex: 1,
       fontSize: 10,
-      fontWeight: '700',
+      fontFamily: 'SpaceGroteskSemiBold',
       color: '#4ade80',
       letterSpacing: 0.5,
     },
     entryVideoHint: {
-      fontSize: 9,
-      fontWeight: '600',
-      color: '#555555',
+      fontSize: 10,
+      fontFamily: 'SpaceGrotesk',
+      color: '#71717a',
       marginBottom: 12,
       letterSpacing: 0.5,
     },
@@ -1527,328 +1730,10 @@ function createStyles(theme, insets) {
     },
     entrySubmitButtonText: {
       fontSize: 11,
-      fontWeight: '900',
-      color: '#ffffff',
-      letterSpacing: 1.5,
-    },
-    challengeMetaText: {
-      fontSize: 12,
-      fontWeight: '900',
-      color: '#dddddd',
+      fontFamily: 'SpaceGroteskBold',
+      color: '#fafafa',
       letterSpacing: 1,
-      backgroundColor: '#161616',
-      borderWidth: 1,
-      borderColor: '#2a2a2a',
-      borderRadius: 10,
-      paddingHorizontal: 12,
-      paddingVertical: 10,
-      alignSelf: 'flex-start',
+      textTransform: 'uppercase',
     },
-
-    // --- Timeframe Selector (HUD Pill) ---
-    timeframeContainer: {
-      paddingHorizontal: 16,
-      marginBottom: 12,
-    },
-    timeframeSelector: {
-      flexDirection: 'row',
-      backgroundColor: '#121212',
-      borderRadius: 14,
-      padding: 4,
-      borderWidth: 1,
-      borderColor: '#222222',
-    },
-    timeframeTab: {
-      flex: 1,
-      paddingVertical: 12,
-      alignItems: 'center',
-      borderRadius: 12,
-    },
-    timeframeTabActive: {},
-    timeframeText: {
-      fontSize: 11,
-      fontWeight: '900',
-      color: '#555555',
-      letterSpacing: 1,
-    },
-    timeframeTextActive: {
-      color: '#ffffff',
-    },
-
-    // --- Column Headers ---
-    columnHeaderRow: {
-      flexDirection: 'row',
-      paddingHorizontal: 20,
-      paddingBottom: 12,
-      borderBottomWidth: 2,
-      borderBottomColor: '#1a1a1a',
-    },
-    columnHeaderText: {
-      fontSize: 10,
-      fontWeight: '900',
-      color: '#555555',
-      letterSpacing: 1.5,
-    },
-
-    // --- List Container ---
-    listContainer: {
-      paddingHorizontal: 12,
-      marginTop: 12,
-      flex: 1,
-    },
-
-    // --- Empty State ---
-    emptyState: {
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingVertical: 60,
-      paddingHorizontal: 20,
-    },
-    emptyIconBox: {
-      width: 80,
-      height: 80,
-      borderRadius: 20,
-      backgroundColor: '#161616',
-      borderTopWidth: 2,
-      borderTopColor: '#333333',
-      borderWidth: 1,
-      borderColor: '#1a1a1a',
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginBottom: 20,
-    },
-    emptyStateText: {
-      fontSize: 14,
-      fontWeight: '900',
-      color: '#666666',
-      letterSpacing: 2,
-      marginBottom: 8,
-    },
-    emptyStateSubtext: {
-      fontSize: 10,
-      fontWeight: '800',
-      color: '#444444',
-      letterSpacing: 1,
-    },
-
-    // --- Podium Section ---
-    podiumSection: {
-      marginBottom: 24,
-      paddingHorizontal: 8,
-    },
-    podiumLabel: {
-      fontSize: 10,
-      fontWeight: '900',
-      color: '#555555',
-      letterSpacing: 2,
-      marginBottom: 14,
-    },
-    podiumRow: {
-      flexDirection: 'row',
-      alignItems: 'flex-end',
-      justifyContent: 'center',
-      gap: 8,
-    },
-    podiumCard: {
-      flex: 1,
-      backgroundColor: '#161616',
-      borderRadius: 16, // Smooth armor curve
-      borderTopWidth: 3,
-      padding: 14,
-      alignItems: 'center',
-      borderWidth: 1,
-      borderColor: '#1a1a1a',
-    },
-    podiumCardFirst: {
-      paddingBottom: 20,
-    },
-    podiumAvatar: {
-      width: 44,
-      height: 44,
-      borderRadius: 14,
-      marginBottom: 10,
-    },
-    podiumAvatarLarge: {
-      width: 60,
-      height: 60,
-      borderRadius: 18,
-      marginBottom: 10,
-    },
-    podiumAvatarFallback: {
-      backgroundColor: '#1a1a1a',
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderWidth: 2,
-      borderColor: '#333333',
-    },
-    podiumAvatarText: {
-      fontSize: 14,
-      fontWeight: '900',
-      color: '#dddddd',
-    },
-    podiumRankBadge: {
-      width: 26,
-      height: 26,
-      borderRadius: 13,
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginTop: -14,
-      marginBottom: 8,
-    },
-    podiumRankText: {
-      fontSize: 12,
-      fontWeight: '900',
-      color: '#000000',
-    },
-    podiumName: {
-      fontSize: 12,
-      fontWeight: '900',
-      color: '#ffffff',
-      textAlign: 'center',
-      marginBottom: 4,
-    },
-    podiumLiftValue: {
-      fontSize: 15,
-      fontWeight: '900',
-      color: '#dddddd',
-    },
-
-    // --- Rank Rows (Operation History Cards) ---
-    rankRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: 14,
-      paddingHorizontal: 10,
-      marginBottom: 6,
-      borderRadius: 16, // Smooth armor curve
-      backgroundColor: '#0a0a0a',
-      borderLeftWidth: 4, // Heavy indicator
-      borderLeftColor: '#222222',
-      borderWidth: 1,
-      borderColor: '#1a1a1a',
-      borderTopWidth: 2,
-      borderTopColor: '#1a1a1a',
-    },
-    rankRowTopTen: {
-      borderLeftColor: '#333333',
-      backgroundColor: '#0f0f0f',
-    },
-    rankRowActive: {},
-    rankNumCol: {
-      width: 32,
-      alignItems: 'center',
-      marginRight: 8,
-    },
-    rankNumText: {
-      fontSize: 15,
-      fontWeight: '900',
-    },
-    athleteCol: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    listAvatar: {
-      width: 38,
-      height: 38,
-      borderRadius: 12, // Smooth armor curve
-      borderWidth: 2,
-      borderColor: '#333333',
-    },
-    listAvatarFallback: {
-      width: 38,
-      height: 38,
-      borderRadius: 12,
-      backgroundColor: '#161616',
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderWidth: 2,
-      borderColor: '#2A2A2A',
-    },
-    listAvatarText: {
-      fontSize: 12,
-      fontWeight: '900',
-      color: '#555555',
-    },
-    nameWrap: {
-      marginLeft: 10,
-      flex: 1,
-    },
-    listName: {
-      fontSize: 14,
-      fontWeight: '900',
-      color: '#ffffff',
-    },
-    youBadge: {
-      paddingHorizontal: 8,
-      paddingVertical: 3,
-      borderRadius: 8,
-      marginTop: 4,
-      alignSelf: 'flex-start',
-    },
-    youBadgeText: {
-      fontSize: 9,
-      fontWeight: '900',
-      color: '#ffffff',
-      letterSpacing: 1,
-    },
-    classCol: {
-      alignItems: 'center',
-    },
-    weightCol: {
-      alignItems: 'center',
-    },
-    columnValueText: {
-      fontSize: 12,
-      fontWeight: '800',
-      color: '#888888',
-    },
-    bestCol: {
-      alignItems: 'flex-end',
-    },
-    bestPill: {
-      paddingHorizontal: 14,
-      paddingVertical: 6,
-      borderRadius: 12, // Smooth armor curve
-      borderWidth: 1,
-      borderColor: '#333333',
-      minWidth: 70,
-      alignItems: 'center',
-      backgroundColor: 'rgba(255,255,255,0.03)',
-    },
-    bestPillText: {
-      fontSize: 12,
-      fontWeight: '900',
-      color: '#e5e5e5',
-    },
-
-    // --- Sticky Current User Rank ---
-    stickyRankContainer: {
-      position: 'absolute',
-      bottom: 0,
-      left: 0,
-      right: 0,
-      backgroundColor: '#050505',
-      paddingTop: 14,
-      borderTopWidth: 2,
-      borderTopColor: '#1a1a1a',
-      zIndex: 20,
-    },
-    stickyDivider: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: 12,
-      paddingHorizontal: 12,
-    },
-    dividerLine: {
-      flex: 1,
-      height: 1,
-      backgroundColor: '#333333',
-    },
-    dividerText: {
-      fontSize: 9,
-      fontWeight: '900',
-      marginHorizontal: 12,
-      letterSpacing: 2
-    }
   });
 }

@@ -34,7 +34,7 @@ const RankMovement = ({ rank, previousRank, styles }) => {
 
   return (
     <View style={styles.rankDown}>
-      <Ionicons name="arrow-down" size={12} color="#ff003c" />
+      <Ionicons name="arrow-down" size={12} color="#ff2d55" />
       <Text style={styles.rankDownText}>{Math.abs(movement)}</Text>
     </View>
   );
@@ -550,7 +550,7 @@ export default function ChallengeDetailScreen({ navigation, route }) {
 
       {/* Bottom Action Bar */}
       {!timeInfo.expired && (
-        <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 16, borderTopColor: 'rgba(255,255,255,0.05)' }]}>
+        <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 16, borderTopColor: '#27272a' }]}>
           {challenge.joined ? (
             <>
               <TouchableOpacity
@@ -600,7 +600,7 @@ function createStyles(theme) {
     return StyleSheet.create({
       container: {
         flex: 1,
-        backgroundColor: theme.bgDeep,
+        backgroundColor: '#09090b',
       },
       header: {
         flexDirection: 'row',
@@ -608,7 +608,7 @@ function createStyles(theme) {
         paddingHorizontal: 16,
         paddingVertical: 12,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255,255,255,0.05)',
+        borderBottomColor: '#27272a',
       },
       backButton: {
         padding: 8,
@@ -617,7 +617,7 @@ function createStyles(theme) {
         flex: 1,
         fontSize: 14,
         fontWeight: '800',
-        color: theme.textMain,
+        color: '#fafafa',
         textAlign: 'center',
         letterSpacing: 1,
       },
@@ -631,19 +631,19 @@ function createStyles(theme) {
       },
       errorText: {
         fontSize: 16,
-        color: theme.textMuted,
+        color: '#a1a1aa',
       },
       content: {
         flex: 1,
         padding: 16,
       },
       challengeHeader: {
-        backgroundColor: theme.bgCard,
+        backgroundColor: '#121214',
         borderRadius: 16,
         padding: 20,
         marginBottom: 16,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.05)',
+        borderColor: '#27272a',
       },
       headerTop: {
         flexDirection: 'row',
@@ -662,7 +662,7 @@ function createStyles(theme) {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: 'rgba(212, 175, 55, 0.05)',
-        borderRadius: 8,
+        borderRadius: 12,
         paddingHorizontal: 10,
         paddingVertical: 6,
         borderWidth: 1,
@@ -678,21 +678,21 @@ function createStyles(theme) {
       },
       challengeTitle: {
         ...Typography.h3,
-        color: theme.textMain,
+        color: '#fafafa',
         marginBottom: 8,
       },
       challengeDescription: {
         fontSize: 14,
-        color: theme.textMuted,
+        color: '#a1a1aa',
         lineHeight: 22,
         marginBottom: 16,
       },
       metaRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.03)',
+        backgroundColor: '#09090b',
         padding: 12,
-        borderRadius: 8,
+        borderRadius: 12,
       },
       metaItem: {
         flexDirection: 'row',
@@ -701,23 +701,23 @@ function createStyles(theme) {
       metaDivider: {
         width: 1,
         height: 12,
-        backgroundColor: 'rgba(255,255,255,0.1)',
+        backgroundColor: '#27272a',
         marginHorizontal: 12,
       },
       metaText: {
         fontSize: 11,
         fontWeight: '700',
-        color: theme.textMuted,
+        color: '#a1a1aa',
         marginLeft: 6,
         letterSpacing: 0.5,
       },
       card: {
-        backgroundColor: theme.bgCard,
+        backgroundColor: '#121214',
         borderRadius: 16,
         padding: 20,
         marginBottom: 16,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.05)',
+        borderColor: '#27272a',
       },
       cardHeader: {
         flexDirection: 'row',
@@ -727,12 +727,12 @@ function createStyles(theme) {
       cardTitle: {
         fontSize: 12,
         fontWeight: '800',
-        color: theme.textMuted,
+        color: '#a1a1aa',
         letterSpacing: 1,
       },
       rulesText: {
         fontSize: 14,
-        color: '#ccc',
+        color: '#a1a1aa',
         lineHeight: 22,
         marginBottom: 16,
       },
@@ -742,7 +742,7 @@ function createStyles(theme) {
       leaderboardShortcut: {
         marginTop: 14,
         borderWidth: 1,
-        borderRadius: 8,
+        borderRadius: 12,
         paddingVertical: 10,
         paddingHorizontal: 12,
         flexDirection: 'row',
@@ -761,27 +761,27 @@ function createStyles(theme) {
       },
       ruleBox: {
         flex: 1,
-        backgroundColor: 'rgba(255,255,255,0.02)',
+        backgroundColor: '#09090b',
         padding: 12,
-        borderRadius: 8,
+        borderRadius: 12,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.03)',
+        borderColor: '#27272a',
       },
       rulesLabel: {
         fontSize: 10,
         fontWeight: '700',
-        color: theme.textMuted,
+        color: '#a1a1aa',
         marginBottom: 4,
         letterSpacing: 0.5,
       },
       rulesValue: {
         fontSize: 13,
         fontWeight: '700',
-        color: theme.textMain,
+        color: '#fafafa',
       },
       exercisesText: {
         fontSize: 13,
-        color: theme.textMain,
+        color: '#fafafa',
         lineHeight: 18,
       },
       progressHeader: {
@@ -793,11 +793,11 @@ function createStyles(theme) {
       progressText: {
         fontSize: 12,
         fontWeight: '800',
-        color: theme.textMain,
+        color: '#fafafa',
       },
       progressBarContainer: {
         height: 6,
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        backgroundColor: '#27272a',
         borderRadius: 3,
         overflow: 'hidden',
       },
@@ -811,7 +811,7 @@ function createStyles(theme) {
         justifyContent: 'center',
         backgroundColor: 'rgba(0, 212, 170, 0.1)',
         padding: 8,
-        borderRadius: 8,
+        borderRadius: 12,
       },
       completedText: {
         fontSize: 12,
@@ -825,7 +825,7 @@ function createStyles(theme) {
       },
       emptyText: {
         fontSize: 13,
-        color: theme.textMuted,
+        color: '#a1a1aa',
         fontStyle: 'italic',
       },
       leaderboardList: {
@@ -856,7 +856,7 @@ function createStyles(theme) {
         alignItems: 'center',
         paddingVertical: 12,
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255,255,255,0.05)',
+        borderBottomColor: '#27272a',
       },
       leaderboardRank: {
         width: 32,
@@ -867,7 +867,7 @@ function createStyles(theme) {
         width: 24,
         height: 24,
         borderRadius: 12,
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        backgroundColor: '#27272a',
         justifyContent: 'center',
         alignItems: 'center',
       },
@@ -890,13 +890,13 @@ function createStyles(theme) {
       rankDownText: {
         fontSize: 10,
         fontWeight: '800',
-        color: '#ff003c',
+        color: '#DC2626',
         marginLeft: 2,
       },
       rankNumberText: {
         fontSize: 10,
         fontWeight: '800',
-        color: theme.textMuted,
+        color: '#a1a1aa',
       },
       leaderboardInfo: {
         flex: 1,
@@ -904,11 +904,11 @@ function createStyles(theme) {
       leaderboardName: {
         fontSize: 13,
         fontWeight: '700',
-        color: theme.textMain,
+        color: '#fafafa',
       },
       leaderboardProgress: {
         fontSize: 11,
-        color: theme.textMuted,
+        color: '#a1a1aa',
         marginTop: 2,
       },
       leaderboardPercentage: {
@@ -920,12 +920,12 @@ function createStyles(theme) {
         fontWeight: '800',
       },
       submissionItem: {
-        backgroundColor: 'rgba(255,255,255,0.02)',
-        borderRadius: 10,
+        backgroundColor: '#09090b',
+        borderRadius: 12,
         padding: 12,
         marginBottom: 8,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.03)',
+        borderColor: '#27272a',
       },
       submissionHeader: {
         flexDirection: 'row',
@@ -936,12 +936,12 @@ function createStyles(theme) {
       submissionExercise: {
         fontSize: 13,
         fontWeight: '700',
-        color: theme.textMain,
+        color: '#fafafa',
       },
       statusBadge: {
         paddingHorizontal: 8,
         paddingVertical: 2,
-        borderRadius: 6,
+        borderRadius: 12,
       },
       statusText: {
         fontSize: 9,
@@ -954,15 +954,15 @@ function createStyles(theme) {
       },
       submissionDetail: {
         fontSize: 11,
-        color: theme.textMuted,
+        color: '#a1a1aa',
       },
       submissionDetailValue: {
-        color: theme.textMain,
+        color: '#fafafa',
         fontWeight: '600',
       },
       submissionDate: {
         fontSize: 11,
-        color: theme.textMuted,
+        color: '#a1a1aa',
       },
       rejectionReason: {
         fontSize: 11,
@@ -971,14 +971,14 @@ function createStyles(theme) {
       coreLiftButton: {
         marginTop: 10,
         borderWidth: 1,
-        borderRadius: 8,
+        borderRadius: 12,
         paddingVertical: 8,
         paddingHorizontal: 10,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         gap: 6,
-        backgroundColor: 'rgba(255,255,255,0.02)',
+        backgroundColor: '#09090b',
       },
       coreLiftButtonText: {
         fontSize: 10,
@@ -998,9 +998,9 @@ function createStyles(theme) {
         letterSpacing: 1,
       },
       bottomBar: {
-        backgroundColor: theme.bgCard,
+        backgroundColor: '#121214',
         borderTopWidth: 1,
-        borderTopColor: 'rgba(255,255,255,0.05)',
+        borderTopColor: '#27272a',
         paddingHorizontal: 16,
         paddingTop: 16,
         flexDirection: 'row',
@@ -1026,12 +1026,12 @@ function createStyles(theme) {
       leaveButton: {
         backgroundColor: 'transparent',
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
+        borderColor: '#27272a',
       },
       leaveButtonText: {
         fontSize: 12,
         fontWeight: '800',
-        color: theme.textMuted,
+        color: '#a1a1aa',
         letterSpacing: 1,
       },
       submitButton: {

@@ -318,7 +318,7 @@ export default function AdminProfileEditModal({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0a',
+    backgroundColor: '#121214',
   },
   header: {
     flexDirection: 'row',
@@ -381,7 +381,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1e1e20',
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#2a2a2a',
@@ -408,7 +408,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1e1e20',
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#2a2a2a',
@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   dropdownContent: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1e1e20',
     borderRadius: 16,
     width: '80%',
     maxWidth: 320,

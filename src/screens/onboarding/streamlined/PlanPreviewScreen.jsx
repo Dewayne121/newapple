@@ -136,7 +136,7 @@ const PlanPreviewScreen = ({ navigation }) => {
     <View style={[styles.container, { backgroundColor: theme.bgDeep }]}>
       {/* Background gradient */}
       <LinearGradient
-        colors={['rgba(155, 44, 44, 0.1)', 'transparent', 'rgba(155, 44, 44, 0.05)']}
+        colors={['rgba(255, 45, 85, 0.1)', 'transparent', 'rgba(255, 45, 85, 0.05)']}
         style={StyleSheet.absoluteFill}
         pointerEvents="none"
       />
@@ -310,6 +310,7 @@ const styles = StyleSheet.create({
   title: {
     ...Typography.h2,
     fontSize: 28,
+    fontFamily: 'SpaceGroteskSemiBold',
     fontWeight: '800',
     textAlign: 'center',
     marginBottom: Spacing.xs,
@@ -338,6 +339,7 @@ const styles = StyleSheet.create({
   planTitle: {
     ...Typography.h4,
     fontSize: 18,
+    fontFamily: 'SpaceGroteskSemiBold',
     fontWeight: '700',
   },
   planBadge: {
@@ -350,6 +352,7 @@ const styles = StyleSheet.create({
   },
   planBadgeText: {
     ...Typography.bodySmall,
+    fontFamily: 'SpaceGroteskSemiBold',
     fontWeight: '700',
     fontSize: 12,
   },
@@ -363,6 +366,7 @@ const styles = StyleSheet.create({
   },
   goalText: {
     ...Typography.body,
+    fontFamily: 'SpaceGroteskSemiBold',
     fontWeight: '700',
     fontSize: 16,
   },
@@ -390,6 +394,7 @@ const styles = StyleSheet.create({
   },
   featureTitle: {
     ...Typography.body,
+    fontFamily: 'SpaceGroteskSemiBold',
     fontWeight: '600',
     fontSize: 15,
     marginBottom: 2,
@@ -404,6 +409,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     ...Typography.h4,
     fontSize: 18,
+    fontFamily: 'SpaceGroteskSemiBold',
     fontWeight: '700',
     marginBottom: Spacing.md,
   },
@@ -425,6 +431,7 @@ const styles = StyleSheet.create({
   },
   stepNumberText: {
     ...Typography.body,
+    fontFamily: 'SpaceGroteskSemiBold',
     fontWeight: '700',
     fontSize: 14,
     color: '#fff',
@@ -434,6 +441,7 @@ const styles = StyleSheet.create({
   },
   stepTitle: {
     ...Typography.body,
+    fontFamily: 'SpaceGroteskSemiBold',
     fontWeight: '600',
     fontSize: 15,
     marginBottom: 2,
@@ -458,6 +466,7 @@ const styles = StyleSheet.create({
   },
   editButtonText: {
     ...Typography.body,
+    fontFamily: 'SpaceGroteskSemiBold',
     fontWeight: '600',
     fontSize: 15,
   },
@@ -477,6 +486,7 @@ const styles = StyleSheet.create({
   },
   startButtonText: {
     ...Typography.body,
+    fontFamily: 'SpaceGroteskSemiBold',
     fontWeight: '700',
     fontSize: 17,
   },

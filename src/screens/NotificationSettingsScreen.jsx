@@ -330,8 +330,8 @@ export default function NotificationSettingsScreen() {
             <Switch
               value={notificationsEnabled}
               onValueChange={handleMasterToggle}
-              trackColor={{ false: '#333', true: theme.primary + '40' }}
-              thumbColor={notificationsEnabled ? theme.primary : '#666'}
+              trackColor={{ false: '#27272a', true: theme.primary + '40' }}
+              thumbColor={notificationsEnabled ? theme.primary : '#a1a1aa'}
               disabled={saving}
             />
           </View>
@@ -341,7 +341,7 @@ export default function NotificationSettingsScreen() {
         <View style={[styles.section, !notificationsEnabled && styles.sectionDisabled]}>
           <View style={styles.sectionHeader}>
             <View style={[styles.sectionIconWrapper, !notificationsEnabled && styles.iconDisabled]}>
-              <Ionicons name="options" size={18} color={notificationsEnabled ? theme.primary : '#444'} />
+              <Ionicons name="options" size={18} color={notificationsEnabled ? theme.primary : '#a1a1aa'} />
             </View>
             <Text style={[styles.sectionTitle, !notificationsEnabled && styles.textDisabled]}>
               Notification Types
@@ -369,8 +369,8 @@ export default function NotificationSettingsScreen() {
             <Switch
               value={notifyRankUp}
               onValueChange={(value) => handleToggle('notifyRankUp', value)}
-              trackColor={{ false: '#333', true: '#22C55E40' }}
-              thumbColor={notifyRankUp ? '#22C55E' : '#666'}
+              trackColor={{ false: '#27272a', true: '#22C55E40' }}
+              thumbColor={notifyRankUp ? '#22C55E' : '#a1a1aa'}
               disabled={saving || !notificationsEnabled}
             />
           </View>
@@ -393,8 +393,8 @@ export default function NotificationSettingsScreen() {
             <Switch
               value={notifyRankDownWeekly}
               onValueChange={(value) => handleToggle('notifyRankDownWeekly', value)}
-              trackColor={{ false: '#333', true: '#3B82F640' }}
-              thumbColor={notifyRankDownWeekly ? '#3B82F6' : '#666'}
+              trackColor={{ false: '#27272a', true: '#3B82F640' }}
+              thumbColor={notifyRankDownWeekly ? '#3B82F6' : '#a1a1aa'}
               disabled={saving || !notificationsEnabled}
             />
           </View>
@@ -417,8 +417,8 @@ export default function NotificationSettingsScreen() {
             <Switch
               value={notifyStreakMilestone}
               onValueChange={(value) => handleToggle('notifyStreakMilestone', value)}
-              trackColor={{ false: '#333', true: '#F59E0B40' }}
-              thumbColor={notifyStreakMilestone ? '#F59E0B' : '#666'}
+              trackColor={{ false: '#27272a', true: '#F59E0B40' }}
+              thumbColor={notifyStreakMilestone ? '#F59E0B' : '#a1a1aa'}
               disabled={saving || !notificationsEnabled}
             />
           </View>
@@ -441,8 +441,8 @@ export default function NotificationSettingsScreen() {
             <Switch
               value={notifyNewChallenges}
               onValueChange={(value) => handleToggle('notifyNewChallenges', value)}
-              trackColor={{ false: '#333', true: '#8B5CF640' }}
-              thumbColor={notifyNewChallenges ? '#8B5CF6' : '#666'}
+              trackColor={{ false: '#27272a', true: '#8B5CF640' }}
+              thumbColor={notifyNewChallenges ? '#8B5CF6' : '#a1a1aa'}
               disabled={saving || !notificationsEnabled}
             />
           </View>
@@ -465,8 +465,8 @@ export default function NotificationSettingsScreen() {
             <Switch
               value={notifyChallengeEnding}
               onValueChange={(value) => handleToggle('notifyChallengeEnding', value)}
-              trackColor={{ false: '#333', true: '#EF444440' }}
-              thumbColor={notifyChallengeEnding ? '#EF4444' : '#666'}
+              trackColor={{ false: '#27272a', true: '#EF444440' }}
+              thumbColor={notifyChallengeEnding ? '#EF4444' : '#a1a1aa'}
               disabled={saving || !notificationsEnabled}
             />
           </View>
@@ -474,7 +474,7 @@ export default function NotificationSettingsScreen() {
 
         {/* Info Section */}
         <View style={styles.infoSection}>
-          <Ionicons name="information-circle" size={14} color="#666" />
+          <Ionicons name="information-circle" size={14} color="#a1a1aa" />
           <Text style={styles.infoText}>
             Notifications are sent via push. Make sure you've granted notification permissions in your device settings.
           </Text>
@@ -495,7 +495,7 @@ function createStyles(theme, insets) {
   return StyleSheet.create({
     page: {
       flex: 1,
-      backgroundColor: '#050505',
+      backgroundColor: '#09090b',
     },
     centered: {
       justifyContent: 'center',
@@ -510,12 +510,12 @@ function createStyles(theme, insets) {
 
     // Section
     section: {
-      backgroundColor: '#0a0a0a',
+      backgroundColor: '#121214',
       marginHorizontal: 16,
       marginTop: 16,
       borderRadius: 12,
       borderWidth: 1,
-      borderColor: 'rgba(255,255,255,0.06)',
+      borderColor: '#27272a',
     },
     sectionDisabled: {
       opacity: 0.5,
@@ -530,28 +530,28 @@ function createStyles(theme, insets) {
     sectionIconWrapper: {
       width: 28,
       height: 28,
-      borderRadius: 6,
+      borderRadius: 12,
       backgroundColor: theme.primary + '15',
       alignItems: 'center',
       justifyContent: 'center',
       marginRight: 10,
     },
     iconDisabled: {
-      backgroundColor: '#222',
+      backgroundColor: '#121214',
     },
     sectionTitle: {
       fontSize: 13,
       fontWeight: '700',
-      color: '#e5e5e5',
+      color: '#fafafa',
       letterSpacing: 0.5,
       textTransform: 'uppercase',
     },
     textDisabled: {
-      color: '#555',
+      color: '#a1a1aa',
     },
     sectionDescription: {
       fontSize: 12,
-      color: '#999',
+      color: '#a1a1aa',
       lineHeight: 18,
       paddingHorizontal: 16,
       paddingBottom: 12,
@@ -565,7 +565,7 @@ function createStyles(theme, insets) {
       paddingHorizontal: 16,
       paddingVertical: 10,
       borderTopWidth: 1,
-      borderTopColor: 'rgba(255,255,255,0.04)',
+      borderTopColor: '#27272a',
     },
     lastToggleRow: {
       borderBottomWidth: 0,
@@ -579,7 +579,7 @@ function createStyles(theme, insets) {
     toggleIcon: {
       width: 28,
       height: 28,
-      borderRadius: 6,
+      borderRadius: 12,
       borderWidth: 1,
       justifyContent: 'center',
       alignItems: 'center',
@@ -591,12 +591,12 @@ function createStyles(theme, insets) {
     toggleLabel: {
       fontSize: 13,
       fontWeight: '600',
-      color: '#d4d4d4',
+      color: '#fafafa',
       lineHeight: 18,
     },
     toggleSubtitle: {
       fontSize: 11,
-      color: '#888',
+      color: '#a1a1aa',
       lineHeight: 16,
       marginTop: 1,
     },
@@ -608,14 +608,14 @@ function createStyles(theme, insets) {
       marginHorizontal: 16,
       marginTop: 20,
       padding: 12,
-      backgroundColor: 'rgba(155, 44, 44, 0.08)',
-      borderRadius: 8,
+      backgroundColor: 'rgba(255, 45, 85, 0.08)',
+      borderRadius: 12,
       borderWidth: 1,
-      borderColor: 'rgba(155, 44, 44, 0.15)',
+      borderColor: 'rgba(255, 45, 85, 0.15)',
     },
     infoText: {
       fontSize: 11,
-      color: '#999',
+      color: '#a1a1aa',
       marginLeft: 8,
       flex: 1,
       lineHeight: 16,
@@ -631,7 +631,7 @@ function createStyles(theme, insets) {
     },
     savingText: {
       fontSize: 12,
-      color: '#888',
+      color: '#a1a1aa',
       marginLeft: 8,
       fontWeight: '500',
     },

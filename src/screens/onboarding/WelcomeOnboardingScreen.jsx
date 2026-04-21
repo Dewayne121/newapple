@@ -167,14 +167,14 @@ export default function WelcomeOnboardingScreen({ navigation }) {
           activeOpacity={0.85}
           style={[styles.nextButton, { backgroundColor: theme.primary }]}
         >
-          <Text style={[styles.nextButtonText, { color: isDark ? theme.bgDeep : '#fff' }]}>
+          <Text style={[styles.nextButtonText, { color: isDark ? theme.bgDeep : '#fafafa' }]}>
             {isLastSlide ? 'Get Started' : 'Next'}
           </Text>
           {!isLastSlide && (
             <Ionicons
               name="chevron-forward"
               size={22}
-              color={isDark ? theme.bgDeep : '#fff'}
+              color={isDark ? theme.bgDeep : '#fafafa'}
             />
           )}
         </TouchableOpacity>
@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
   dot: {
     width: 8,
     height: 8,
-    borderRadius: 4,
+    borderRadius: 99,
   },
   dotActive: {
     width: 24,
@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
   swipeLine: {
     width: 40,
     height: 4,
-    borderRadius: 2,
+    borderRadius: 12,
     marginBottom: 8,
   },
   swipeText: {

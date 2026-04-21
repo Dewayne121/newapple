@@ -39,6 +39,7 @@ export const checkOnboardingAbandoned = async () => {
 export const ONBOARDING_STEPS = {
   ENTRY: 'entry',
   PROFILE: 'profile',
+  GENDER: 'gender',
   GOAL: 'goal',
   EXPERIENCE: 'experience',
   BODY_PROFILE: 'body_profile',
@@ -50,6 +51,7 @@ export const ONBOARDING_STEPS = {
 export const STEP_ORDER = [
   ONBOARDING_STEPS.ENTRY,
   ONBOARDING_STEPS.PROFILE,
+  ONBOARDING_STEPS.GENDER,
   ONBOARDING_STEPS.GOAL,
   ONBOARDING_STEPS.EXPERIENCE,
   ONBOARDING_STEPS.BODY_PROFILE,
@@ -178,6 +180,9 @@ const initialState = {
   [ONBOARDING_STEPS.PROFILE]: {
     displayName: '',
     profileImage: null,
+  },
+  [ONBOARDING_STEPS.GENDER]: {
+    selectedGender: null,
   },
   [ONBOARDING_STEPS.GOAL]: {
     selectedGoal: null,
@@ -362,6 +367,8 @@ export const StreamlinedOnboardingProvider = ({ children }) => {
         return stepData?.isAuthenticated || stepData?.isGuest;
       case ONBOARDING_STEPS.PROFILE:
         return stepData?.displayName && stepData.displayName.trim().length >= 2;
+      case ONBOARDING_STEPS.GENDER:
+        return !!stepData?.selectedGender;
       case ONBOARDING_STEPS.GOAL:
         return !!stepData?.selectedGoal;
       case ONBOARDING_STEPS.EXPERIENCE:
@@ -428,6 +435,7 @@ export const StreamlinedOnboardingProvider = ({ children }) => {
 
       // Map onboarding data to backend format
       const profileData = onboardingData[ONBOARDING_STEPS.PROFILE];
+      const genderData = onboardingData[ONBOARDING_STEPS.GENDER];
       const goalData = onboardingData[ONBOARDING_STEPS.GOAL];
       const experienceData = onboardingData[ONBOARDING_STEPS.EXPERIENCE];
       const bodyData = onboardingData[ONBOARDING_STEPS.BODY_PROFILE];
@@ -442,6 +450,11 @@ export const StreamlinedOnboardingProvider = ({ children }) => {
       }
       if (profileData?.profileImage) {
         updates.profileImage = profileData.profileImage;
+      }
+
+      // Gender data
+      if (genderData?.selectedGender) {
+        updates.gender = genderData.selectedGender;
       }
 
       // Set default region for onboarding completion check

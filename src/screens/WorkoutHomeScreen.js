@@ -6,33 +6,29 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useWorkout } from '../context/WorkoutContext';
 import { useTheme } from '../context/ThemeContext';
-import { SKINS } from '../constants/colors';
-import ScreenHeader from '../components/ScreenHeader';
 import QuickWorkoutModal from '../components/QuickWorkoutModal';
 import CustomAlert, { useCustomAlert } from '../components/CustomAlert';
 
 export default function WorkoutHomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const { theme, skin } = useTheme();
-  const { templates, completedSessions, activeSession, startSession, deleteTemplate, addExercisesToSession } = useWorkout();
+  const { theme } = useTheme();
+  const { templates, completedSessions, activeSession, startSession, deleteTemplate } = useWorkout();
   const { alertConfig, showAlert, hideAlert } = useCustomAlert();
-  const isDark = skin === SKINS.operator || skin === SKINS.midnight;
   const [refreshing, setRefreshing] = useState(false);
   const [showQuickWorkoutModal, setShowQuickWorkoutModal] = useState(false);
 
-  // Sort templates by recently updated
   const sortedTemplates = useMemo(() => {
     return [...templates].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
   }, [templates]);
 
-  // Sort sessions by recently completed
   const recentSessions = useMemo(() => {
-    return [...completedSessions].sort((a, b) => new Date(b.finishedAt) - new Date(a.finishedAt)).slice(0, 10);
+    return [...completedSessions].sort((a, b) => new Date(b.finishedAt) - new Date(a.finishedAt)).slice(0, 5);
   }, [completedSessions]);
 
   const handleStartWorkout = (templateId) => {
@@ -45,15 +41,12 @@ export default function WorkoutHomeScreen({ navigation }) {
   };
 
   const handleGenerateWorkout = async (workout, workoutName) => {
-    // Start a new session with the generated exercises directly
-    const result = startSession({ 
-      templateId: null, 
+    const result = startSession({
+      templateId: null,
       name: workoutName,
-      initialExercises: workout 
+      initialExercises: workout,
     });
-
     if (result.success && result.data) {
-      // Navigate to the active session
       navigation.navigate('ActiveSession');
     }
   };
@@ -70,14 +63,12 @@ export default function WorkoutHomeScreen({ navigation }) {
           style: 'destructive',
           onPress: () => deleteTemplate(templateId),
         },
-      ]
+      ],
     });
   };
 
   const onRefresh = async () => {
     setRefreshing(true);
-    // Templates are loaded from AsyncStorage, so no refresh needed
-    // This is for consistency with other screens
     setRefreshing(false);
   };
 
@@ -86,7 +77,6 @@ export default function WorkoutHomeScreen({ navigation }) {
     const now = new Date();
     const diffTime = Math.abs(now - date);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Yesterday';
     if (diffDays < 7) return `${diffDays} days ago`;
@@ -96,7 +86,6 @@ export default function WorkoutHomeScreen({ navigation }) {
   const calculateSessionStats = (session) => {
     let totalVolume = 0;
     let completedSets = 0;
-
     session.exercises?.forEach(exercise => {
       exercise.sets?.forEach(set => {
         if (set.completed && set.reps && set.weight) {
@@ -105,73 +94,84 @@ export default function WorkoutHomeScreen({ navigation }) {
         }
       });
     });
-
     return { totalVolume, completedSets };
   };
 
-  const styles = createStyles(theme, isDark);
+  const styles = createStyles(theme, insets);
 
   return (
-    <View style={styles.container}>
-      <ScreenHeader
-        title="WORKOUTS"
-        subtitle="Templates & Sessions"
-        rightAction={
+    <View style={styles.page}>
+      {/* Header */}
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+        <View style={styles.headerRow}>
+          <View style={styles.headerLeft}>
+            <Text style={styles.headerTitle}>WORKOUTS</Text>
+            <Text style={styles.headerSubtitle}>
+              {sortedTemplates.length} TEMPLATES
+            </Text>
+          </View>
           <TouchableOpacity
             onPress={() => navigation.navigate('SessionHistory')}
-            style={styles.historyButton}
+            style={styles.headerButton}
           >
-            <Ionicons name="time-outline" size={24} color={theme.primary} />
+            <Ionicons name="time-outline" size={18} color="#a1a1aa" />
           </TouchableOpacity>
-        }
-      />
+        </View>
+      </View>
 
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#DC2626" />
         }
       >
         {/* Active Session Banner */}
         {activeSession && (
           <TouchableOpacity
-            style={styles.activeSessionBanner}
+            style={styles.activeBanner}
             onPress={() => navigation.navigate('ActiveSession')}
+            activeOpacity={0.7}
           >
-            <View style={styles.activeSessionLeft}>
-              <Ionicons name="play-circle" size={24} color="#fff" />
-              <View style={styles.activeSessionText}>
-                <Text style={styles.activeSessionTitle}>{activeSession.name}</Text>
-                <Text style={styles.activeSessionSubtitle}>Workout in progress</Text>
+            <View style={styles.activeBannerBar} />
+            <View style={styles.activeBannerContent}>
+              <View style={styles.activeBannerLeft}>
+                <View style={styles.activeBannerIcon}>
+                  <Ionicons name="play" size={14} color="#fafafa" />
+                </View>
+                <View style={styles.activeBannerText}>
+                  <Text style={styles.activeBannerTitle}>{activeSession.name}</Text>
+                  <Text style={styles.activeBannerSub}>IN PROGRESS</Text>
+                </View>
               </View>
+              <Ionicons name="chevron-forward" size={18} color="#a1a1aa" />
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#fff" />
           </TouchableOpacity>
         )}
 
         {/* Quick Actions */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, styles.sectionTitleSpaced]}>QUICK ACTIONS</Text>
-          <View style={styles.quickActions}>
-            <TouchableOpacity style={styles.quickActionCard} onPress={handleQuickStart}>
-              <View style={styles.quickActionIcon}>
-                <Ionicons name="flash" size={24} color={theme.primary} />
+          <Text style={styles.sectionLabel}>QUICK ACTIONS</Text>
+          <View style={styles.quickRow}>
+            <TouchableOpacity style={styles.quickCard} onPress={handleQuickStart} activeOpacity={0.85}>
+              <View style={styles.quickIcon}>
+                <Ionicons name="flash" size={20} color="#DC2626" />
               </View>
-              <Text style={styles.quickActionTitle}>Quick Workout</Text>
-              <Text style={styles.quickActionSubtitle}>Generate instantly</Text>
+              <Text style={styles.quickTitle}>Quick Workout</Text>
+              <Text style={styles.quickSub}>Generate instantly</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.quickActionCard}
+              style={styles.quickCard}
               onPress={() => navigation.navigate('TemplateBuilder')}
+              activeOpacity={0.85}
             >
-              <View style={styles.quickActionIcon}>
-                <Ionicons name="add" size={24} color={theme.primary} />
+              <View style={styles.quickIcon}>
+                <Ionicons name="add" size={20} color="#DC2626" />
               </View>
-              <Text style={styles.quickActionTitle}>Create Template</Text>
-              <Text style={styles.quickActionSubtitle}>Build custom workout</Text>
+              <Text style={styles.quickTitle}>Create Template</Text>
+              <Text style={styles.quickSub}>Build custom workout</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -179,59 +179,56 @@ export default function WorkoutHomeScreen({ navigation }) {
         {/* My Templates */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>MY TEMPLATES</Text>
+            <Text style={styles.sectionLabel}>MY TEMPLATES</Text>
             <TouchableOpacity onPress={() => navigation.navigate('TemplateBuilder')}>
-              <Text style={styles.seeAll}>Create New</Text>
+              <Text style={styles.sectionLink}>+ NEW</Text>
             </TouchableOpacity>
           </View>
 
           {sortedTemplates.length === 0 ? (
             <View style={styles.emptyState}>
-              <Ionicons name="document-outline" size={48} color="#666" />
-              <Text style={styles.emptyText}>No workout templates yet</Text>
-              <Text style={styles.emptySubtext}>Create a template to quickly start workouts</Text>
-              <TouchableOpacity
-                style={styles.emptyButton}
-                onPress={() => navigation.navigate('TemplateBuilder')}
-              >
-                <Text style={styles.emptyButtonText}>Create Template</Text>
-              </TouchableOpacity>
+              <Ionicons name="document-outline" size={32} color="#52525b" />
+              <Text style={styles.emptyTitle}>NO TEMPLATES YET</Text>
+              <Text style={styles.emptySub}>Create a template to quickly start workouts</Text>
             </View>
           ) : (
             sortedTemplates.map((template) => (
               <View key={template.id} style={styles.templateCard}>
-                <View style={styles.templateLeft}>
-                  <View style={styles.templateIcon}>
-                    <Text style={styles.templateInitials}>
-                      {template.name.substring(0, 2).toUpperCase()}
-                    </Text>
+                <View style={styles.templateBar} />
+                <View style={styles.templateContent}>
+                  <View style={styles.templateLeft}>
+                    <View style={styles.templateIcon}>
+                      <Text style={styles.templateInitials}>
+                        {template.name.substring(0, 2).toUpperCase()}
+                      </Text>
+                    </View>
+                    <View style={styles.templateInfo}>
+                      <Text style={styles.templateName} numberOfLines={1}>{template.name}</Text>
+                      <Text style={styles.templateMeta}>
+                        {template.exercises?.length || 0} exercises
+                      </Text>
+                    </View>
                   </View>
-                  <View style={styles.templateInfo}>
-                    <Text style={styles.templateName}>{template.name}</Text>
-                    <Text style={styles.templateMeta}>
-                      {template.exercises?.length || 0} exercises
-                    </Text>
+                  <View style={styles.templateActions}>
+                    <TouchableOpacity
+                      style={styles.templateBtn}
+                      onPress={() => handleStartWorkout(template.id)}
+                    >
+                      <Ionicons name="play" size={16} color="#DC2626" />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.templateBtn}
+                      onPress={() => navigation.navigate('TemplateBuilder', { templateId: template.id })}
+                    >
+                      <Ionicons name="create-outline" size={16} color="#a1a1aa" />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.templateBtn, styles.templateBtnDelete]}
+                      onPress={() => handleDeleteTemplate(template.id)}
+                    >
+                      <Ionicons name="trash-outline" size={16} color="#DC2626" />
+                    </TouchableOpacity>
                   </View>
-                </View>
-                <View style={styles.templateActions}>
-                  <TouchableOpacity
-                    style={styles.templateButton}
-                    onPress={() => handleStartWorkout(template.id)}
-                  >
-                    <Ionicons name="play" size={18} color={theme.primary} />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.templateButton, styles.templateButtonEdit]}
-                    onPress={() => navigation.navigate('TemplateBuilder', { templateId: template.id })}
-                  >
-                    <Ionicons name="create-outline" size={18} color="#888" />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.templateButton, styles.templateButtonDelete]}
-                    onPress={() => handleDeleteTemplate(template.id)}
-                  >
-                    <Ionicons name="trash-outline" size={18} color="#ff003c" />
-                  </TouchableOpacity>
                 </View>
               </View>
             ))
@@ -242,9 +239,9 @@ export default function WorkoutHomeScreen({ navigation }) {
         {recentSessions.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>RECENT SESSIONS</Text>
+              <Text style={styles.sectionLabel}>RECENT SESSIONS</Text>
               <TouchableOpacity onPress={() => navigation.navigate('SessionHistory')}>
-                <Text style={styles.seeAll}>See All</Text>
+                <Text style={styles.sectionLink}>SEE ALL</Text>
               </TouchableOpacity>
             </View>
 
@@ -255,21 +252,25 @@ export default function WorkoutHomeScreen({ navigation }) {
                   key={session.id}
                   style={styles.sessionCard}
                   onPress={() => navigation.navigate('SessionDetail', { sessionId: session.id })}
+                  activeOpacity={0.7}
                 >
-                  <View style={styles.sessionLeft}>
-                    <View style={styles.sessionIcon}>
-                      <Ionicons name="checkmark-done" size={20} color="#9b2c2c" />
+                  <View style={styles.sessionBar} />
+                  <View style={styles.sessionContent}>
+                    <View style={styles.sessionLeft}>
+                      <View style={styles.sessionIcon}>
+                        <Ionicons name="checkmark-done" size={16} color="#DC2626" />
+                      </View>
+                      <View style={styles.sessionInfo}>
+                        <Text style={styles.sessionName} numberOfLines={1}>{session.name}</Text>
+                        <Text style={styles.sessionMeta}>
+                          {formatDate(session.finishedAt)} • {stats.completedSets} sets
+                        </Text>
+                      </View>
                     </View>
-                    <View style={styles.sessionInfo}>
-                      <Text style={styles.sessionName}>{session.name}</Text>
-                      <Text style={styles.sessionMeta}>
-                        {formatDate(session.finishedAt)} • {stats.completedSets} sets
-                      </Text>
+                    <View style={styles.sessionRight}>
+                      <Text style={styles.sessionVolume}>{stats.totalVolume.toLocaleString()} kg</Text>
+                      <Text style={styles.sessionVolumeLabel}>VOLUME</Text>
                     </View>
-                  </View>
-                  <View style={styles.sessionRight}>
-                    <Text style={styles.sessionVolume}>{stats.totalVolume.toLocaleString()} kg</Text>
-                    <Text style={styles.sessionVolumeLabel}>volume</Text>
                   </View>
                 </TouchableOpacity>
               );
@@ -293,61 +294,123 @@ export default function WorkoutHomeScreen({ navigation }) {
   );
 }
 
-function createStyles(theme, isDark) {
+// -------------------------------------------------------------
+// STYLES — Zinc Minimal, matching Dashboard aesthetic
+// -------------------------------------------------------------
+function createStyles(theme, insets) {
   return StyleSheet.create({
-    container: {
+    page: {
       flex: 1,
-      backgroundColor: '#0a0a0a',
-    },
-    historyButton: {
-      width: 44,
-      height: 44,
-      justifyContent: 'center',
-      alignItems: 'center',
+      backgroundColor: '#09090b',
     },
     scroll: {
       flex: 1,
     },
     scrollContent: {
-      padding: 16,
+      paddingBottom: 20,
     },
 
-    // Active Session Banner - Tactical Style
-    activeSessionBanner: {
+    // --- Header ---
+    header: {
+      paddingHorizontal: 16,
+      paddingBottom: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: '#27272a',
+      backgroundColor: '#09090b',
+    },
+    headerRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-end',
+    },
+    headerLeft: {
+      flex: 1,
+    },
+    headerTitle: {
+      fontSize: 28,
+      fontWeight: '900',
+      fontFamily: 'SpaceGroteskBold',
+      color: '#fafafa',
+      textTransform: 'uppercase',
+      letterSpacing: -0.5,
+    },
+    headerSubtitle: {
+      fontSize: 11,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#71717a',
+      letterSpacing: 1,
+      marginTop: 4,
+      textTransform: 'uppercase',
+    },
+    headerButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      backgroundColor: '#121214',
+      borderWidth: 1,
+      borderColor: '#27272a',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+
+    // --- Active Session Banner ---
+    activeBanner: {
+      backgroundColor: '#121214',
+      borderWidth: 1,
+      borderColor: 'rgba(220, 38, 38, 0.2)',
+      borderRadius: 12,
+      overflow: 'hidden',
+      marginHorizontal: 16,
+      marginTop: 12,
+    },
+    activeBannerBar: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: 4,
+      height: '100%',
+      backgroundColor: '#DC2626',
+    },
+    activeBannerContent: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      backgroundColor: theme.primary,
-      borderRadius: 6,
-      padding: 16,
-      marginBottom: 20,
-      borderLeftWidth: 4,
-      borderLeftColor: '#fff',
+      padding: 14,
+      paddingLeft: 18,
     },
-    activeSessionLeft: {
+    activeBannerLeft: {
       flexDirection: 'row',
       alignItems: 'center',
       flex: 1,
+      gap: 12,
     },
-    activeSessionText: {
-      marginLeft: 12,
+    activeBannerIcon: {
+      width: 32,
+      height: 32,
+      borderRadius: 10,
+      backgroundColor: 'rgba(220, 38, 38, 0.15)',
+      justifyContent: 'center',
+      alignItems: 'center',
     },
-    activeSessionTitle: {
-      fontSize: 16,
-      fontWeight: '800',
-      color: '#fff',
-      letterSpacing: 0.5,
+    activeBannerTitle: {
+      fontSize: 14,
+      fontWeight: '700',
+      fontFamily: 'SpaceGroteskBold',
+      color: '#fafafa',
     },
-    activeSessionSubtitle: {
-      fontSize: 11,
-      color: 'rgba(255,255,255,0.7)',
+    activeBannerSub: {
+      fontSize: 9,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#DC2626',
+      letterSpacing: 1,
       marginTop: 2,
-      fontWeight: '600',
     },
+    activeBannerText: {},
 
-    // Sections
+    // --- Sections ---
     section: {
-      marginBottom: 28,
+      paddingHorizontal: 16,
+      marginTop: 20,
     },
     sectionHeader: {
       flexDirection: 'row',
@@ -355,228 +418,226 @@ function createStyles(theme, isDark) {
       alignItems: 'center',
       marginBottom: 12,
     },
-    sectionTitle: {
-      fontSize: 14,
-      fontWeight: '900',
-      color: '#555',
-      letterSpacing: 2,
-    },
-    sectionTitleSpaced: {
-      marginBottom: 12,
-    },
-    seeAll: {
-      fontSize: 11,
-      fontWeight: '700',
-      color: theme.primary,
-      letterSpacing: 0.5,
-    },
-
-    // Quick Actions - Tactical Style
-    quickActions: {
-      flexDirection: 'row',
-      gap: 12,
-    },
-    quickActionCard: {
-      flex: 1,
-      backgroundColor: '#161616',
-      borderRadius: 6,
-      borderTopWidth: 2,
-      borderTopColor: '#333',
-      padding: 16,
-      alignItems: 'center',
-    },
-    quickActionIcon: {
-      width: 48,
-      height: 48,
-      borderRadius: 4,
-      backgroundColor: 'rgba(155, 44, 44, 0.2)',
-      borderWidth: 2,
-      borderColor: theme.primary,
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginBottom: 12,
-    },
-    quickActionTitle: {
-      fontSize: 13,
-      fontWeight: '800',
-      color: '#fff',
-      marginBottom: 4,
-      letterSpacing: 0.5,
-    },
-    quickActionSubtitle: {
+    sectionLabel: {
       fontSize: 10,
-      color: '#666',
-      textAlign: 'center',
-      letterSpacing: 0.5,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#71717a',
+      letterSpacing: 1.5,
+      textTransform: 'uppercase',
     },
-
-    // Empty State - Tactical Style
-    emptyState: {
-      backgroundColor: '#121212',
-      borderRadius: 6,
-      borderTopWidth: 2,
-      borderTopColor: '#333',
-      padding: 32,
-      alignItems: 'center',
-      borderStyle: 'dashed',
-    },
-    emptyText: {
-      fontSize: 14,
-      fontWeight: '800',
-      color: '#666',
-      marginTop: 16,
-      letterSpacing: 0.5,
-    },
-    emptySubtext: {
-      fontSize: 12,
-      color: '#444',
-      marginTop: 4,
-      marginBottom: 20,
-    },
-    emptyButton: {
-      backgroundColor: '#121212',
-      borderWidth: 2,
-      borderColor: theme.primary,
-      paddingHorizontal: 20,
-      paddingVertical: 12,
-      borderRadius: 6,
-    },
-    emptyButtonText: {
-      fontSize: 12,
-      fontWeight: '800',
-      color: theme.primary,
+    sectionLink: {
+      fontSize: 10,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#DC2626',
       letterSpacing: 1,
     },
 
-    // Template Cards - Tactical Style
+    // --- Quick Actions ---
+    quickRow: {
+      flexDirection: 'row',
+      gap: 10,
+    },
+    quickCard: {
+      flex: 1,
+      backgroundColor: '#121214',
+      borderWidth: 1,
+      borderColor: '#27272a',
+      borderRadius: 12,
+      padding: 16,
+      alignItems: 'center',
+    },
+    quickIcon: {
+      width: 44,
+      height: 44,
+      borderRadius: 12,
+      backgroundColor: 'rgba(220, 38, 38, 0.08)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 10,
+    },
+    quickTitle: {
+      fontSize: 13,
+      fontWeight: '700',
+      fontFamily: 'SpaceGroteskBold',
+      color: '#fafafa',
+      letterSpacing: 0.3,
+    },
+    quickSub: {
+      fontSize: 10,
+      fontFamily: 'SpaceGrotesk',
+      color: '#71717a',
+      marginTop: 3,
+    },
+
+    // --- Empty State ---
+    emptyState: {
+      backgroundColor: '#121214',
+      borderWidth: 1,
+      borderColor: '#27272a',
+      borderRadius: 12,
+      padding: 32,
+      alignItems: 'center',
+    },
+    emptyTitle: {
+      fontSize: 11,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#71717a',
+      letterSpacing: 1.5,
+      marginTop: 12,
+    },
+    emptySub: {
+      fontSize: 11,
+      fontFamily: 'SpaceGrotesk',
+      color: '#52525b',
+      marginTop: 4,
+    },
+
+    // --- Template Cards ---
     templateCard: {
+      backgroundColor: '#121214',
+      borderWidth: 1,
+      borderColor: '#27272a',
+      borderRadius: 12,
+      overflow: 'hidden',
+      marginBottom: 8,
+    },
+    templateBar: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: 3,
+      height: '100%',
+      backgroundColor: '#27272a',
+    },
+    templateContent: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      backgroundColor: '#161616',
-      borderRadius: 4,
-      padding: 14,
-      marginBottom: 8,
-      borderLeftWidth: 4,
-      borderLeftColor: theme.primary,
+      padding: 12,
+      paddingLeft: 16,
     },
     templateLeft: {
       flexDirection: 'row',
       alignItems: 'center',
       flex: 1,
+      gap: 10,
     },
     templateIcon: {
-      width: 40,
-      height: 40,
-      borderRadius: 4,
-      backgroundColor: 'rgba(155, 44, 44, 0.15)',
-      borderWidth: 1,
-      borderColor: '#333',
+      width: 36,
+      height: 36,
+      borderRadius: 10,
+      backgroundColor: 'rgba(220, 38, 38, 0.08)',
       justifyContent: 'center',
       alignItems: 'center',
     },
     templateInitials: {
-      fontSize: 12,
-      fontWeight: '900',
-      color: theme.primary,
-      letterSpacing: 0.5,
+      fontSize: 11,
+      fontWeight: '700',
+      fontFamily: 'SpaceGroteskBold',
+      color: '#DC2626',
     },
     templateInfo: {
-      marginLeft: 12,
       flex: 1,
+      minWidth: 0,
     },
     templateName: {
       fontSize: 14,
-      fontWeight: '800',
-      color: '#fff',
-      letterSpacing: 0.3,
+      fontWeight: '700',
+      fontFamily: 'SpaceGroteskBold',
+      color: '#fafafa',
     },
     templateMeta: {
-      fontSize: 11,
-      color: '#666',
+      fontSize: 10,
+      fontFamily: 'SpaceGrotesk',
+      color: '#71717a',
       marginTop: 2,
-      fontWeight: '600',
     },
     templateActions: {
       flexDirection: 'row',
-      gap: 6,
+      gap: 4,
     },
-    templateButton: {
-      width: 36,
-      height: 36,
-      borderRadius: 4,
-      backgroundColor: 'rgba(155, 44, 44, 0.2)',
-      borderWidth: 1,
-      borderColor: theme.primary,
+    templateBtn: {
+      width: 32,
+      height: 32,
+      borderRadius: 8,
+      backgroundColor: '#18181b',
       justifyContent: 'center',
       alignItems: 'center',
     },
-    templateButtonEdit: {
-      backgroundColor: 'rgba(255, 255, 255, 0.05)',
-      borderColor: '#333',
-    },
-    templateButtonDelete: {
-      backgroundColor: 'rgba(255, 0, 60, 0.1)',
-      borderColor: '#ff003c',
+    templateBtnDelete: {
+      backgroundColor: 'rgba(220, 38, 38, 0.06)',
     },
 
-    // Session Cards - Tactical Style
+    // --- Session Cards ---
     sessionCard: {
+      backgroundColor: '#121214',
+      borderWidth: 1,
+      borderColor: '#27272a',
+      borderRadius: 12,
+      overflow: 'hidden',
+      marginBottom: 8,
+    },
+    sessionBar: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: 3,
+      height: '100%',
+      backgroundColor: '#DC2626',
+    },
+    sessionContent: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      backgroundColor: '#161616',
-      borderRadius: 4,
-      padding: 14,
-      marginBottom: 8,
-      borderLeftWidth: 3,
-      borderLeftColor: '#333',
+      padding: 12,
+      paddingLeft: 16,
     },
     sessionLeft: {
       flexDirection: 'row',
       alignItems: 'center',
       flex: 1,
+      gap: 10,
+      minWidth: 0,
     },
     sessionIcon: {
-      width: 36,
-      height: 36,
-      borderRadius: 4,
-      backgroundColor: 'rgba(155, 44, 44, 0.1)',
-      borderWidth: 1,
-      borderColor: '#333',
+      width: 32,
+      height: 32,
+      borderRadius: 10,
+      backgroundColor: 'rgba(220, 38, 38, 0.06)',
       justifyContent: 'center',
       alignItems: 'center',
     },
     sessionInfo: {
-      marginLeft: 12,
       flex: 1,
+      minWidth: 0,
     },
     sessionName: {
-      fontSize: 14,
-      fontWeight: '800',
-      color: '#fff',
-      letterSpacing: 0.3,
+      fontSize: 13,
+      fontWeight: '700',
+      fontFamily: 'SpaceGroteskBold',
+      color: '#fafafa',
     },
     sessionMeta: {
       fontSize: 10,
-      color: '#666',
+      fontFamily: 'SpaceGrotesk',
+      color: '#71717a',
       marginTop: 2,
-      fontWeight: '600',
-      letterSpacing: 0.5,
+      letterSpacing: 0.3,
     },
     sessionRight: {
       alignItems: 'flex-end',
     },
     sessionVolume: {
-      fontSize: 14,
-      fontWeight: '900',
-      color: theme.primary,
-      letterSpacing: -0.5,
+      fontSize: 13,
+      fontWeight: '700',
+      fontFamily: 'SpaceGroteskBold',
+      color: '#DC2626',
+      letterSpacing: -0.3,
     },
     sessionVolumeLabel: {
-      fontSize: 9,
-      color: '#555',
-      fontWeight: '700',
+      fontSize: 8,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#71717a',
       letterSpacing: 1,
       marginTop: 1,
     },

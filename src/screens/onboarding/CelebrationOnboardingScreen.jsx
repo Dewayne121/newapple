@@ -264,8 +264,8 @@ export default function CelebrationOnboardingScreen({ navigation }) {
             activeOpacity={0.85}
             style={[styles.startButton, { backgroundColor: theme.primary }]}
           >
-            <Ionicons name="play" size={22} color={isDark ? theme.bgDeep : '#fff'} />
-            <Text style={[styles.startButtonText, { color: isDark ? theme.bgDeep : '#fff' }]}>
+            <Ionicons name="play" size={22} color={isDark ? theme.bgDeep : '#fafafa'} />
+            <Text style={[styles.startButtonText, { color: isDark ? theme.bgDeep : '#fafafa' }]}>
               Start Your Journey
             </Text>
           </TouchableOpacity>
@@ -298,11 +298,11 @@ const styles = StyleSheet.create({
   },
   confettiOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.1)',
+    backgroundColor: '#09090b88',
   },
   confettiPiece: {
     position: 'absolute',
-    borderRadius: 3,
+    borderRadius: 12,
   },
   content: {
     flex: 1,
@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
   summaryIconContainer: {
     width: 42,
     height: 42,
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },

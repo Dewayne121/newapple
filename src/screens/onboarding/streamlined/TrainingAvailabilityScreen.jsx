@@ -148,16 +148,14 @@ const TrainingAvailabilityScreen = () => {
 const styles = StyleSheet.create({
   contextBox: {
     padding: Spacing.md,
-    borderRadius: 6,
+    borderRadius: 12,
     borderWidth: 1,
-    borderTopWidth: 2,
-    borderLeftWidth: 4,
-    borderColor: '#333',
-    backgroundColor: '#161616',
+    backgroundColor: '#09090b',
     marginTop: Spacing.md,
   },
   contextBoxTitle: {
     ...Typography.body,
+    fontFamily: 'SpaceGroteskBold',
     fontWeight: '900',
     fontSize: 14,
     letterSpacing: 0.5,

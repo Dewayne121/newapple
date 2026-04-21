@@ -231,7 +231,7 @@ const TOKEN_KEY = 'unyield_auth_token';
 // Upload timeout in milliseconds (tunnel/mobile uploads can exceed 2 minutes).
 const UPLOAD_TIMEOUT = Number(process.env.EXPO_PUBLIC_UPLOAD_TIMEOUT_MS || 600000); // 10 minutes
 const UPLOAD_RETRIES = Number(process.env.EXPO_PUBLIC_UPLOAD_RETRIES || 2);
-const BLUR_TIMEOUT = 300000; // 5 minutes
+
 
 class ApiService {
   constructor() {
@@ -498,6 +498,17 @@ class ApiService {
         username: looksLikeEmail ? undefined : normalizedIdentifier,
         password,
       }),
+    });
+    if (response.data?.token) {
+      await this.setToken(response.data.token);
+    }
+    return response;
+  }
+
+  async signInWithApple(appleData) {
+    const response = await this.request('/api/auth/apple', {
+      method: 'POST',
+      body: JSON.stringify(appleData),
     });
     if (response.data?.token) {
       await this.setToken(response.data.token);
@@ -1109,47 +1120,16 @@ class ApiService {
     });
   }
 
-  // Blur faces in video using the Python faceblurapi service
+  // Blur faces in video — DISABLED
   async blurVideo(videoUrl) {
-    console.log('[API] blurVideo called with videoUrl:', videoUrl?.substring(0, 50) + '...');
-    if (!videoUrl) {
-      return { success: false, error: 'videoUrl is required' };
-    }
-
-    try {
-      const data = await this.request('/api/videos/blur', {
-        method: 'POST',
-        body: JSON.stringify({ videoUrl }),
-        timeout: BLUR_TIMEOUT,
-        // Blur is expensive/non-idempotent; avoid automatic retries that can duplicate processing.
-        retries: 0,
-      });
-
-      console.log('[API] blurVideo response:', data.success ? 'success' : data.error);
-      return data;
-    } catch (error) {
-      console.error('[API] blurVideo error:', error);
-      return { success: false, error: error.message || 'Face blur service unavailable' };
-    }
+    console.log('[API] blurVideo is disabled');
+    return { success: false, error: 'Face blur has been disabled' };
   }
 
-  // Detect faces in video without blurring (for testing)
+  // Detect faces in video — DISABLED
   async detectFaces(videoUrl) {
-    const FACE_BLUR_API_URL = process.env.EXPO_PUBLIC_FACE_BLUR_API_URL || 'https://unyield-faceblur-api-production.up.railway.app';
-
-    try {
-      const response = await fetch(`${FACE_BLUR_API_URL}/detect`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ videoUrl }),
-      });
-
-      return await response.json();
-    } catch (error) {
-      return { success: false, error: error.message };
-    }
+    console.log('[API] detectFaces is disabled');
+    return { success: false, error: 'Face detection has been disabled' };
   }
 }
 

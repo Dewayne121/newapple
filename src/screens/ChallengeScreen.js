@@ -50,7 +50,7 @@ const CountdownTimer = ({ endDate }) => {
 
   return (
     <View style={[styles.countdownContainer, timeLeft?.urgent && styles.countdownUrgent]}>
-      <Ionicons name="time" size={14} color={timeLeft?.urgent ? '#ff003c' : '#d4af37'} />
+      <Ionicons name="time" size={14} color={timeLeft?.urgent ? '#ff2d55' : '#d4af37'} />
       <Text style={[styles.countdownText, timeLeft?.urgent && styles.countdownTextUrgent]}>
         {timeLeft?.text}
       </Text>
@@ -253,7 +253,7 @@ const getRankColor = (rank) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#050505',
+    backgroundColor: '#09090b',
   },
   scrollView: {
     flex: 1,
@@ -263,8 +263,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#121212',
-    backgroundColor: '#0a0a0a',
+    borderBottomColor: '#121214',
+    backgroundColor: '#121214',
   },
   headerTopRow: {
     flexDirection: 'row',
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#666666',
+    color: '#a1a1aa',
     letterSpacing: 1.5,
     marginTop: 2,
   },
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
   headerStatLabel: {
     fontSize: 9,
     fontWeight: '800',
-    color: '#666666',
+    color: '#a1a1aa',
     letterSpacing: 1.5,
   },
   headerStatValue: {
@@ -324,9 +324,9 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 10,
     borderRadius: 12,
-    backgroundColor: '#161616',
+    backgroundColor: '#121214',
     borderWidth: 2,
-    borderColor: '#1a1a1a',
+    borderColor: '#1e1e20',
     alignItems: 'center',
   },
   typeButtonActive: {
@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
   typeButtonText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#666666',
+    color: '#a1a1aa',
     letterSpacing: 1,
   },
   typeButtonTextActive: {
@@ -405,7 +405,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   countdownTextUrgent: {
-    color: '#ff003c',
+    color: '#ff2d55',
     fontWeight: '700',
   },
   actionCard: {

@@ -76,7 +76,7 @@ const OnboardingEntryScreen = () => {
     <View style={[styles.container, { backgroundColor: theme.bgDeep }]}>
       {/* Background gradient overlay */}
       <LinearGradient
-        colors={['rgba(155, 44, 44, 0.15)', 'transparent']}
+        colors={['rgba(255, 45, 85, 0.15)', 'transparent']}
         style={StyleSheet.absoluteFill}
         pointerEvents="none"
       />
@@ -199,6 +199,7 @@ const styles = StyleSheet.create({
   heroTitle: {
     ...Typography.display,
     fontSize: 42,
+    fontFamily: 'SpaceGroteskBold',
     fontWeight: '900',
     textAlign: 'center',
     lineHeight: 52,
@@ -207,6 +208,7 @@ const styles = StyleSheet.create({
   heroSubtitle: {
     ...Typography.h4,
     fontSize: 18,
+    fontFamily: 'SpaceGroteskSemiBold',
     fontWeight: '600',
     textAlign: 'center',
     marginTop: Spacing.sm,
@@ -224,16 +226,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    borderRadius: 4,
+    borderRadius: 12,
     borderWidth: 1,
-    borderTopWidth: 2,
-    borderLeftWidth: 3,
-    borderColor: '#333',
-    backgroundColor: '#161616',
+    backgroundColor: '#09090b',
     gap: Spacing.xs,
   },
   featureText: {
     ...Typography.bodySmall,
+    fontFamily: 'SpaceGroteskSemiBold',
     fontWeight: '600',
     fontSize: 13,
   },
@@ -245,14 +245,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: Spacing.lg,
-    borderRadius: 4,
-    borderTopWidth: 2,
-    borderLeftWidth: 3,
+    borderRadius: 14,
     gap: Spacing.sm,
     overflow: 'hidden',
   },
   primaryButtonText: {
     ...Typography.body,
+    fontFamily: 'SpaceGroteskBold',
     fontWeight: '900',
     fontSize: 16,
     letterSpacing: 1,
@@ -262,15 +261,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: Spacing.lg,
-    borderRadius: 4,
+    borderRadius: 14,
     borderWidth: 1,
-    borderTopWidth: 2,
-    borderLeftWidth: 3,
-    borderColor: '#333',
-    backgroundColor: '#161616',
+    backgroundColor: '#09090b',
   },
   secondaryButtonText: {
     ...Typography.body,
+    fontFamily: 'SpaceGroteskSemiBold',
     fontWeight: '800',
     fontSize: 14,
     letterSpacing: 1,

@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     maxWidth: 420,
-    backgroundColor: '#161616',
+    backgroundColor: '#121214',
     borderRadius: 24,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
@@ -277,7 +277,8 @@ const styles = StyleSheet.create({
   topicTitle: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#666',
+    fontFamily: 'SpaceGroteskSemiBold',
+    color: '#a1a1aa',
     letterSpacing: 2,
   },
   skipBtn: {
@@ -287,7 +288,8 @@ const styles = StyleSheet.create({
   skipText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#666',
+    fontFamily: 'SpaceGroteskSemiBold',
+    color: '#a1a1aa',
     letterSpacing: 1,
   },
   progressContainer: {
@@ -303,7 +305,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   progressDotActive: {
-    backgroundColor: '#9b2c2c',
+    backgroundColor: '#ff2d55',
     width: 24,
   },
   content: {

@@ -6,6 +6,7 @@ import { useTheme } from '../../../context/ThemeContext';
 // Screen imports
 import OnboardingEntryScreen from './OnboardingEntryScreen';
 import ProfileSetupScreen from './ProfileSetupScreen';
+import GenderSelectionScreen from './GenderSelectionScreen';
 import GoalSelectionScreen from './GoalSelectionScreen';
 import ExperienceLevelScreen from './ExperienceLevelScreen';
 import BodyProfileScreen from './BodyProfileScreen';
@@ -36,6 +37,8 @@ const StreamlinedOnboardingNavigator = ({ navigation }) => {
         return <OnboardingEntryScreen />;
       case STEPS.PROFILE:
         return <ProfileSetupScreen />;
+      case STEPS.GENDER:
+        return <GenderSelectionScreen />;
       case STEPS.GOAL:
         return <GoalSelectionScreen />;
       case STEPS.EXPERIENCE:

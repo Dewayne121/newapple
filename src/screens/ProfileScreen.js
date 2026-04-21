@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Modal, ActivityIndicator, TextInput, Platform, ActionSheetIOS, Image, Share } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Modal, ActivityIndicator, TextInput, Platform, ActionSheetIOS, Image, Share, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
@@ -584,15 +584,13 @@ export default function ProfileScreen({ route, navigation }) {
   };
 
   const handleDeleteAccount = () => {
-    showAlert({
-      title: 'DELETE ACCOUNT',
-      message: 'THIS IS PERMANENT. ALL DATA WILL BE LOST.',
-      icon: 'warning',
-      buttons: [
+    setShowSettingsModal(false);
+    setTimeout(() => {
+      Alert.alert('DELETE ACCOUNT', 'THIS IS PERMANENT. ALL DATA WILL BE LOST.', [
         { text: 'CANCEL', style: 'cancel' },
-        { text: 'DELETE', style: 'destructive', onPress: async () => { await deleteAccount(); }}
-      ]
-    });
+        { text: 'DELETE', style: 'destructive', onPress: () => deleteAccount() },
+      ]);
+    }, 400);
   };
 
   const [showGoalModal, setShowGoalModal] = useState(false);
@@ -687,7 +685,7 @@ export default function ProfileScreen({ route, navigation }) {
   if (loadingProfile || !viewedUser) {
     return (
       <View style={[styles.container, styles.loadingContainer]}>
-        <ActivityIndicator size="large" color="#b91c1c" />
+        <ActivityIndicator size="large" color="#ff2d55" />
       </View>
     );
   }
@@ -707,7 +705,7 @@ export default function ProfileScreen({ route, navigation }) {
 
   const userAccolades = viewedUser?.accolades || [];
   const accoladeConfig = {
-    admin: { label: 'ADMIN', color: '#9b2c2c', icon: 'shield' },
+    admin: { label: 'ADMIN', color: '#ff2d55', icon: 'shield' },
     community_support: { label: 'SUPPORT', color: '#3B82F6', icon: 'people' },
     beta: { label: 'BETA TESTER', color: '#8B5CF6', icon: 'flask' },
     staff: { label: 'STAFF', color: '#10B981', icon: 'construct' },
@@ -726,15 +724,15 @@ export default function ProfileScreen({ route, navigation }) {
         rightAction={!isOwnProfile && isAdmin ? (
           <View style={styles.adminActions}>
             <TouchableOpacity onPress={handleAdminEditProfile} style={styles.adminActionBtn} activeOpacity={0.8}>
-              <Ionicons name="create-outline" size={20} color="#fff" />
+              <Ionicons name="create-outline" size={20} color="#fafafa" />
             </TouchableOpacity>
             <TouchableOpacity onPress={handleManageAccolades} style={styles.adminActionBtn} activeOpacity={0.8}>
-              <Ionicons name="shield-checkmark" size={20} color="#b91c1c" />
+              <Ionicons name="shield-checkmark" size={20} color="#ff2d55" />
             </TouchableOpacity>
           </View>
         ) : isOwnProfile ? (
           <TouchableOpacity onPress={() => setShowSettingsModal(true)} style={styles.iconBtn} activeOpacity={0.8}>
-            <Ionicons name="settings-sharp" size={20} color="#fff" />
+            <Ionicons name="settings-sharp" size={20} color="#fafafa" />
           </TouchableOpacity>
         ) : null}
       />
@@ -757,7 +755,7 @@ export default function ProfileScreen({ route, navigation }) {
             <Image source={userTier.image} style={styles.tierBadgeImage} resizeMode="contain" />
             {isOwnProfile && (
               <View style={styles.cameraBadge}>
-                <Ionicons name="camera" size={14} color="#fff" />
+                <Ionicons name="camera" size={14} color="#fafafa" />
               </View>
             )}
           </TouchableOpacity>
@@ -829,7 +827,7 @@ export default function ProfileScreen({ route, navigation }) {
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={[styles.statVal, { color: '#b91c1c' }]}>{formatPoints(points)}</Text>
+            <Text style={[styles.statVal, { color: '#ff2d55' }]}>{formatPoints(points)}</Text>
             <Text style={styles.statLabel}>MERIT</Text>
           </View>
           <View style={styles.statDivider} />
@@ -855,7 +853,7 @@ export default function ProfileScreen({ route, navigation }) {
              activeOpacity={isOwnProfile ? 0.8 : 1}
            >
               <View style={styles.infoIconContainer}>
-                <Ionicons name="location" size={18} color="#b91c1c" />
+                <Ionicons name="location" size={18} color="#ff2d55" />
               </View>
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>REGION</Text>
@@ -869,7 +867,7 @@ export default function ProfileScreen({ route, navigation }) {
              activeOpacity={isOwnProfile ? 0.8 : 1}
            >
               <View style={styles.infoIconContainer}>
-                <Ionicons name="flag" size={18} color="#b91c1c" />
+                <Ionicons name="flag" size={18} color="#ff2d55" />
               </View>
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>OBJECTIVE</Text>
@@ -879,7 +877,7 @@ export default function ProfileScreen({ route, navigation }) {
 
            <View style={styles.infoCard}>
               <View style={styles.infoIconContainer}>
-                <Ionicons name="barbell" size={18} color="#b91c1c" />
+                <Ionicons name="barbell" size={18} color="#ff2d55" />
               </View>
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>WEIGHT</Text>
@@ -896,7 +894,7 @@ export default function ProfileScreen({ route, navigation }) {
 
            <View style={styles.infoCard}>
               <View style={styles.infoIconContainer}>
-                <Ionicons name="resize" size={18} color="#b91c1c" />
+                <Ionicons name="resize" size={18} color="#ff2d55" />
               </View>
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>HEIGHT</Text>
@@ -936,7 +934,7 @@ export default function ProfileScreen({ route, navigation }) {
                         <Image source={{ uri: thumbnailUri }} style={styles.videoThumbnailImage} resizeMode="cover" />
                       ) : (
                         <View style={styles.videoThumbnailFallback}>
-                          <Ionicons name="videocam" size={24} color="#333" />
+                          <Ionicons name="videocam" size={24} color="#52525b" />
                         </View>
                       )}
                       <View style={styles.videoOverlay}>
@@ -944,7 +942,7 @@ export default function ProfileScreen({ route, navigation }) {
                             {video.approved ? (
                                 <Ionicons name="checkmark-sharp" size={14} color="#10B981" />
                             ) : video.status === 'rejected' ? (
-                                <Ionicons name="close-sharp" size={14} color="#ff003c" />
+                                <Ionicons name="close-sharp" size={14} color="#ff2d55" />
                             ) : (
                                 <Ionicons name="time-sharp" size={14} color="#F59E0B" />
                             )}
@@ -964,7 +962,7 @@ export default function ProfileScreen({ route, navigation }) {
                                )}
                              {video.blurStatus === 'failed' && (
                                <>
-                                   <Ionicons name="alert-circle-sharp" size={14} color="#ff003c" />
+                                   <Ionicons name="alert-circle-sharp" size={14} color="#ff2d55" />
                                  </>
                                )}
                            </View>
@@ -979,7 +977,7 @@ export default function ProfileScreen({ route, navigation }) {
                           }}
                           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                         >
-                          <Ionicons name="trash" size={14} color="#ff003c" />
+                          <Ionicons name="trash" size={14} color="#ff2d55" />
                         </TouchableOpacity>
                       )}
                     </View>
@@ -1005,13 +1003,13 @@ export default function ProfileScreen({ route, navigation }) {
             <ScrollView style={styles.settingsScroll} showsVerticalScrollIndicator={false}>
               {(userAccolades.includes('admin') || userAccolades.includes('community_support')) && (
                   <TouchableOpacity style={styles.settingItem} activeOpacity={0.8} onPress={() => { setShowSettingsModal(false); navigation.navigate('AdminDashboard'); }}>
-                      <Ionicons name="shield" size={20} color="#b91c1c" />
-                      <Text style={[styles.settingText, { color: '#b91c1c' }]}>ADMIN PANEL</Text>
+                      <Ionicons name="shield" size={20} color="#ff2d55" />
+                      <Text style={[styles.settingText, { color: '#ff2d55' }]}>ADMIN PANEL</Text>
                   </TouchableOpacity>
               )}
 
               <TouchableOpacity style={styles.settingItem} activeOpacity={0.8} onPress={handleEditProfile}>
-                 <Ionicons name="person" size={20} color="#fff" />
+                 <Ionicons name="person" size={20} color="#fafafa" />
                  <Text style={styles.settingText}>EDIT PROFILE</Text>
               </TouchableOpacity>
 
@@ -1026,10 +1024,10 @@ export default function ProfileScreen({ route, navigation }) {
                     <Ionicons
                       name="ticket"
                       size={20}
-                      color={inviteLimits.isUnlimitedInvites || inviteLimits.remainingInviteCodes > 0 ? '#fff' : '#333'}
+                      color={inviteLimits.isUnlimitedInvites || inviteLimits.remainingInviteCodes > 0 ? '#fafafa' : '#27272a'}
                     />
                     <View style={styles.settingTextWrap}>
-                      <Text style={[styles.settingText, (!inviteLimits.isUnlimitedInvites && inviteLimits.remainingInviteCodes <= 0) && { color: '#666' }]}>
+                      <Text style={[styles.settingText, (!inviteLimits.isUnlimitedInvites && inviteLimits.remainingInviteCodes <= 0) && { color: '#a1a1aa' }]}>
                         GENERATE INVITE
                       </Text>
                       <Text style={styles.settingSubText}>
@@ -1039,19 +1037,19 @@ export default function ProfileScreen({ route, navigation }) {
                       </Text>
                     </View>
                     {generatingInviteCode ? (
-                      <ActivityIndicator color="#b91c1c" />
+                      <ActivityIndicator color="#ff2d55" />
                     ) : (
                       <Ionicons
                         name="add-sharp"
                         size={24}
-                        color={inviteLimits.isUnlimitedInvites || inviteLimits.remainingInviteCodes > 0 ? '#b91c1c' : '#333'}
+                        color={inviteLimits.isUnlimitedInvites || inviteLimits.remainingInviteCodes > 0 ? '#ff2d55' : '#27272a'}
                       />
                     )}
                   </TouchableOpacity>
 
                   <View style={styles.inviteCodesList}>
                     {loadingInviteCodes ? (
-                      <ActivityIndicator color="#b91c1c" />
+                      <ActivityIndicator color="#ff2d55" />
                     ) : inviteCodes.length > 0 ? (
                       inviteCodes.map((invite) => (
                         <View key={invite.id} style={styles.inviteCodeRow}>
@@ -1067,7 +1065,7 @@ export default function ProfileScreen({ route, navigation }) {
                             style={styles.inviteShareButton}
                             activeOpacity={0.8}
                           >
-                            <Ionicons name="share-social" size={16} color={invite.isUsed ? '#333' : '#fff'} />
+                            <Ionicons name="share-social" size={16} color={invite.isUsed ? '#27272a' : '#fafafa'} />
                           </TouchableOpacity>
                         </View>
                       ))
@@ -1080,13 +1078,13 @@ export default function ProfileScreen({ route, navigation }) {
 
               {viewedUser?.provider === 'email' && (
               <TouchableOpacity style={styles.settingItem} activeOpacity={0.8} onPress={handleChangePassword}>
-                 <Ionicons name="lock-closed" size={20} color="#fff" />
+                 <Ionicons name="lock-closed" size={20} color="#fafafa" />
                  <Text style={styles.settingText}>CHANGE PASSWORD</Text>
               </TouchableOpacity>
               )}
 
               <TouchableOpacity style={styles.settingItem} activeOpacity={0.8} onPress={toggleWeightUnit}>
-                 <Ionicons name="scale" size={20} color="#fff" />
+                 <Ionicons name="scale" size={20} color="#fafafa" />
                  <Text style={styles.settingText}>UNIT: {weightUnit.toUpperCase()}</Text>
               </TouchableOpacity>
 
@@ -1095,7 +1093,7 @@ export default function ProfileScreen({ route, navigation }) {
                 activeOpacity={0.8}
                 onPress={() => { setShowSettingsModal(false); navigation.navigate('Notifications'); }}
               >
-                 <Ionicons name="notifications" size={20} color="#fff" />
+                 <Ionicons name="notifications" size={20} color="#fafafa" />
                  <Text style={styles.settingText}>NOTIFICATION CENTER</Text>
               </TouchableOpacity>
 
@@ -1104,7 +1102,7 @@ export default function ProfileScreen({ route, navigation }) {
                 activeOpacity={0.8}
                 onPress={() => { setShowSettingsModal(false); navigation.navigate('NotificationSettings'); }}
               >
-                 <Ionicons name="options" size={20} color="#fff" />
+                 <Ionicons name="options" size={20} color="#fafafa" />
                  <Text style={styles.settingText}>NOTIFICATION SETTINGS</Text>
               </TouchableOpacity>
 
@@ -1113,28 +1111,28 @@ export default function ProfileScreen({ route, navigation }) {
                 activeOpacity={0.8}
                 onPress={() => { setShowSettingsModal(false); setShowTutorial(true); }}
               >
-                 <Ionicons name="help-circle" size={20} color="#fff" />
+                 <Ionicons name="help-circle" size={20} color="#fafafa" />
                  <Text style={styles.settingText}>TUTORIAL</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.settingItem} activeOpacity={0.8} onPress={handleClearLocalVideos}>
-                 <Ionicons name="trash" size={20} color="#fff" />
+                 <Ionicons name="trash" size={20} color="#fafafa" />
                  <Text style={styles.settingText}>CLEAR CACHE</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.settingItem} activeOpacity={0.8} onPress={() => navigation.navigate('DebugNotifications')}>
-                 <Ionicons name="bug" size={20} color="#8b0000" />
-                 <Text style={[styles.settingText, { color: '#8b0000' }]}>DEBUG NOTIFICATIONS</Text>
+                 <Ionicons name="bug" size={20} color="#ff2d55" />
+                 <Text style={[styles.settingText, { color: '#ff2d55' }]}>DEBUG NOTIFICATIONS</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.settingItem} activeOpacity={0.8} onPress={signOut}>
-                 <Ionicons name="log-out" size={20} color="#ff0000" />
-                 <Text style={[styles.settingText, { color: '#ff0000' }]}>SIGN OUT</Text>
+                 <Ionicons name="log-out" size={20} color="#ff2d55" />
+                 <Text style={[styles.settingText, { color: '#ff2d55' }]}>SIGN OUT</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={[styles.settingItem, { borderBottomWidth: 0 }]} activeOpacity={0.8} onPress={handleDeleteAccount}>
-                 <Ionicons name="warning" size={20} color="#666" />
-                 <Text style={[styles.settingText, { color: '#666' }]}>DELETE ACCOUNT</Text>
+                 <Ionicons name="warning" size={20} color="#a1a1aa" />
+                 <Text style={[styles.settingText, { color: '#a1a1aa' }]}>DELETE ACCOUNT</Text>
               </TouchableOpacity>
             </ScrollView>
           </TouchableOpacity>
@@ -1151,7 +1149,7 @@ export default function ProfileScreen({ route, navigation }) {
                 </TouchableOpacity>
                 <Text style={styles.editModalTitle}>EDIT PROFILE</Text>
                 <TouchableOpacity onPress={handleSaveProfile} disabled={savingProfile} activeOpacity={0.8}>
-                    {savingProfile ? <ActivityIndicator color="#b91c1c" /> : <Text style={styles.editModalSaveText}>SAVE</Text>}
+                    {savingProfile ? <ActivityIndicator color="#ff2d55" /> : <Text style={styles.editModalSaveText}>SAVE</Text>}
                 </TouchableOpacity>
             </View>
             <ScrollView style={styles.editModalScroll} showsVerticalScrollIndicator={false}>
@@ -1159,11 +1157,11 @@ export default function ProfileScreen({ route, navigation }) {
                     <Text style={styles.cardLabel}>PUBLIC INFO</Text>
                     <View style={styles.inputGroup}>
                         <Text style={styles.inputLabel}>DISPLAY NAME</Text>
-                        <TextInput style={styles.modernInput} value={editName} onChangeText={setEditName} placeholder="ENTER NAME" placeholderTextColor="#555" />
+                        <TextInput style={styles.modernInput} value={editName} onChangeText={setEditName} placeholder="ENTER NAME" placeholderTextColor="#a1a1aa" />
                     </View>
                     <View style={styles.inputGroup}>
                         <Text style={styles.inputLabel}>BIO</Text>
-                        <TextInput style={[styles.modernInput, styles.textArea]} value={editBio} onChangeText={setEditBio} placeholder="ENTER BIO" placeholderTextColor="#555" multiline />
+                        <TextInput style={[styles.modernInput, styles.textArea]} value={editBio} onChangeText={setEditBio} placeholder="ENTER BIO" placeholderTextColor="#a1a1aa" multiline />
                     </View>
                 </View>
 
@@ -1172,11 +1170,11 @@ export default function ProfileScreen({ route, navigation }) {
                     <View style={styles.statsRow}>
                         <View style={styles.statInputWrap}>
                             <Text style={styles.statInputLabel}>WEIGHT ({weightUnit.toUpperCase()})</Text>
-                            <TextInput style={styles.statInput} value={editWeight} onChangeText={setEditWeight} keyboardType="decimal-pad" placeholder="--" placeholderTextColor="#555" />
+                            <TextInput style={styles.statInput} value={editWeight} onChangeText={setEditWeight} keyboardType="decimal-pad" placeholder="--" placeholderTextColor="#a1a1aa" />
                         </View>
                         <View style={styles.statInputWrap}>
                             <Text style={styles.statInputLabel}>HEIGHT ({(heightUnit || 'cm').toUpperCase()})</Text>
-                            <TextInput style={styles.statInput} value={editHeight} onChangeText={setEditHeight} keyboardType="decimal-pad" placeholder="--" placeholderTextColor="#555" />
+                            <TextInput style={styles.statInput} value={editHeight} onChangeText={setEditHeight} keyboardType="decimal-pad" placeholder="--" placeholderTextColor="#a1a1aa" />
                         </View>
                     </View>
                 </View>
@@ -1195,7 +1193,7 @@ export default function ProfileScreen({ route, navigation }) {
               </TouchableOpacity>
               <Text style={styles.editModalTitle}>CHANGE PASSWORD</Text>
               <TouchableOpacity onPress={handleSavePassword} disabled={changingPassword} activeOpacity={0.8}>
-                {changingPassword ? <ActivityIndicator color="#b91c1c" /> : <Text style={styles.editModalSaveText}>SAVE</Text>}
+                {changingPassword ? <ActivityIndicator color="#ff2d55" /> : <Text style={styles.editModalSaveText}>SAVE</Text>}
               </TouchableOpacity>
             </View>
 
@@ -1205,7 +1203,7 @@ export default function ProfileScreen({ route, navigation }) {
 
                 {passwordError ? (
                   <View style={styles.errorContainer}>
-                    <Ionicons name="alert" size={16} color="#ff0000" />
+                    <Ionicons name="alert" size={16} color="#ff2d55" />
                     <Text style={styles.errorText}>{passwordError.toUpperCase()}</Text>
                   </View>
                 ) : null}
@@ -1218,13 +1216,13 @@ export default function ProfileScreen({ route, navigation }) {
                       value={currentPassword}
                       onChangeText={setCurrentPassword}
                       placeholder="ENTER CURRENT PASSWORD"
-                      placeholderTextColor="#555"
+                      placeholderTextColor="#a1a1aa"
                       secureTextEntry={!showPasswords}
                       autoCapitalize="none"
                       autoCorrect={false}
                     />
                     <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPasswords(!showPasswords)}>
-                      <Ionicons name={showPasswords ? "eye-off" : "eye"} size={20} color="#666" />
+                      <Ionicons name={showPasswords ? "eye-off" : "eye"} size={20} color="#a1a1aa" />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -1237,7 +1235,7 @@ export default function ProfileScreen({ route, navigation }) {
                       value={newPassword}
                       onChangeText={setNewPassword}
                       placeholder="ENTER NEW PASSWORD"
-                      placeholderTextColor="#555"
+                      placeholderTextColor="#a1a1aa"
                       secureTextEntry={!showPasswords}
                       autoCapitalize="none"
                       autoCorrect={false}
@@ -1253,7 +1251,7 @@ export default function ProfileScreen({ route, navigation }) {
                       value={confirmPassword}
                       onChangeText={setConfirmPassword}
                       placeholder="RE-ENTER NEW PASSWORD"
-                      placeholderTextColor="#555"
+                      placeholderTextColor="#a1a1aa"
                       secureTextEntry={!showPasswords}
                       autoCapitalize="none"
                       autoCorrect={false}
@@ -1262,7 +1260,7 @@ export default function ProfileScreen({ route, navigation }) {
                 </View>
 
                 <View style={styles.infoBox}>
-                  <Ionicons name="information-circle" size={16} color="#666" />
+                  <Ionicons name="information-circle" size={16} color="#a1a1aa" />
                   <Text style={styles.infoText}>MINIMUM 6 CHARACTERS REQUIRED</Text>
                 </View>
               </View>
@@ -1282,7 +1280,7 @@ export default function ProfileScreen({ route, navigation }) {
                 <Text style={[styles.selectionText, viewedUser?.goal === goal && styles.selectionTextActive]}>
                   {goal.toUpperCase()}
                 </Text>
-                {viewedUser?.goal === goal && <Ionicons name="checkmark-sharp" size={20} color="#b91c1c" />}
+                {viewedUser?.goal === goal && <Ionicons name="checkmark-sharp" size={20} color="#ff2d55" />}
               </TouchableOpacity>
             ))}
           </View>
@@ -1300,7 +1298,7 @@ export default function ProfileScreen({ route, navigation }) {
                 <Text style={[styles.selectionText, viewedUser?.region === region && styles.selectionTextActive]}>
                   {region.toUpperCase()}
                 </Text>
-                {viewedUser?.region === region && <Ionicons name="checkmark-sharp" size={20} color="#b91c1c" />}
+                {viewedUser?.region === region && <Ionicons name="checkmark-sharp" size={20} color="#ff2d55" />}
               </TouchableOpacity>
             ))}
           </View>
@@ -1311,7 +1309,7 @@ export default function ProfileScreen({ route, navigation }) {
       <Modal visible={selectedVideo !== null} animationType="fade" onRequestClose={() => setSelectedVideo(null)}>
         <View style={styles.videoModalContainer}>
           <TouchableOpacity style={styles.videoModalClose} onPress={() => setSelectedVideo(null)}>
-            <Ionicons name="close" size={32} color="#fff" />
+            <Ionicons name="close" size={32} color="#fafafa" />
           </TouchableOpacity>
           {selectedVideo && (
             <Video source={{ uri: selectedVideo.uri }} style={styles.fullScreenVideo} useNativeControls resizeMode="contain" shouldPlay />
@@ -1324,7 +1322,7 @@ export default function ProfileScreen({ route, navigation }) {
         <Modal visible={uploadingProfilePicture} transparent animationType="fade">
           <View style={styles.uploadLoadingOverlay}>
             <View style={styles.uploadLoadingCard}>
-              <ActivityIndicator size="large" color="#b91c1c" />
+              <ActivityIndicator size="large" color="#ff2d55" />
               <Text style={styles.uploadLoadingText}>UPLOADING IMAGE...</Text>
             </View>
           </View>
@@ -1360,12 +1358,12 @@ export default function ProfileScreen({ route, navigation }) {
 }
 
 // -------------------------------------------------------------
-// STYLESHEET: Gritty Gym Industrial HUD
+// STYLESHEET: Cyber Neon Theme
 // -------------------------------------------------------------
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#050505' // Abyss black
+    backgroundColor: '#09090b'
   },
   loadingContainer: {
     justifyContent: 'center',
@@ -1377,9 +1375,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 12,
-    backgroundColor: '#161616',
+    backgroundColor: '#121214',
     borderWidth: 2,
-    borderColor: '#333333'
+    borderColor: '#27272a'
   },
   adminActions: {
     flexDirection: 'row',
@@ -1391,9 +1389,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 12,
-    backgroundColor: '#161616',
+    backgroundColor: '#121214',
     borderWidth: 2,
-    borderColor: '#333333'
+    borderColor: '#27272a'
   },
   scroll: {
     flex: 1
@@ -1416,10 +1414,10 @@ const styles = StyleSheet.create({
   avatar: {
     width: 100,
     height: 100,
-    borderRadius: 20, // Smooth armor curve
-    borderWidth: 3,
-    borderColor: '#333333',
-    backgroundColor: '#121212'
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#27272a',
+    backgroundColor: '#18181b'
   },
   avatarPlaceholder: {
     justifyContent: 'center',
@@ -1428,7 +1426,8 @@ const styles = StyleSheet.create({
   avatarInitials: {
     fontSize: 36,
     fontWeight: '900',
-    color: '#666666',
+    fontFamily: 'SpaceGroteskBold',
+    color: '#a1a1aa',
     letterSpacing: 2
   },
   tierBadgeImage: {
@@ -1438,34 +1437,36 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    borderWidth: 3,
-    borderColor: '#050505',
-    backgroundColor: '#121212'
+    borderWidth: 2,
+    borderColor: '#09090b',
+    backgroundColor: '#18181b'
   },
   cameraBadge: {
     position: 'absolute',
     bottom: -8,
     left: -8,
-    backgroundColor: '#b91c1c',
+    backgroundColor: '#ff2d55',
     width: 36,
     height: 36,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#050505'
+    borderWidth: 2,
+    borderColor: '#09090b'
   },
   userName: {
     fontSize: 24,
     fontWeight: '900',
-    color: '#ffffff',
+    fontFamily: 'SpaceGroteskBold',
+    color: '#fafafa',
     letterSpacing: 1,
     marginBottom: 4
   },
   userHandle: {
     fontSize: 11,
-    color: '#888888',
+    color: '#a1a1aa',
     fontWeight: '800',
+    fontFamily: 'SpaceGroteskSemiBold',
     letterSpacing: 2,
     textTransform: 'uppercase',
   },
@@ -1478,7 +1479,8 @@ const styles = StyleSheet.create({
   bioText: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#888888',
+    fontFamily: 'SpaceGroteskSemiBold',
+    color: '#a1a1aa',
     textAlign: 'center',
     lineHeight: 18,
     letterSpacing: 1
@@ -1486,7 +1488,8 @@ const styles = StyleSheet.create({
   bioPlaceholder: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#555555',
+    fontFamily: 'SpaceGroteskSemiBold',
+    color: '#a1a1aa',
     letterSpacing: 1
   },
   accoladesContainer: {
@@ -1501,29 +1504,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 8,
+    borderRadius: 12,
     gap: 4,
-    borderWidth: 2,
-    backgroundColor: '#121212'
+    borderWidth: 1,
+    backgroundColor: '#18181b'
   },
   accoladeText: {
     fontSize: 9,
     fontWeight: '900',
+    fontFamily: 'SpaceGroteskBold',
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
 
   // --- Tactical Data Blocks ---
   tacticalDataBlock: {
-    backgroundColor: '#161616',
+    backgroundColor: '#121214',
     marginHorizontal: 16,
     marginTop: 24,
-    borderRadius: 16, // Smooth armor curve
+    borderRadius: 16,
     padding: 16,
-    borderTopWidth: 2,
-    borderTopColor: '#333333',
     borderWidth: 1,
-    borderColor: '#1a1a1a',
+    borderColor: '#27272a',
   },
 
   // --- HUD Progress Panel ---
@@ -1545,39 +1547,43 @@ const styles = StyleSheet.create({
   tierName: {
     fontSize: 16,
     fontWeight: '900',
+    fontFamily: 'SpaceGroteskBold',
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
   tierPoints: {
     fontSize: 10,
-    color: '#888888',
+    color: '#a1a1aa',
     fontWeight: '800',
+    fontFamily: 'SpaceGroteskSemiBold',
     marginTop: 2,
     letterSpacing: 1
   },
   nextTierLabel: {
     fontSize: 10,
-    color: '#666666',
+    color: '#a1a1aa',
     fontWeight: '800',
+    fontFamily: 'SpaceGroteskSemiBold',
     letterSpacing: 1.5
   },
   maxTierLabel: {
     fontSize: 10,
     color: '#D4AF37',
     fontWeight: '900',
+    fontFamily: 'SpaceGroteskBold',
     letterSpacing: 1.5
   },
   // HUD Nested Progress Track (Armor > Slot > Fill)
   hudProgressTrackOuter: {
     borderWidth: 1,
-    borderColor: '#2A2A2A',
+    borderColor: '#27272a',
     padding: 3,
     borderRadius: 12,
-    backgroundColor: '#0a0a0a'
+    backgroundColor: '#18181b'
   },
   hudProgressTrackInner: {
     height: 6,
-    backgroundColor: '#161616',
+    backgroundColor: '#18181b',
     borderRadius: 999,
     overflow: 'hidden'
   },
@@ -1600,7 +1606,8 @@ const styles = StyleSheet.create({
   statVal: {
     fontSize: 22,
     fontWeight: '900',
-    color: '#ffffff',
+    fontFamily: 'SpaceGroteskBold',
+    color: '#fafafa',
     marginBottom: 4,
     letterSpacing: -0.5
   },
@@ -1613,14 +1620,15 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#666666',
+    fontFamily: 'SpaceGroteskSemiBold',
+    color: '#a1a1aa',
     letterSpacing: 1.5,
     textTransform: 'uppercase',
   },
   statDivider: {
     width: 1,
     height: 36,
-    backgroundColor: '#333333'
+    backgroundColor: '#27272a'
   },
 
   // --- Info Grid (Tactical Cards) ---
@@ -1635,26 +1643,24 @@ const styles = StyleSheet.create({
   infoCard: {
     width: IS_WIDE_SCREEN ? '48%' : (CONTENT_WIDTH - 44) / 2,
     minWidth: 150,
-    backgroundColor: '#161616',
+    backgroundColor: '#121214',
     padding: 14,
-    borderRadius: 16, // Smooth armor curve
-    borderTopWidth: 2,
-    borderTopColor: '#333333',
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#1a1a1a',
+    borderColor: '#27272a',
     flexDirection: 'row',
     alignItems: 'center'
   },
   infoIconContainer: {
     width: 40,
     height: 40,
-    borderRadius: 12, // Smooth curve
-    backgroundColor: '#121212',
+    borderRadius: 12,
+    backgroundColor: '#18181b',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
-    borderWidth: 2,
-    borderColor: '#333333'
+    borderWidth: 1,
+    borderColor: '#27272a'
   },
   infoContent: {
     flex: 1
@@ -1662,7 +1668,7 @@ const styles = StyleSheet.create({
   infoLabel: {
     fontSize: 9,
     fontWeight: '800',
-    color: '#666666',
+    color: '#a1a1aa',
     marginBottom: 2,
     letterSpacing: 1.5,
     textTransform: 'uppercase',
@@ -1670,7 +1676,7 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: 13,
     fontWeight: '900',
-    color: '#ffffff',
+    color: '#fafafa',
     letterSpacing: 0.5
   },
 
@@ -1688,14 +1694,14 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '900',
-    color: '#555555',
+    color: '#a1a1aa',
     letterSpacing: 2,
     textTransform: 'uppercase',
   },
   sectionCount: {
     fontSize: 12,
     fontWeight: '900',
-    color: '#b91c1c',
+    color: '#ff2d55',
     letterSpacing: 1
   },
   videosGrid: {
@@ -1713,12 +1719,12 @@ const styles = StyleSheet.create({
   },
   videoThumbnail: {
     aspectRatio: 1,
-    backgroundColor: '#121212',
+    backgroundColor: '#121214',
     borderRadius: 12, // Smooth curve
     overflow: 'hidden',
     marginBottom: 8,
     borderWidth: 2,
-    borderColor: '#333333'
+    borderColor: '#27272a'
   },
   videoThumbnailImage: {
     width: '100%',
@@ -1739,7 +1745,7 @@ const styles = StyleSheet.create({
     padding: 5,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#333333'
+    borderColor: '#27272a'
   },
   videoDeleteButton: {
     position: 'absolute',
@@ -1749,12 +1755,12 @@ const styles = StyleSheet.create({
     padding: 6,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#ff003c'
+    borderColor: '#ff2d55'
   },
   videoExercise: {
     fontSize: 10,
     fontWeight: '900',
-    color: '#f5f5f5',
+    color: '#fafafa',
     marginBottom: 2,
     letterSpacing: 0.5,
     textTransform: 'uppercase',
@@ -1762,7 +1768,7 @@ const styles = StyleSheet.create({
   videoMeta: {
     fontSize: 9,
     fontWeight: '800',
-    color: '#666666',
+    color: '#a1a1aa',
     letterSpacing: 1
   },
 
@@ -1774,9 +1780,9 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   brutalistSheet: {
-    backgroundColor: '#121212',
+    backgroundColor: '#121214',
     borderTopWidth: 3,
-    borderTopColor: '#333333',
+    borderTopColor: '#27272a',
     padding: 24,
     maxHeight: '80%',
     width: IS_WIDE_SCREEN ? MAX_CONTENT_WIDTH : '100%',
@@ -1791,7 +1797,7 @@ const styles = StyleSheet.create({
   sheetHandle: {
     width: 48,
     height: 4,
-    backgroundColor: '#333333',
+    backgroundColor: '#27272a',
     borderRadius: 2,
     alignSelf: 'center',
     marginBottom: 24
@@ -1799,7 +1805,7 @@ const styles = StyleSheet.create({
   sheetTitle: {
     fontSize: 12,
     fontWeight: '900',
-    color: '#666666',
+    color: '#a1a1aa',
     marginBottom: 16,
     letterSpacing: 2,
     textTransform: 'uppercase',
@@ -1809,13 +1815,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#1a1a1a',
+    borderBottomColor: '#27272a',
     gap: 16
   },
   settingText: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#ffffff',
+    color: '#fafafa',
     letterSpacing: 1
   },
   settingTextWrap: {
@@ -1824,13 +1830,13 @@ const styles = StyleSheet.create({
   settingSubText: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#666666',
+    color: '#a1a1aa',
     marginTop: 4,
     letterSpacing: 1
   },
   inviteCodesList: {
     borderBottomWidth: 1,
-    borderBottomColor: '#1a1a1a',
+    borderBottomColor: '#27272a',
     paddingBottom: 12
   },
   inviteCodeRow: {
@@ -1847,7 +1853,7 @@ const styles = StyleSheet.create({
   inviteCodeText: {
     fontSize: 14,
     fontWeight: '900',
-    color: '#ffffff',
+    color: '#fafafa',
     letterSpacing: 2
   },
   inviteCodeStatus: {
@@ -1857,17 +1863,17 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5
   },
   inviteCodeStatusUsed: {
-    color: '#666666'
+    color: '#a1a1aa'
   },
   inviteShareButton: {
     padding: 10,
     borderRadius: 12,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#18181b',
     borderWidth: 2,
-    borderColor: '#333333'
+    borderColor: '#27272a'
   },
   inviteEmptyText: {
-    color: '#666666',
+    color: '#a1a1aa',
     fontSize: 10,
     fontWeight: '800',
     paddingVertical: 8,
@@ -1879,23 +1885,23 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#1a1a1a'
+    borderBottomColor: '#27272a'
   },
   selectionText: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#666666',
+    color: '#a1a1aa',
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
   selectionTextActive: {
-    color: '#ffffff'
+    color: '#fafafa'
   },
 
   // --- Edit Profile / Password Modals ---
   editModalContainer: {
     flex: 1,
-    backgroundColor: '#050505',
+    backgroundColor: '#09090b',
     alignItems: 'center'
   },
   editModalContent: {
@@ -1909,24 +1915,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 2,
-    borderBottomColor: '#333333',
-    backgroundColor: '#0a0a0a'
+    borderBottomColor: '#27272a',
+    backgroundColor: '#121214'
   },
   editModalTitle: {
     fontSize: 14,
     fontWeight: '900',
-    color: '#ffffff',
+    color: '#fafafa',
     letterSpacing: 2,
     textTransform: 'uppercase',
   },
   editModalCancelText: {
-    color: '#666666',
+    color: '#a1a1aa',
     fontSize: 12,
     fontWeight: '800',
     letterSpacing: 1
   },
   editModalSaveText: {
-    color: '#b91c1c',
+    color: '#ff2d55',
     fontSize: 12,
     fontWeight: '900',
     letterSpacing: 1
@@ -1937,18 +1943,18 @@ const styles = StyleSheet.create({
   },
   formCard: {
     marginBottom: 24,
-    backgroundColor: '#161616',
+    backgroundColor: '#121214',
     padding: 16,
     borderRadius: 16,
     borderTopWidth: 2,
-    borderTopColor: '#333333',
+    borderTopColor: '#27272a',
     borderWidth: 1,
-    borderColor: '#1a1a1a',
+    borderColor: '#27272a',
   },
   cardLabel: {
     fontSize: 12,
     fontWeight: '900',
-    color: '#666666',
+    color: '#a1a1aa',
     marginBottom: 16,
     letterSpacing: 2,
     textTransform: 'uppercase',
@@ -1959,18 +1965,18 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#888888',
+    color: '#a1a1aa',
     marginBottom: 8,
     letterSpacing: 1.5,
     textTransform: 'uppercase',
   },
   modernInput: {
-    backgroundColor: '#0a0a0a',
+    backgroundColor: '#121214',
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#333333',
+    borderColor: '#27272a',
     padding: 16,
-    color: '#ffffff',
+    color: '#fafafa',
     fontSize: 14,
     fontWeight: '800',
     letterSpacing: 0.5
@@ -1989,18 +1995,18 @@ const styles = StyleSheet.create({
   statInputLabel: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#888888',
+    color: '#a1a1aa',
     marginBottom: 8,
     letterSpacing: 1.5,
     textTransform: 'uppercase',
   },
   statInput: {
-    backgroundColor: '#0a0a0a',
+    backgroundColor: '#121214',
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#333333',
+    borderColor: '#27272a',
     padding: 16,
-    color: '#ffffff',
+    color: '#fafafa',
     fontSize: 14,
     fontWeight: '800',
     textAlign: 'center',
@@ -2010,7 +2016,7 @@ const styles = StyleSheet.create({
   // --- Video Player Modal ---
   videoModalContainer: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: '#09090b',
     justifyContent: 'center'
   },
   videoModalClose: {
@@ -2022,7 +2028,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#333333'
+    borderColor: '#27272a'
   },
   fullScreenVideo: {
     width: '100%',
@@ -2035,7 +2041,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#1a0a0a',
     borderLeftWidth: 4,
-    borderLeftColor: '#ff0000',
+    borderLeftColor: '#ff2d55',
     padding: 14,
     borderRadius: 12,
     marginBottom: 16,
@@ -2044,7 +2050,7 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 10,
     fontWeight: '900',
-    color: '#ff0000',
+    color: '#ff2d55',
     flex: 1,
     letterSpacing: 1,
     textTransform: 'uppercase',
@@ -2060,9 +2066,9 @@ const styles = StyleSheet.create({
   infoBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#121212',
+    backgroundColor: '#121214',
     borderWidth: 1,
-    borderColor: '#333333',
+    borderColor: '#27272a',
     padding: 14,
     borderRadius: 12,
     gap: 10,
@@ -2071,7 +2077,7 @@ const styles = StyleSheet.create({
   infoText: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#666666',
+    color: '#a1a1aa',
     flex: 1,
     letterSpacing: 1
   },
@@ -2084,16 +2090,16 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   uploadLoadingCard: {
-    backgroundColor: '#121212',
+    backgroundColor: '#121214',
     padding: 28,
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: '#333333',
+    borderColor: '#27272a',
     alignItems: 'center',
     minWidth: 220
   },
   uploadLoadingText: {
-    color: '#ffffff',
+    color: '#fafafa',
     fontSize: 12,
     fontWeight: '900',
     marginTop: 16,

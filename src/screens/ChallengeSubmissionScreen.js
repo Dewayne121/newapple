@@ -65,9 +65,7 @@ export default function ChallengeSubmissionScreen({ navigation, route }) {
   const [cameraKey, setCameraKey] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [showExerciseSelector, setShowExerciseSelector] = useState(false);
-  const [videoSource, setVideoSource] = useState('camera');
-  const [blurFaces, setBlurFaces] = useState(false);
-  const [blurring, setBlurring] = useState(false); 
+  const [videoSource, setVideoSource] = useState('camera'); 
 
   const recordingTimerRef = useRef(null);
   const recordingRef = useRef(false);
@@ -417,11 +415,6 @@ export default function ChallengeSubmissionScreen({ navigation, route }) {
       let finalServerVideoId = uploadResponse.data.objectName;
       let originalVideoUrl = null; // Store original for admin view
 
-      if (blurFaces) {
-        // For challenges, blur happens asynchronously on the backend after submission.
-        originalVideoUrl = finalVideoUrl;
-      }
-
       let value = 0;
       switch (challenge?.metricType) {
         case 'reps': value = parseInt(reps) || 0; break;
@@ -443,14 +436,11 @@ export default function ChallengeSubmissionScreen({ navigation, route }) {
         originalVideoUrl: originalVideoUrl, // Original unblurred URL (admin only)
         serverVideoId: finalServerVideoId,
         value,
-        blurFaces: blurFaces, // Pass blur flag to backend
         notes: notes.trim(),
       });
 
       if (response.success) {
-        const message = blurFaces
-          ? 'Entry submitted! Face blur is processing in the background. Check your profile for status.'
-          : 'Your entry is now pending admin approval. XP will be confirmed once verified.';
+        const message = 'Your entry is now pending admin approval. XP will be confirmed once verified.';
         showAlert({
           title: 'Entry Submitted',
           message: message,
@@ -693,44 +683,17 @@ export default function ChallengeSubmissionScreen({ navigation, route }) {
 
       {/* Footer */}
       <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
-        {/* Blur Faces Toggle */}
-        {videoUri && (
-          <TouchableOpacity
-            style={[
-                styles.blurToggle, 
-                { borderColor: blurFaces ? theme.primary : theme.border, backgroundColor: blurFaces ? theme.primary : theme.bgCard }
-            ]}
-            onPress={() => setBlurFaces(!blurFaces)}
-            disabled={submitting}
-          >
-            <Ionicons
-              name={blurFaces ? "eye-off" : "eye"}
-              size={20}
-              color={blurFaces ? "#fff" : theme.textMuted}
-            />
-            <Text style={[styles.blurToggleText, blurFaces ? { color: '#fff' } : { color: theme.textMuted }]}>
-              {blurFaces ? "FACE BLUR: ON" : "FACE BLUR: OFF"}
-            </Text>
-            {blurring && (
-              <ActivityIndicator
-                size="small"
-                color="#fff"
-                style={{ marginLeft: 8 }}
-              />
-            )}
-          </TouchableOpacity>
-        )}
 
         <TouchableOpacity
             style={[
-                styles.submitBtn, 
+                styles.submitBtn,
                 { backgroundColor: theme.primary, shadowColor: theme.primary },
-                (!videoUri || submitting || blurring) && styles.submitBtnDisabled
+                (!videoUri || submitting) && styles.submitBtnDisabled
             ]}
             onPress={handleSubmit}
-            disabled={submitting || !videoUri || blurring}
+            disabled={submitting || !videoUri}
         >
-            {submitting || blurring ? (
+            {submitting ? (
                 <ActivityIndicator color="#fff" />
             ) : (
                 <Text style={styles.submitBtnText}>DEPLOY ENTRY</Text>

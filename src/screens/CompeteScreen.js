@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
-  StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,56 +21,15 @@ import {
 } from '../constants/competitiveLifts';
 
 const FILTERS = [
-  { key: 'active', label: 'ACTIVE' },
-  { key: 'ended', label: 'COMPLETED' },
-  { key: 'all', label: 'ALL' },
+  { key: 'active', label: 'Active' },
+  { key: 'ended', label: 'Completed' },
+  { key: 'all', label: 'All' },
 ];
 
-const LIFT_FILTERS = [{ id: null, label: 'ALL LIFTS' }, ...COMPETITIVE_LIFTS.map((lift) => ({
+const LIFT_FILTERS = [{ id: null, label: 'All' }, ...COMPETITIVE_LIFTS.map((lift) => ({
   id: lift.id,
-  label: lift.label.toUpperCase(),
+  label: lift.label,
 }))];
-
-// Countdown Timer Component for Challenges
-const CountdownTimer = ({ endDate, isSeasonal, styles }) => {
-  const [timeLeft, setTimeLeft] = useState(null);
-
-  useEffect(() => {
-    const update = () => {
-      const now = new Date();
-      const end = new Date(endDate);
-      const diff = end - now;
-
-      if (diff <= 0) {
-        setTimeLeft({ text: 'ENDED', expired: true, days: 0 });
-        return;
-      }
-
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
-      if (days > 0) {
-        setTimeLeft({ text: `${days}d ${hours}h remaining`, expired: false, days });
-      } else {
-        setTimeLeft({ text: `${hours}h ${minutes}m remaining`, expired: false, days: 0 });
-      }
-    };
-
-    update();
-    const interval = setInterval(update, 1000);
-    return () => clearInterval(interval);
-  }, [endDate]);
-
-  return (
-    <View style={styles.timerBlock}>
-      <Ionicons name="time" size={12} color={timeLeft?.expired ? '#ff003c' : (timeLeft?.days < 3 && isSeasonal) ? '#ff003c' : '#666'} />
-      <Text style={[styles.timerText, timeLeft?.expired && styles.timerTextExpired, timeLeft?.days < 3 && isSeasonal && styles.timerTextUrgent]}>
-        {timeLeft?.text}
-      </Text>
-    </View>
-  );
-};
 
 export default function CompeteScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -151,17 +109,17 @@ export default function CompeteScreen({ navigation }) {
 
   const confirmLeave = (challenge) => {
     showAlert({
-      title: "LEAVE CHALLENGE?",
-      message: "LEAVING WILL FORFEIT YOUR PROGRESS IN THIS CHALLENGE. ARE YOU SURE?",
+      title: 'Leave Challenge?',
+      message: 'Leaving will forfeit your progress. Are you sure?',
       icon: 'warning',
       buttons: [
-        { text: "STAY", style: "cancel" },
+        { text: 'Stay', style: 'cancel' },
         {
-          text: "LEAVE",
-          style: "destructive",
-          onPress: () => handleJoinLeave(challenge)
-        }
-      ]
+          text: 'Leave',
+          style: 'destructive',
+          onPress: () => handleJoinLeave(challenge),
+        },
+      ],
     });
   };
 
@@ -184,18 +142,18 @@ export default function CompeteScreen({ navigation }) {
           getChallengeId(c) === challengeId ? { ...c, joined: true, progress: 0 } : c
         )));
         showAlert({
-          title: "JOINED",
-          message: `YOU ARE NOW IN: ${challenge.title.toUpperCase()}. GIVE IT EVERYTHING.`,
+          title: 'Joined',
+          message: `You're now in ${challenge.title}. Give it everything.`,
           icon: 'success',
-          buttons: [{ text: 'GOT IT', style: 'default' }]
+          buttons: [{ text: 'Got it', style: 'default' }],
         });
       }
     } catch (err) {
       showAlert({
-        title: "ERROR",
-        message: err.message?.toUpperCase() || "COULD NOT JOIN CHALLENGE.",
+        title: 'Error',
+        message: err.message || 'Could not join challenge.',
         icon: 'error',
-        buttons: [{ text: 'OK', style: 'default' }]
+        buttons: [{ text: 'OK', style: 'default' }],
       });
     } finally {
       setJoining(null);
@@ -206,731 +164,641 @@ export default function CompeteScreen({ navigation }) {
     const now = new Date();
     const end = new Date(endDate);
     const diff = end - now;
-    if (diff <= 0) return { text: 'TERMINATED', expired: true };
+    if (diff <= 0) return { text: 'Ended', expired: true, days: 0 };
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    return { text: `T-${days}D:${hours}H`, expired: false };
-  };
-
-  const renderChallengeCard = (challenge, index) => {
-    const challengeId = getChallengeId(challenge);
-    const timeInfo = getTimeRemaining(challenge.endDate);
-    const isJoined = challenge.joined;
-    const isCompleted = challenge.completed;
-    const progressPercent = challenge.target > 0
-      ? Math.min(100, ((challenge.progress || 0) / challenge.target) * 100)
-      : 0;
-    const liftId = getChallengeLiftId(challenge);
-    const liftLabel = getCompetitiveLiftLabel(liftId) || 'Unknown';
-
-    return (
-      <TouchableOpacity
-        key={challengeId || index}
-        activeOpacity={0.85}
-        onPress={() => navigation.navigate('ChallengeDetail', { challengeId })}
-        style={[
-          styles.gridCard,
-          isJoined && styles.gridCardJoined,
-          isCompleted && styles.gridCardCompleted
-        ]}
-      >
-        {/* Top Tactical Row */}
-        <View style={styles.cardTopRow}>
-          <View style={[
-            styles.statusIconBlock,
-            isCompleted ? { backgroundColor: 'rgba(0, 212, 170, 0.15)', borderColor: '#00d4aa' } :
-            isJoined ? { backgroundColor: 'rgba(185, 28, 28, 0.2)', borderColor: theme.primary } : {}
-          ]}>
-            <Ionicons
-              name={isCompleted ? "shield-checkmark" : (isJoined ? "flame" : "skull")}
-              size={16}
-              color={isCompleted ? "#00d4aa" : (isJoined ? theme.primary : "#555")}
-            />
-          </View>
-          <View style={styles.rewardRow}>
-            {/* Seasonal badge for seasonal challenges */}
-            {challenge.isSeasonal && (
-              <View style={styles.seasonalBadge}>
-                <Ionicons name="star" size={10} color="#ffd700" />
-                <Text style={styles.seasonalBadgeText}>SEASONAL</Text>
-              </View>
-            )}
-            <View style={styles.rewardBlock}>
-              <Text style={styles.rewardText}>+{challenge.reward || 100} XP</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Seasonal Prize Pool Display */}
-        {challenge.isSeasonal && (
-          <View style={styles.prizePoolBlock}>
-            <View style={styles.prizePoolIcon}>
-              <Ionicons name="trophy" size={14} color="#ffd700" />
-            </View>
-            <View style={styles.prizePoolInfo}>
-              <Text style={styles.prizePoolLabel}>PRIZE POOL</Text>
-              <Text style={styles.prizePoolValue}>{challenge.prizePool || 'TBD'}</Text>
-            </View>
-            {challenge.xpMultiplier && challenge.xpMultiplier > 1 && (
-              <View style={styles.xpMultiplierBadge}>
-                <Text style={styles.xpMultiplierText}>{challenge.xpMultiplier}x XP</Text>
-              </View>
-            )}
-          </View>
-        )}
-
-        {/* Title & Region */}
-        <View style={styles.cardMainInfo}>
-          <Text style={styles.cardTitle} numberOfLines={2}>
-            {challenge.title.toUpperCase()}
-          </Text>
-          <View style={styles.liftBadge}>
-            <Text style={styles.liftBadgeText}>{liftLabel.toUpperCase()}</Text>
-          </View>
-          <Text style={styles.regionText}>
-            [ {challenge.regionScope?.toUpperCase() || 'GLOBAL'} ]
-          </Text>
-        </View>
-
-        {/* Time & Contenders */}
-        <View style={styles.metricsRow}>
-          <CountdownTimer endDate={challenge.endDate} isSeasonal={challenge.isSeasonal} styles={styles} />
-          <View style={styles.metricItem}>
-            <Ionicons name="people-outline" size={12} color="#666" />
-            <Text style={styles.metricText}>
-              {challenge.participantCount || 0}
-            </Text>
-          </View>
-        </View>
-
-        {/* HUD Progress (If Joined) - Nested Armor Track */}
-        {isJoined && (
-          <View style={styles.miniProgressContainer}>
-            <View style={styles.miniProgressHeader}>
-              <Text style={styles.miniProgressLabel}>STATUS</Text>
-              <Text style={styles.miniProgressValue}>{challenge.progress || 0}/{challenge.target}</Text>
-            </View>
-            {/* Nested HUD Track: Outer -> Inner -> Fill */}
-            <View style={styles.miniProgressOuter}>
-              <View style={styles.miniProgressInner}>
-                <View style={[
-                  styles.miniProgressFill,
-                  { width: `${progressPercent}%`, backgroundColor: isCompleted ? '#00d4aa' : theme.primary }
-                ]} />
-              </View>
-            </View>
-          </View>
-        )}
-
-        {/* Brutalist Action Button at Bottom */}
-        <View style={styles.cardActionWrapper}>
-          <TouchableOpacity
-            style={[
-              styles.blockBtn,
-              isJoined ? styles.blockBtnAbort : styles.blockBtnEnlist,
-              (joining === challengeId || timeInfo.expired) && styles.blockBtnDisabled
-            ]}
-            activeOpacity={0.85}
-            onPress={(e) => {
-              e.stopPropagation();
-              if (isJoined) confirmLeave(challenge);
-              else handleJoinLeave(challenge);
-            }}
-            disabled={joining === challengeId || timeInfo.expired}
-          >
-            {joining === challengeId ? (
-              <ActivityIndicator size="small" color={isJoined ? "#ff003c" : "#000"} />
-            ) : (
-              <Text style={[
-                styles.blockBtnText,
-                isJoined ? { color: '#ff003c' } : { color: '#000' }
-              ]}>
-                {isJoined ? 'LEAVE' : 'JOIN'}
-              </Text>
-            )}
-          </TouchableOpacity>
-        </View>
-      </TouchableOpacity>
-    );
+    if (days > 0) return { text: `${days}d ${hours}h left`, expired: false, days };
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    return { text: `${hours}h ${minutes}m left`, expired: false, days: 0 };
   };
 
   const styles = createStyles(theme, insets);
 
-  return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+  const activeJoinedCount = challenges.filter(c => c.joined && !c.completed).length;
 
-      {/* Tactical HUD Header */}
+  return (
+    <View style={styles.page}>
+      {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
-        <View style={styles.headerTopRow}>
-          <View style={styles.headerIconBox}>
-            <Ionicons name="trophy" size={22} color={theme.primary} />
-          </View>
-          <View style={styles.headerInfo}>
-            <Text style={styles.pageTitle}>CHALLENGES</Text>
-            <Text style={styles.pageSubtitle}>PUSH YOUR LIMITS. NO EXCUSES.</Text>
-          </View>
-          <View style={styles.headerCountBlock}>
-            <Text style={styles.headerCountLabel}>ACTIVE</Text>
-            <Text style={[styles.headerCountValue, { color: theme.primary }]}>
-              {challenges.filter(c => c.joined && !c.completed).length}
+        <View style={styles.headerRow}>
+          <View style={styles.headerLeft}>
+            <Text style={styles.headerTitle}>COMPETE</Text>
+            <Text style={styles.headerSub}>
+              {activeJoinedCount} active {activeJoinedCount === 1 ? 'challenge' : 'challenges'}
             </Text>
           </View>
+          <TouchableOpacity
+            style={styles.headerBtn}
+            onPress={() => navigation.navigate('Leaderboard')}
+          >
+            <Ionicons name="podium-outline" size={18} color="#a1a1aa" />
+          </TouchableOpacity>
         </View>
       </View>
 
-      {/* Tactical Tabs */}
-      <View style={styles.tabBar}>
+      {/* Tabs */}
+      <View style={styles.tabNav}>
         {FILTERS.map((filter) => (
           <TouchableOpacity
             key={filter.key}
-            style={styles.tab}
-            activeOpacity={0.85}
+            style={styles.tabBtn}
             onPress={() => setSelectedFilter(filter.key)}
+            activeOpacity={0.7}
           >
-            <Text style={[
-                styles.tabText,
-                selectedFilter === filter.key && styles.tabTextActive,
-            ]}>
+            <Text style={[styles.tabBtnText, selectedFilter === filter.key && styles.tabBtnTextActive]}>
               {filter.label}
             </Text>
-            {selectedFilter === filter.key && (
-              <View style={[styles.activeIndicator, { backgroundColor: theme.primary }]} />
-            )}
+            {selectedFilter === filter.key && <View style={styles.tabIndicator} />}
           </TouchableOpacity>
         ))}
       </View>
 
-      {/* Lift Filter Scroll */}
+      {/* Lift Filters */}
       <View style={styles.liftFilterWrap}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.liftFilterScroll}
         >
-          {LIFT_FILTERS.map((lift) => (
-            <TouchableOpacity
-              key={lift.id || 'all'}
-              style={[
-                styles.liftFilterChip,
-                selectedLift === lift.id && styles.liftFilterChipActive,
-              ]}
-              onPress={() => setSelectedLift(lift.id)}
-              activeOpacity={0.85}
-            >
-              <Text
-                style={[
-                  styles.liftFilterChipText,
-                  selectedLift === lift.id && styles.liftFilterChipTextActive,
-                ]}
+          {LIFT_FILTERS.map((lift) => {
+            const isActive = selectedLift === lift.id;
+            return (
+              <TouchableOpacity
+                key={lift.id || 'all'}
+                style={[styles.liftChip, isActive && styles.liftChipActive]}
+                onPress={() => setSelectedLift(isActive ? null : lift.id)}
+                activeOpacity={0.7}
               >
-                {lift.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
+                <Text style={[styles.liftChipText, isActive && styles.liftChipTextActive]}>
+                  {lift.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
       </View>
 
       {/* Content */}
       {loading ? (
-        <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color={theme.primary} />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#DC2626" />
         </View>
       ) : (
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={[styles.scrollContent, { paddingBottom: 110 + insets.bottom }]}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#DC2626" />}
           showsVerticalScrollIndicator={false}
         >
           {challenges.length > 0 ? (
-            <View style={styles.gridContainer}>
-              {challenges.map((challenge, index) => renderChallengeCard(challenge, index))}
+            <View style={styles.cardList}>
+              {challenges.map((challenge, index) => {
+                const challengeId = getChallengeId(challenge);
+                const timeInfo = getTimeRemaining(challenge.endDate);
+                const isJoined = challenge.joined;
+                const isCompleted = challenge.completed;
+                const progressPercent = challenge.target > 0
+                  ? Math.min(100, ((challenge.progress || 0) / challenge.target) * 100)
+                  : 0;
+                const liftId = getChallengeLiftId(challenge);
+                const liftLabel = getCompetitiveLiftLabel(liftId) || 'Challenge';
+
+                const accentColor = isCompleted ? '#22c55e' : isJoined ? '#DC2626' : '#27272a';
+
+                return (
+                  <TouchableOpacity
+                    key={challengeId || index}
+                    style={styles.card}
+                    onPress={() => navigation.navigate('ChallengeDetail', { challengeId })}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.cardAccent, { backgroundColor: accentColor }]} />
+
+                    <View style={styles.cardBody}>
+                      {/* Title + Status Pill */}
+                      <View style={styles.cardTop}>
+                        <View style={styles.cardTitleWrap}>
+                          <Text style={styles.cardTitle} numberOfLines={1}>
+                            {challenge.title}
+                          </Text>
+                          {challenge.isSeasonal && (
+                            <View style={styles.seasonalPill}>
+                              <Ionicons name="star" size={9} color="#ffd700" />
+                              <Text style={styles.seasonalPillText}>SEASONAL</Text>
+                            </View>
+                          )}
+                        </View>
+
+                        {isCompleted ? (
+                          <View style={styles.pillCompleted}>
+                            <Ionicons name="checkmark" size={10} color="#22c55e" />
+                            <Text style={styles.pillCompletedText}>Done</Text>
+                          </View>
+                        ) : isJoined ? (
+                          <View style={styles.pillJoined}>
+                            <View style={styles.pillJoinedDot} />
+                            <Text style={styles.pillJoinedText}>Joined</Text>
+                          </View>
+                        ) : (
+                          <View style={styles.pillOpen}>
+                            <Text style={styles.pillOpenText}>Open</Text>
+                          </View>
+                        )}
+                      </View>
+
+                      {/* Lift badge */}
+                      <View style={styles.liftBadge}>
+                        <Ionicons name="barbell-outline" size={10} color="#71717a" />
+                        <Text style={styles.liftBadgeText}>{liftLabel}</Text>
+                      </View>
+
+                      {/* Meta row */}
+                      <View style={styles.cardMeta}>
+                        <View style={styles.metaItem}>
+                          <Ionicons name="time-outline" size={12} color="#a1a1aa" />
+                          <Text style={[
+                            styles.metaValue,
+                            timeInfo.expired && styles.metaValueExpired,
+                          ]}>
+                            {timeInfo.text}
+                          </Text>
+                        </View>
+                        <View style={styles.metaItem}>
+                          <Ionicons name="people-outline" size={12} color="#a1a1aa" />
+                          <Text style={styles.metaValue}>{challenge.participantCount || 0}</Text>
+                        </View>
+                        {challenge.reward ? (
+                          <View style={styles.metaItem}>
+                            <Ionicons name="star-outline" size={12} color="#a1a1aa" />
+                            <Text style={styles.metaReward}>+{challenge.reward} XP</Text>
+                          </View>
+                        ) : null}
+                      </View>
+
+                      {/* Progress (joined only) */}
+                      {isJoined && (
+                        <View style={styles.progressSection}>
+                          <View style={styles.progressHeader}>
+                            <Text style={styles.progressLabel}>
+                              <Ionicons name="flame" size={11} color="#DC2626" /> Progress
+                            </Text>
+                            <Text style={styles.progressValue}>
+                              {challenge.progress || 0}/{challenge.target}
+                            </Text>
+                          </View>
+                          <View style={styles.progressBar}>
+                            <View style={[
+                              styles.progressFill,
+                              {
+                                width: `${progressPercent}%`,
+                                backgroundColor: isCompleted ? '#22c55e' : '#DC2626',
+                              },
+                            ]} />
+                          </View>
+                        </View>
+                      )}
+
+                      {/* Action */}
+                      <TouchableOpacity
+                        style={[
+                          styles.actionBtn,
+                          isJoined ? styles.actionBtnLeave : styles.actionBtnJoin,
+                          (joining === challengeId || timeInfo.expired) && styles.actionBtnDisabled,
+                        ]}
+                        activeOpacity={0.7}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          if (isJoined) confirmLeave(challenge);
+                          else handleJoinLeave(challenge);
+                        }}
+                        disabled={joining === challengeId || timeInfo.expired}
+                      >
+                        {joining === challengeId ? (
+                          <ActivityIndicator size="small" color={isJoined ? '#DC2626' : '#fafafa'} />
+                        ) : (
+                          <Text style={[styles.actionBtnText, isJoined && styles.actionBtnTextLeave]}>
+                            {isJoined ? 'Leave' : 'Join Challenge'}
+                          </Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           ) : (
-            <View style={styles.emptyContainer}>
-              <View style={styles.emptyIconContainer}>
-                <Ionicons name="scan-outline" size={40} color="#555" />
+            <View style={styles.emptyState}>
+              <View style={styles.emptyIcon}>
+                <Ionicons name="flag-outline" size={24} color="#52525b" />
               </View>
-              <Text style={styles.emptyText}>NO CHALLENGES</Text>
-              <Text style={styles.emptySubtext}>NO ACTIVE CHALLENGES FOUND. CHECK BACK LATER.</Text>
+              <Text style={styles.emptyTitle}>No challenges found</Text>
+              <Text style={styles.emptySub}>
+                {selectedFilter === 'active' ? 'Check back later for new challenges' : 'No completed challenges yet'}
+              </Text>
             </View>
           )}
         </ScrollView>
       )}
 
-      {/* Custom Alert */}
       <CustomAlert {...alertConfig} onClose={hideAlert} />
     </View>
   );
 }
 
-// -------------------------------------------------------------
-// STYLESHEET: Gritty Gym Industrial HUD - Compete Screen
-// -------------------------------------------------------------
 function createStyles(theme, insets) {
   return StyleSheet.create({
-    container: {
+    page: {
       flex: 1,
-      backgroundColor: '#050505', // Abyss black
+      backgroundColor: '#09090b',
     },
 
-    // --- Tactical HUD Header ---
+    // --- Header ---
     header: {
       paddingHorizontal: 16,
-      paddingBottom: 20,
+      paddingBottom: 24,
       borderBottomWidth: 1,
-      borderBottomColor: '#121212',
-      backgroundColor: '#0a0a0a',
+      borderBottomColor: '#27272a',
+      backgroundColor: '#09090b',
     },
-    headerTopRow: {
+    headerRow: {
       flexDirection: 'row',
-      alignItems: 'center',
-      gap: 14,
-    },
-    headerIconBox: {
-      width: 48,
-      height: 48,
-      borderRadius: 14,
-      backgroundColor: '#1a0e0e',
-      borderWidth: 2,
-      borderColor: theme.primary + '60',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    headerInfo: {
-      flex: 1,
-    },
-    pageTitle: {
-      fontSize: 22,
-      fontWeight: '900',
-      color: '#ffffff',
-      letterSpacing: 1,
-    },
-    pageSubtitle: {
-      fontSize: 9,
-      fontWeight: '900',
-      color: theme.primary,
-      letterSpacing: 2,
-      marginTop: 2,
-    },
-    headerCountBlock: {
+      justifyContent: 'space-between',
       alignItems: 'flex-end',
     },
-    headerCountLabel: {
-      fontSize: 9,
-      fontWeight: '800',
-      color: '#666666',
-      letterSpacing: 1.5,
+    headerLeft: {
+      flex: 1,
     },
-    headerCountValue: {
-      fontSize: 24,
+    headerTitle: {
+      fontSize: 28,
       fontWeight: '900',
+      fontFamily: 'SpaceGroteskBold',
+      color: '#fafafa',
+      textTransform: 'uppercase',
       letterSpacing: -0.5,
     },
+    headerSub: {
+      fontSize: 12,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#71717a',
+      letterSpacing: 0.5,
+      marginTop: 4,
+    },
+    headerBtn: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      backgroundColor: '#121214',
+      borderWidth: 1,
+      borderColor: '#27272a',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
 
-    // --- Tactical Tabs ---
-    tabBar: {
+    // --- Tabs ---
+    tabNav: {
       flexDirection: 'row',
+      marginTop: 0,
       paddingHorizontal: 16,
-      backgroundColor: '#0a0a0a',
+      paddingTop: 16,
       borderBottomWidth: 1,
-      borderBottomColor: '#1a1a1a',
+      borderBottomColor: '#27272a',
+      backgroundColor: '#09090b',
     },
-    tab: {
-      marginRight: 28,
-      paddingVertical: 16,
+    tabBtn: {
+      paddingBottom: 16,
+      paddingHorizontal: 12,
       position: 'relative',
+      marginRight: 4,
     },
-    tabText: {
-      fontSize: 11,
-      fontWeight: '900',
-      letterSpacing: 1.5,
-      color: '#555555',
+    tabBtnText: {
+      fontSize: 12,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#71717a',
+      letterSpacing: 0.5,
     },
-    tabTextActive: {
-      color: '#ffffff',
+    tabBtnTextActive: {
+      color: '#fafafa',
     },
-    activeIndicator: {
+    tabIndicator: {
       position: 'absolute',
-      bottom: 0,
+      bottom: -1,
       left: 0,
       right: 0,
-      height: 3,
-      borderRadius: 3,
+      height: 2,
+      backgroundColor: '#DC2626',
     },
 
-    // --- Lift Filter Scroll ---
+    // --- Lift Filters ---
     liftFilterWrap: {
-      backgroundColor: '#0a0a0a',
-      borderBottomWidth: 1,
-      borderBottomColor: '#1a1a1a',
+      backgroundColor: '#09090b',
       paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: '#27272a',
     },
     liftFilterScroll: {
       paddingHorizontal: 16,
       gap: 8,
     },
-    liftFilterChip: {
-      paddingHorizontal: 14,
+    liftChip: {
+      paddingHorizontal: 16,
       paddingVertical: 8,
-      borderRadius: 12,
+      borderRadius: 8,
       borderWidth: 1,
-      borderColor: '#2a2a2a',
-      backgroundColor: '#121212',
+      borderColor: '#27272a',
+      backgroundColor: '#121214',
     },
-    liftFilterChipActive: {
-      borderColor: theme.primary,
-      backgroundColor: 'rgba(155, 44, 44, 0.15)',
+    liftChipActive: {
+      borderColor: '#DC2626',
+      backgroundColor: 'rgba(220, 38, 38, 0.1)',
     },
-    liftFilterChipText: {
-      fontSize: 10,
-      fontWeight: '900',
-      letterSpacing: 1,
-      color: '#666666',
+    liftChipText: {
+      fontSize: 12,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#71717a',
     },
-    liftFilterChipTextActive: {
-      color: '#ffffff',
+    liftChipTextActive: {
+      color: '#fafafa',
     },
 
-    // --- Content ---
+    // --- Scroll ---
     scroll: {
       flex: 1,
     },
     scrollContent: {
       padding: 16,
     },
-    centerContainer: {
+    loadingContainer: {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: '#050505',
+      backgroundColor: '#09090b',
     },
 
-    // --- 2-Column Grid Layout ---
-    gridContainer: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      justifyContent: 'space-between',
+    // --- Card List ---
+    cardList: {
       gap: 12,
     },
 
-    // --- Tactical Challenge Card ---
-    gridCard: {
-      width: '48%',
-      backgroundColor: '#121212',
+    // --- Challenge Card ---
+    card: {
+      backgroundColor: '#121214',
       borderWidth: 1,
-      borderColor: '#222222',
-      borderRadius: 16, // Smooth armor curve
-      marginBottom: 4,
-      padding: 14,
-      display: 'flex',
-      flexDirection: 'column',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 6 },
-      shadowOpacity: 0.7,
-      shadowRadius: 12,
-      elevation: 8,
-      borderTopWidth: 2,
-      borderTopColor: '#333333',
+      borderColor: '#27272a',
+      borderRadius: 16,
       overflow: 'hidden',
-      position: 'relative',
     },
-    gridCardJoined: {
-      borderColor: theme.primary,
-      backgroundColor: '#160a0a',
-      borderTopColor: theme.primary,
+    cardAccent: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: 4,
+      height: '100%',
+      borderRadius: 4,
     },
-    gridCardCompleted: {
-      borderColor: '#00d4aa',
-      backgroundColor: '#0a1612',
-      borderTopColor: '#00d4aa',
+    cardBody: {
+      padding: 16,
+      paddingLeft: 20,
     },
 
-    // --- Card Top Row ---
-    cardTopRow: {
+    // Card Top
+    cardTop: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'flex-start',
-      marginBottom: 12,
+      marginBottom: 8,
     },
-    statusIconBlock: {
-      width: 30,
-      height: 30,
-      borderRadius: 10,
-      backgroundColor: '#1a1a1a',
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderWidth: 1,
-      borderColor: '#333333',
-    },
-    rewardBlock: {
-      backgroundColor: 'rgba(212, 175, 55, 0.08)',
-      paddingHorizontal: 8,
-      paddingVertical: 4,
-      borderWidth: 1,
-      borderColor: '#4a3f12',
-      borderRadius: 8,
-    },
-    rewardText: {
-      fontSize: 9,
-      fontWeight: '900',
-      color: '#D4AF37',
-      letterSpacing: 1,
-    },
-    rewardRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-    },
-    seasonalBadge: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: 'rgba(255, 215, 0, 0.15)',
-      paddingHorizontal: 6,
-      paddingVertical: 3,
-      borderRadius: 6,
-      borderWidth: 1,
-      borderColor: '#ffd700',
-    },
-    seasonalBadgeText: {
-      fontSize: 7,
-      fontWeight: '900',
-      color: '#ffd700',
-      letterSpacing: 1,
-      marginLeft: 2,
-    },
-    prizePoolBlock: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: 'rgba(212, 175, 55, 0.08)',
-      padding: 10,
-      borderRadius: 12,
-      marginBottom: 12,
-      borderWidth: 1,
-      borderColor: 'rgba(212, 175, 55, 0.3)',
-    },
-    prizePoolIcon: {
-      width: 28,
-      height: 28,
-      borderRadius: 8,
-      backgroundColor: 'rgba(255, 215, 0, 0.15)',
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginRight: 10,
-    },
-    prizePoolInfo: {
+    cardTitleWrap: {
       flex: 1,
-    },
-    prizePoolLabel: {
-      fontSize: 8,
-      fontWeight: '800',
-      color: '#888888',
-      letterSpacing: 1,
-      marginBottom: 2,
-    },
-    prizePoolValue: {
-      fontSize: 14,
-      fontWeight: '900',
-      color: '#ffd700',
-      letterSpacing: 0.5,
-    },
-    xpMultiplierBadge: {
-      backgroundColor: 'rgba(155, 44, 44, 0.2)',
-      paddingHorizontal: 8,
-      paddingVertical: 4,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: '#9b2c2c',
-    },
-    xpMultiplierText: {
-      fontSize: 10,
-      fontWeight: '900',
-      color: '#ffffff',
-      letterSpacing: 1,
-    },
-
-    // --- Card Main Info ---
-    cardMainInfo: {
-      flex: 1,
-      marginBottom: 12,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      paddingRight: 16,
     },
     cardTitle: {
-      fontSize: 14,
-      fontWeight: '900',
-      color: '#ffffff',
-      letterSpacing: 0.3,
-      lineHeight: 18,
-      marginBottom: 8,
+      fontSize: 18,
+      fontWeight: '700',
+      fontFamily: 'SpaceGroteskBold',
+      color: '#fafafa',
+      letterSpacing: -0.3,
+      flex: 1,
     },
-    regionText: {
-      fontSize: 9,
-      fontWeight: '900',
-      color: '#666666',
-      letterSpacing: 1.5,
-    },
+
+    // Lift Badge
     liftBadge: {
-      alignSelf: 'flex-start',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: '#18181b',
       borderWidth: 1,
-      borderColor: '#333333',
-      backgroundColor: '#1a1a1a',
-      borderRadius: 8,
+      borderColor: '#27272a',
       paddingHorizontal: 8,
       paddingVertical: 4,
-      marginBottom: 6,
+      borderRadius: 8,
+      alignSelf: 'flex-start',
+      marginBottom: 16,
     },
     liftBadgeText: {
+      fontSize: 11,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#a1a1aa',
+      letterSpacing: 0.5,
+    },
+
+    // Seasonal Pill
+    seasonalPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: 'rgba(255, 215, 0, 0.1)',
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 4,
+    },
+    seasonalPillText: {
       fontSize: 8,
-      fontWeight: '900',
-      color: '#bbbbbb',
+      fontFamily: 'SpaceGroteskBold',
+      color: '#ffd700',
       letterSpacing: 1,
     },
 
-    // --- Metrics Row ---
-    metricsRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      borderTopWidth: 1,
-      borderTopColor: '#222222',
-      paddingTop: 10,
-      marginBottom: 12,
-    },
-    metricItem: {
+    // Status Pills
+    pillCompleted: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 4,
-    },
-    metricText: {
-      fontSize: 9,
-      fontWeight: '900',
-      color: '#888888',
-      letterSpacing: 1,
-    },
-    timerBlock: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 4,
-      backgroundColor: 'rgba(255,255,255,0.03)',
+      borderWidth: 1,
+      borderColor: 'rgba(34, 197, 94, 0.3)',
+      backgroundColor: 'rgba(34, 197, 94, 0.1)',
       paddingHorizontal: 8,
       paddingVertical: 4,
       borderRadius: 8,
     },
-    timerText: {
-      fontSize: 8,
-      fontWeight: '800',
-      color: '#666666',
+    pillCompletedText: {
+      fontSize: 10,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#22c55e',
       letterSpacing: 0.5,
     },
-    timerTextExpired: {
-      color: '#ff003c',
+    pillJoined: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      borderWidth: 1,
+      borderColor: 'rgba(220, 38, 38, 0.3)',
+      backgroundColor: 'rgba(220, 38, 38, 0.1)',
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 8,
     },
-    timerTextUrgent: {
-      color: '#ff003c',
-      fontWeight: '900',
+    pillJoinedDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: '#DC2626',
+    },
+    pillJoinedText: {
+      fontSize: 10,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#DC2626',
+      letterSpacing: 0.5,
+    },
+    pillOpen: {
+      borderWidth: 1,
+      borderColor: '#3f3f46',
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 8,
+    },
+    pillOpenText: {
+      fontSize: 10,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#a1a1aa',
+      letterSpacing: 0.5,
     },
 
-    // --- Mini HUD Progress (Nested Armor Track) ---
-    miniProgressContainer: {
-      marginBottom: 12,
+    // Meta Row
+    cardMeta: {
+      flexDirection: 'row',
+      borderTopWidth: 1,
+      borderTopColor: '#27272a',
+      paddingTop: 16,
+      gap: 16,
+      marginBottom: 16,
     },
-    miniProgressHeader: {
+    metaItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    metaValue: {
+      fontSize: 12,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#d4d4d8',
+      letterSpacing: 0.3,
+    },
+    metaValueExpired: {
+      color: '#DC2626',
+    },
+    metaReward: {
+      fontSize: 12,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#FFD700',
+      letterSpacing: 0.3,
+    },
+
+    // Progress
+    progressSection: {
+      marginBottom: 16,
+    },
+    progressHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      marginBottom: 6,
+      alignItems: 'center',
+      marginBottom: 8,
     },
-    miniProgressLabel: {
-      fontSize: 8,
-      fontWeight: '900',
-      color: '#666666',
-      letterSpacing: 1,
-    },
-    miniProgressValue: {
+    progressLabel: {
       fontSize: 10,
-      fontWeight: '900',
-      color: '#ffffff',
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#DC2626',
+      letterSpacing: 0.5,
     },
-    // Nested track: Outer border -> Inner track -> Fill
-    miniProgressOuter: {
-      borderWidth: 1,
-      borderColor: '#2A2A2A',
-      borderRadius: 10,
-      padding: 2,
-      backgroundColor: '#0a0a0a',
+    progressValue: {
+      fontSize: 10,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#d4d4d8',
     },
-    miniProgressInner: {
+    progressBar: {
       height: 6,
-      backgroundColor: '#161616',
-      borderRadius: 999,
+      backgroundColor: '#27272a',
+      borderRadius: 99,
       overflow: 'hidden',
     },
-    miniProgressFill: {
+    progressFill: {
       height: '100%',
-      borderRadius: 999,
+      borderRadius: 99,
     },
 
-    // --- Block Action Buttons ---
-    cardActionWrapper: {
-      marginTop: 'auto',
-    },
-    blockBtn: {
-      width: '100%',
+    // Action Button
+    actionBtn: {
       paddingVertical: 12,
-      borderRadius: 12,
+      borderRadius: 8,
       alignItems: 'center',
       justifyContent: 'center',
-      borderWidth: 2,
     },
-    blockBtnEnlist: {
-      backgroundColor: theme.primary,
-      borderColor: theme.primary,
+    actionBtnJoin: {
+      backgroundColor: '#DC2626',
     },
-    blockBtnAbort: {
+    actionBtnLeave: {
       backgroundColor: 'transparent',
-      borderColor: '#ff003c',
+      borderWidth: 1,
+      borderColor: '#27272a',
     },
-    blockBtnDisabled: {
-      opacity: 0.3,
+    actionBtnDisabled: {
+      opacity: 0.35,
     },
-    blockBtnText: {
-      fontSize: 11,
-      fontWeight: '900',
-      letterSpacing: 2,
-      color: '#000000',
+    actionBtnText: {
+      fontSize: 12,
+      fontFamily: 'SpaceGroteskBold',
+      fontWeight: '700',
+      color: '#fafafa',
+      letterSpacing: 0.5,
+    },
+    actionBtnTextLeave: {
+      color: '#a1a1aa',
     },
 
-    // --- Empty State ---
-    emptyContainer: {
-      flex: 1,
+    // Empty State
+    emptyState: {
+      borderWidth: 1,
+      borderColor: '#27272a',
+      backgroundColor: '#121214',
+      padding: 40,
       alignItems: 'center',
-      paddingTop: 80,
+      justifyContent: 'center',
+      borderRadius: 12,
     },
-    emptyIconContainer: {
-      width: 80,
-      height: 80,
-      borderRadius: 20,
-      backgroundColor: '#161616',
+    emptyIcon: {
+      width: 48,
+      height: 48,
+      borderRadius: 12,
+      backgroundColor: '#18181b',
+      borderWidth: 1,
+      borderColor: '#27272a',
       justifyContent: 'center',
       alignItems: 'center',
-      marginBottom: 24,
-      borderWidth: 2,
-      borderTopWidth: 2,
-      borderTopColor: '#333333',
-      borderColor: '#1a1a1a',
+      marginBottom: 16,
     },
-    emptyText: {
-      fontSize: 16,
-      fontWeight: '900',
-      color: '#666666',
-      marginBottom: 8,
-      letterSpacing: 2,
+    emptyTitle: {
+      fontSize: 12,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#71717a',
+      letterSpacing: 0.5,
     },
-    emptySubtext: {
-      fontSize: 10,
-      fontWeight: '800',
-      color: '#444444',
-      letterSpacing: 1.5,
-      textAlign: 'center',
-      paddingHorizontal: 40,
+    emptySub: {
+      fontSize: 12,
+      fontFamily: 'SpaceGrotesk',
+      color: '#52525b',
+      marginTop: 4,
     },
   });
 }

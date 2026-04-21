@@ -579,7 +579,7 @@ export default function TrainingReportScreen({ navigation }) {
               onPress={() => setViewMode(viewMode === 'calendar' ? 'list' : 'calendar')}
               style={styles.headerBtn}
             >
-               <Ionicons name={viewMode === 'calendar' ? 'list' : 'calendar'} size={20} color="#fff" />
+               <Ionicons name={viewMode === 'calendar' ? 'list' : 'calendar'} size={20} color="#fafafa" />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => setShowAddLogModal(true)}
@@ -658,7 +658,7 @@ export default function TrainingReportScreen({ navigation }) {
                     </Text>
                   </View>
                   <View style={styles.arrowBtn}>
-                    <Ionicons name="chevron-forward" size={16} color="#fff" />
+                    <Ionicons name="chevron-forward" size={16} color="#fafafa" />
                   </View>
                 </TouchableOpacity>
               </View>
@@ -713,7 +713,7 @@ export default function TrainingReportScreen({ navigation }) {
                           onPress={() => handleDeleteLog(log.id)}
                           style={styles.deleteIconBtn}
                         >
-                          <Ionicons name="close" size={16} color="#666" />
+                          <Ionicons name="close" size={16} color="#a1a1aa" />
                         </TouchableOpacity>
                       </View>
 
@@ -726,7 +726,7 @@ export default function TrainingReportScreen({ navigation }) {
                         </View>
                         <View style={styles.cardStat}>
                           <Text style={styles.cardStatLabel}>VOLUME</Text>
-                          <Text style={[styles.cardStatValue, { color: '#888' }]}>
+                          <Text style={[styles.cardStatValue, { color: '#a1a1aa' }]}>
                             {Math.round((log.weight || 0) * (log.reps || 0)).toLocaleString()}
                           </Text>
                         </View>
@@ -742,7 +742,7 @@ export default function TrainingReportScreen({ navigation }) {
         {/* LIST VIEW */}
         {viewMode === 'list' && (
           <View style={{ paddingHorizontal: 16, marginTop: 8 }}>
-            
+
             {/* Progressive Overload Suggestions */}
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
@@ -760,12 +760,12 @@ export default function TrainingReportScreen({ navigation }) {
                     <View style={styles.cardHeader}>
                       <Text style={styles.cardTitle}>{suggestion.exercise}</Text>
                       <View style={[
-                        styles.badge, 
-                        { backgroundColor: suggestion.type === 'increase' ? 'rgba(155, 44, 44, 0.15)' : 'rgba(255,255,255,0.05)' }
+                        styles.badge,
+                        { backgroundColor: suggestion.type === 'increase' ? 'rgba(255, 45, 85, 0.15)' : 'rgba(255,255,255,0.05)' }
                       ]}>
                          <Text style={[
                            styles.badgeText,
-                           { color: suggestion.type === 'increase' ? theme.primary : '#888' }
+                           { color: suggestion.type === 'increase' ? theme.primary : '#a1a1aa' }
                          ]}>
                            {suggestion.message.toUpperCase()}
                          </Text>
@@ -777,11 +777,11 @@ export default function TrainingReportScreen({ navigation }) {
                         <Text style={styles.cardStatLabel}>LAST</Text>
                         <Text style={styles.cardStatValue}>{formatWeight(suggestion.lastWeight)}<Text style={styles.unit}>kg</Text> × {suggestion.lastReps}</Text>
                       </View>
-                      
-                      <Ionicons 
-                        name="arrow-forward" 
-                        size={16} 
-                        color="#444" 
+
+                      <Ionicons
+                        name="arrow-forward"
+                        size={16}
+                        color="#27272a"
                         style={{ marginTop: 12 }}
                       />
 
@@ -882,12 +882,12 @@ export default function TrainingReportScreen({ navigation }) {
                           onPress={() => handleDeleteLog(log.id)}
                           style={styles.deleteIconBtn}
                         >
-                          <Ionicons name="close" size={16} color="#666" />
+                          <Ionicons name="close" size={16} color="#a1a1aa" />
                         </TouchableOpacity>
                       </View>
-                      
+
                       <View style={styles.cardDivider} />
-                      
+
                       <View style={styles.cardRow}>
                         <View style={styles.cardStat}>
                           <Text style={styles.cardStatLabel}>SET</Text>
@@ -895,7 +895,7 @@ export default function TrainingReportScreen({ navigation }) {
                         </View>
                         <View style={styles.cardStat}>
                           <Text style={styles.cardStatLabel}>VOLUME</Text>
-                          <Text style={[styles.cardStatValue, { color: '#888' }]}>
+                          <Text style={[styles.cardStatValue, { color: '#a1a1aa' }]}>
                             {Math.round((log.weight || 0) * (log.reps || 0)).toLocaleString()}
                           </Text>
                         </View>
@@ -926,7 +926,7 @@ export default function TrainingReportScreen({ navigation }) {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>ADD LOG</Text>
               <TouchableOpacity onPress={() => setShowAddLogModal(false)}>
-                <Ionicons name="close" size={24} color="#fff" />
+                <Ionicons name="close" size={24} color="#fafafa" />
               </TouchableOpacity>
             </View>
 
@@ -985,7 +985,7 @@ export default function TrainingReportScreen({ navigation }) {
                     value={logReps}
                     onChangeText={setLogReps}
                     placeholder="0"
-                    placeholderTextColor="#444"
+                    placeholderTextColor="#27272a"
                     keyboardType="number-pad"
                     maxLength={4}
                   />
@@ -998,7 +998,7 @@ export default function TrainingReportScreen({ navigation }) {
                     value={logWeight}
                     onChangeText={setLogWeight}
                     placeholder="0"
-                    placeholderTextColor="#444"
+                    placeholderTextColor="#27272a"
                     keyboardType="decimal-pad"
                     maxLength={6}
                   />
@@ -1020,7 +1020,7 @@ export default function TrainingReportScreen({ navigation }) {
                 disabled={savingLog || !logReps || !logWeight}
               >
                 {savingLog ? (
-                  <ActivityIndicator color="#fff" />
+                  <ActivityIndicator color="#fafafa" />
                 ) : (
                   <Text style={styles.saveBtnText}>SAVE LOG</Text>
                 )}
@@ -1082,19 +1082,20 @@ function createStyles(theme, skin, insets) {
   return StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: '#050505', // Abyss black
+      backgroundColor: '#09090b',
     },
     loadingContainer: {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: '#050505',
+      backgroundColor: '#09090b',
     },
     loadingText: {
-      color: '#666666',
+      color: '#a1a1aa',
       marginTop: 12,
       fontSize: 12,
       fontWeight: '800',
+      fontFamily: 'SpaceGroteskSemiBold',
       letterSpacing: 1.5,
       textTransform: 'uppercase',
     },
@@ -1103,10 +1104,10 @@ function createStyles(theme, skin, insets) {
       height: 40,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: '#161616',
+      backgroundColor: '#121214',
       borderRadius: 12,
       borderWidth: 2,
-      borderColor: '#333333',
+      borderColor: '#27272a',
     },
     scroll: {
       flex: 1,
@@ -1115,15 +1116,13 @@ function createStyles(theme, skin, insets) {
     // --- Tactical Stats Container (HUD Style) ---
     statsContainer: {
       flexDirection: 'row',
-      backgroundColor: '#161616',
+      backgroundColor: '#121214',
       marginHorizontal: 16,
       marginTop: 16,
       borderRadius: 16,
       padding: 20,
-      borderTopWidth: 2,
-      borderTopColor: '#333333',
       borderWidth: 1,
-      borderColor: '#1a1a1a',
+      borderColor: '#27272a',
       justifyContent: 'space-between',
       alignItems: 'center',
     },
@@ -1134,68 +1133,70 @@ function createStyles(theme, skin, insets) {
     statValue: {
       fontSize: 22,
       fontWeight: '900',
-      color: '#ffffff',
+      fontFamily: 'SpaceGroteskBold',
+      color: '#fafafa',
       marginBottom: 4,
       letterSpacing: -0.5,
     },
     statLabel: {
       fontSize: 10,
       fontWeight: '800',
-      color: '#666666',
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#a1a1aa',
       letterSpacing: 1.5,
       textTransform: 'uppercase',
     },
     statDivider: {
       width: 1,
       height: 28,
-      backgroundColor: '#333333',
+      backgroundColor: '#27272a',
     },
 
     // --- Calendar Container (Tactical Panel) ---
     calendarContainer: {
-      backgroundColor: '#161616',
+      backgroundColor: '#121214',
       borderRadius: 20,
       paddingVertical: 16,
       borderWidth: 1,
-      borderColor: '#1a1a1a',
-      borderTopWidth: 2,
-      borderTopColor: '#333333',
+      borderColor: '#27272a',
       marginTop: 8,
     },
     daySummaryCard: {
-      backgroundColor: '#161616',
+      backgroundColor: '#121214',
       borderRadius: 16,
       padding: 16,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
       borderWidth: 1,
-      borderColor: '#222222',
+      borderColor: '#27272a',
       borderLeftWidth: 4,
       borderLeftColor: theme.primary,
     },
     daySummaryTitle: {
       fontSize: 14,
       fontWeight: '900',
-      color: '#ffffff',
+      fontFamily: 'SpaceGroteskBold',
+      color: '#fafafa',
       marginBottom: 2,
       letterSpacing: 0.5,
     },
     daySummaryVolume: {
       fontSize: 11,
-      color: '#888888',
+      color: '#a1a1aa',
       fontWeight: '800',
+      fontFamily: 'SpaceGroteskSemiBold',
       letterSpacing: 1,
     },
     arrowBtn: {
       width: 36,
       height: 36,
       borderRadius: 12,
-      backgroundColor: '#121212',
+      backgroundColor: '#121214',
       justifyContent: 'center',
       alignItems: 'center',
       borderWidth: 1,
-      borderColor: '#333333',
+      borderColor: '#27272a',
     },
 
     // --- Section Headers (HUD Labels) ---
@@ -1212,14 +1213,16 @@ function createStyles(theme, skin, insets) {
     sectionTitle: {
       fontSize: 12,
       fontWeight: '900',
-      color: '#555555',
+      fontFamily: 'SpaceGroteskBold',
+      color: '#a1a1aa',
       letterSpacing: 2,
       textTransform: 'uppercase',
     },
     sortLabel: {
       fontSize: 10,
       fontWeight: '800',
-      color: '#b91c1c',
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#ff2d55',
       letterSpacing: 1.5,
       marginRight: 8,
       textTransform: 'uppercase',
@@ -1227,19 +1230,20 @@ function createStyles(theme, skin, insets) {
     deleteLink: {
       fontSize: 10,
       fontWeight: '800',
-      color: '#ff003c',
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#ff2d55',
       letterSpacing: 1,
       textTransform: 'uppercase',
     },
 
     // --- Operation History Cards ---
     card: {
-      backgroundColor: '#161616',
+      backgroundColor: '#121214',
       borderRadius: 16,
       padding: 16,
       marginBottom: 12,
       borderWidth: 1,
-      borderColor: '#222222',
+      borderColor: '#27272a',
       borderLeftWidth: 4,
       borderLeftColor: theme.primary,
     },
@@ -1252,50 +1256,54 @@ function createStyles(theme, skin, insets) {
     cardTitle: {
       fontSize: 15,
       fontWeight: '900',
-      color: '#ffffff',
+      fontFamily: 'SpaceGroteskBold',
+      color: '#fafafa',
       letterSpacing: 0.5,
       textTransform: 'uppercase',
     },
     cardDate: {
       fontSize: 10,
-      color: '#666666',
+      color: '#a1a1aa',
       marginTop: 2,
       fontWeight: '800',
+      fontFamily: 'SpaceGroteskSemiBold',
       letterSpacing: 1,
       textTransform: 'uppercase',
     },
     badge: {
       paddingHorizontal: 10,
       paddingVertical: 4,
-      borderRadius: 8,
-      backgroundColor: 'rgba(185, 28, 28, 0.15)',
+      borderRadius: 12,
+      backgroundColor: 'rgba(255, 45, 85, 0.15)',
       borderWidth: 1,
-      borderColor: 'rgba(185, 28, 28, 0.3)',
+      borderColor: 'rgba(255, 45, 85, 0.3)',
     },
     badgeText: {
       fontSize: 10,
       fontWeight: '800',
+      fontFamily: 'SpaceGroteskSemiBold',
       letterSpacing: 1,
-      color: '#b91c1c',
+      color: '#ff2d55',
     },
     miniBadge: {
-      backgroundColor: '#1a1a1a',
+      backgroundColor: '#121214',
       paddingHorizontal: 8,
       paddingVertical: 3,
-      borderRadius: 6,
+      borderRadius: 12,
       borderWidth: 1,
-      borderColor: '#333333',
+      borderColor: '#27272a',
     },
     miniBadgeText: {
       fontSize: 8,
       fontWeight: '800',
-      color: '#888888',
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#a1a1aa',
       letterSpacing: 1,
       textTransform: 'uppercase',
     },
     cardDivider: {
       height: 1,
-      backgroundColor: '#2A2A2A',
+      backgroundColor: '#27272a',
       marginBottom: 12,
     },
     cardRow: {
@@ -1309,7 +1317,8 @@ function createStyles(theme, skin, insets) {
     cardStatLabel: {
       fontSize: 10,
       fontWeight: '800',
-      color: '#666666',
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#a1a1aa',
       marginBottom: 4,
       letterSpacing: 1.5,
       textTransform: 'uppercase',
@@ -1317,30 +1326,30 @@ function createStyles(theme, skin, insets) {
     cardStatValue: {
       fontSize: 16,
       fontWeight: '900',
-      color: '#ffffff',
+      fontFamily: 'SpaceGroteskBold',
+      color: '#fafafa',
       letterSpacing: -0.5,
     },
     unit: {
       fontSize: 11,
-      color: '#666666',
+      color: '#a1a1aa',
       fontWeight: '700',
+      fontFamily: 'SpaceGroteskSemiBold',
     },
     deleteIconBtn: {
       padding: 6,
-      backgroundColor: '#1a1a1a',
-      borderRadius: 8,
+      backgroundColor: '#121214',
+      borderRadius: 12,
       borderWidth: 1,
-      borderColor: '#333333',
+      borderColor: '#27272a',
     },
 
     // --- List Container (Most Trained) ---
     listContainer: {
-      backgroundColor: '#161616',
+      backgroundColor: '#121214',
       borderRadius: 16,
       borderWidth: 1,
-      borderColor: '#1a1a1a',
-      borderTopWidth: 2,
-      borderTopColor: '#333333',
+      borderColor: '#27272a',
       overflow: 'hidden',
     },
     listItem: {
@@ -1348,23 +1357,24 @@ function createStyles(theme, skin, insets) {
       flexDirection: 'row',
       alignItems: 'center',
       borderBottomWidth: 1,
-      borderBottomColor: '#1a1a1a',
+      borderBottomColor: '#121214',
     },
     rankCircle: {
       width: 32,
       height: 32,
-      borderRadius: 10,
-      backgroundColor: '#121212',
+      borderRadius: 12,
+      backgroundColor: '#121214',
       justifyContent: 'center',
       alignItems: 'center',
       marginRight: 12,
       borderWidth: 2,
-      borderColor: '#333333',
+      borderColor: '#27272a',
     },
     rankText: {
       fontSize: 12,
       fontWeight: '900',
-      color: '#ffffff',
+      fontFamily: 'SpaceGroteskBold',
+      color: '#fafafa',
     },
     listContent: {
       flex: 1,
@@ -1377,23 +1387,25 @@ function createStyles(theme, skin, insets) {
     listTitle: {
       fontSize: 14,
       fontWeight: '800',
-      color: '#ffffff',
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#fafafa',
       letterSpacing: 0.5,
       textTransform: 'uppercase',
     },
     listValue: {
       fontSize: 12,
       fontWeight: '800',
-      color: '#888888',
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#a1a1aa',
       letterSpacing: 1,
     },
     // HUD Progress Track (Nested)
     progressBarBg: {
       height: 6,
-      backgroundColor: '#0a0a0a',
+      backgroundColor: '#121214',
       borderRadius: 999,
       borderWidth: 1,
-      borderColor: '#2A2A2A',
+      borderColor: '#27272a',
       padding: 2,
     },
     progressBarFill: {
@@ -1404,34 +1416,34 @@ function createStyles(theme, skin, insets) {
 
     // --- Empty States ---
     emptyCard: {
-      backgroundColor: '#161616',
+      backgroundColor: '#121214',
       borderRadius: 16,
       padding: 40,
       alignItems: 'center',
-      borderTopWidth: 2,
-      borderTopColor: '#333333',
       borderWidth: 1,
-      borderColor: '#1a1a1a',
+      borderColor: '#27272a',
     },
     emptyText: {
       fontSize: 12,
       fontWeight: '900',
-      color: '#555555',
+      fontFamily: 'SpaceGroteskBold',
+      color: '#a1a1aa',
       letterSpacing: 2,
       marginBottom: 4,
       textTransform: 'uppercase',
     },
     emptySubtext: {
       fontSize: 11,
-      color: '#444444',
+      color: '#27272a',
       fontWeight: '800',
+      fontFamily: 'SpaceGroteskSemiBold',
       letterSpacing: 1,
     },
     actionBtn: {
       marginTop: 20,
       paddingHorizontal: 24,
       paddingVertical: 14,
-      backgroundColor: '#121212',
+      backgroundColor: '#121214',
       borderRadius: 12,
       borderWidth: 2,
       borderColor: theme.primary,
@@ -1439,7 +1451,8 @@ function createStyles(theme, skin, insets) {
     actionBtnText: {
       fontSize: 12,
       fontWeight: '900',
-      color: '#ffffff',
+      fontFamily: 'SpaceGroteskBold',
+      color: '#fafafa',
       letterSpacing: 1,
       textTransform: 'uppercase',
     },
@@ -1448,14 +1461,14 @@ function createStyles(theme, skin, insets) {
     modalOverlay: {
       flex: 1,
       justifyContent: 'center',
-      backgroundColor: 'rgba(5, 5, 5, 0.9)',
+      backgroundColor: 'rgba(26, 26, 46, 0.9)',
       padding: 16,
     },
     modalContent: {
-      backgroundColor: '#121212',
+      backgroundColor: '#121214',
       borderRadius: 20,
       borderWidth: 2,
-      borderColor: '#333333',
+      borderColor: '#27272a',
       overflow: 'hidden',
       maxHeight: '80%',
     },
@@ -1465,13 +1478,14 @@ function createStyles(theme, skin, insets) {
       alignItems: 'center',
       padding: 20,
       borderBottomWidth: 2,
-      borderBottomColor: '#333333',
-      backgroundColor: '#0a0a0a',
+      borderBottomColor: '#27272a',
+      backgroundColor: '#09090b',
     },
     modalTitle: {
       fontSize: 16,
       fontWeight: '900',
-      color: '#ffffff',
+      fontFamily: 'SpaceGroteskBold',
+      color: '#fafafa',
       letterSpacing: 2,
       textTransform: 'uppercase',
     },
@@ -1484,7 +1498,8 @@ function createStyles(theme, skin, insets) {
     fieldLabel: {
       fontSize: 10,
       fontWeight: '800',
-      color: '#666666',
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#a1a1aa',
       marginBottom: 12,
       letterSpacing: 1.5,
       textTransform: 'uppercase',
@@ -1500,9 +1515,9 @@ function createStyles(theme, skin, insets) {
       paddingHorizontal: 16,
       paddingVertical: 12,
       borderRadius: 12,
-      backgroundColor: '#121212',
+      backgroundColor: '#121214',
       borderWidth: 2,
-      borderColor: '#333333',
+      borderColor: '#27272a',
       marginRight: 8,
     },
     pillActive: {
@@ -1512,47 +1527,50 @@ function createStyles(theme, skin, insets) {
     pillText: {
       fontSize: 11,
       fontWeight: '800',
-      color: '#666666',
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#a1a1aa',
       textTransform: 'uppercase',
       letterSpacing: 1,
     },
     pillTextActive: {
-      color: '#ffffff',
+      color: '#fafafa',
     },
     input: {
-      backgroundColor: '#0a0a0a',
+      backgroundColor: '#09090b',
       borderRadius: 12,
       padding: 16,
       fontSize: 16,
       fontWeight: '800',
-      color: '#ffffff',
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#fafafa',
       borderWidth: 2,
-      borderColor: '#333333',
+      borderColor: '#27272a',
       letterSpacing: 0.5,
     },
     infoBox: {
       flexDirection: 'row',
-      backgroundColor: 'rgba(185, 28, 28, 0.1)',
+      backgroundColor: 'rgba(255, 45, 85, 0.1)',
       padding: 14,
       borderRadius: 12,
       gap: 12,
       marginTop: 8,
       borderWidth: 1,
-      borderColor: 'rgba(185, 28, 28, 0.2)',
+      borderColor: 'rgba(255, 45, 85, 0.2)',
     },
     infoText: {
       flex: 1,
       fontSize: 11,
-      color: '#888888',
+      color: '#a1a1aa',
       lineHeight: 18,
       fontWeight: '800',
+      fontFamily: 'SpaceGroteskSemiBold',
       letterSpacing: 0.5,
     },
     modalFooter: {
       padding: 20,
       borderTopWidth: 2,
-      borderTopColor: '#333333',
-      backgroundColor: '#0a0a0a',
+      borderTopColor: '#27272a',
+      backgroundColor: '#09090b',
     },
     saveBtn: {
       backgroundColor: theme.primary,
@@ -1560,12 +1578,13 @@ function createStyles(theme, skin, insets) {
       paddingVertical: 16,
       alignItems: 'center',
       borderWidth: 2,
-      borderColor: '#b91c1c',
+      borderColor: '#ff2d55',
     },
     saveBtnText: {
       fontSize: 14,
       fontWeight: '900',
-      color: '#ffffff',
+      fontFamily: 'SpaceGroteskBold',
+      color: '#fafafa',
       letterSpacing: 1.5,
       textTransform: 'uppercase',
     },

@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
+    borderBottomColor: '#1e1e20',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -69,12 +69,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#fff',
+    fontFamily: 'SpaceGroteskBold',
+    color: '#fafafa',
     letterSpacing: 1,
   },
   subtitle: {
     fontSize: 12,
-    color: '#888',
+    fontFamily: 'SpaceGroteskSemiBold',
+    color: '#a1a1aa',
     marginTop: 2,
   },
 });

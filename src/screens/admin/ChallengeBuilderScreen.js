@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -18,7 +18,6 @@ import {
   ADMIN_COLORS,
   ADMIN_SPACING,
   ADMIN_RADIUS,
-  ADMIN_TYPOGRAPHY,
   ADMIN_SHADOWS,
   ADMIN_SURFACES,
 } from '../../constants/adminTheme';
@@ -26,7 +25,28 @@ import {
 const C = ADMIN_COLORS;
 const S = ADMIN_SPACING;
 const R = ADMIN_RADIUS;
-const T = ADMIN_TYPOGRAPHY;
+
+// Exercise metadata — determines what fields to show
+const WEIGHTED_LIFTS = new Set([
+  'bench_press', 'deadlift', 'squat', 'barbell_row', 'overhead_press',
+  'hip_thrust', 'lat_pulldown', 'goblet_squat', 'romanian_deadlift',
+]);
+const TIMED_LIFTS = new Set(['plank']);
+const BODYWEIGHT_LIFTS = new Set([
+  'pullups', 'pushups', 'bodyweight_squat', 'incline_pushup', 'step_ups',
+]);
+
+const CATEGORIES = [
+  { key: 'weighted', label: 'Weighted', icon: 'barbell' },
+  { key: 'bodyweight', label: 'Bodyweight', icon: 'body' },
+  { key: 'timed', label: 'Timed', icon: 'timer-outline' },
+];
+
+function getExerciseMeta(id) {
+  if (WEIGHTED_LIFTS.has(id)) return { type: 'weighted', metricType: 'weight', unit: 'kg', targetLabel: 'Weight' };
+  if (TIMED_LIFTS.has(id)) return { type: 'timed', metricType: 'duration', unit: 'sec', targetLabel: 'Duration' };
+  return { type: 'bodyweight', metricType: 'reps', unit: 'reps', targetLabel: 'Reps' };
+}
 
 export default function ChallengeBuilderScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
@@ -35,97 +55,71 @@ export default function ChallengeBuilderScreen({ navigation, route }) {
   const [saving, setSaving] = useState(false);
   const getChallengeId = (item) => item?.id || item?._id || null;
 
-  // Form state - simplified for big 3 lifts
   const [title, setTitle] = useState(challenge?.title || '');
   const [description, setDescription] = useState(challenge?.description || '');
   const [selectedLift, setSelectedLift] = useState(challenge?.exercises?.[0] || 'bench_press');
-  const [targetWeight, setTargetWeight] = useState(
-    challenge?.target?.toString() || ''
-  );
+  const [target, setTarget] = useState(challenge?.target?.toString() || '');
   const [startDate, setStartDate] = useState(
     challenge?.startDate ? new Date(challenge.startDate) : new Date()
   );
   const [endDate, setEndDate] = useState(
-    challenge?.endDate
-      ? new Date(challenge.endDate)
-      : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    challenge?.endDate ? new Date(challenge.endDate) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
   );
   const [reward, setReward] = useState(challenge?.reward?.toString() || '100');
   const [rules, setRules] = useState(challenge?.rules || '');
-  const [requiresVideo, setRequiresVideo] = useState(
-    challenge?.requiresVideo !== false
-  );
+  const [requiresVideo, setRequiresVideo] = useState(challenge?.requiresVideo !== false);
+  const [gender, setGender] = useState(challenge?.gender || null);
 
-  // UI state
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
 
+  const meta = useMemo(() => getExerciseMeta(selectedLift), [selectedLift]);
+  const activeCategory = meta.type;
+
+  const filteredLifts = useMemo(() => {
+    if (activeCategory === 'weighted') return COMPETITIVE_LIFTS.filter(l => WEIGHTED_LIFTS.has(l.id));
+    if (activeCategory === 'timed') return COMPETITIVE_LIFTS.filter(l => TIMED_LIFTS.has(l.id));
+    return COMPETITIVE_LIFTS.filter(l => BODYWEIGHT_LIFTS.has(l.id));
+  }, [activeCategory]);
+
+  const handleCategoryChange = (cat) => {
+    const first = COMPETITIVE_LIFTS.find(l =>
+      cat === 'weighted' ? WEIGHTED_LIFTS.has(l.id) : cat === 'timed' ? TIMED_LIFTS.has(l.id) : BODYWEIGHT_LIFTS.has(l.id)
+    );
+    if (first) setSelectedLift(first.id);
+    setTarget('');
+  };
+
   const handleSave = async () => {
-    // Validation
-    if (!title.trim()) {
-      showAlert({
-        title: 'Required',
-        message: 'Please enter a challenge title',
-        icon: 'warning',
-        buttons: [{ text: 'OK', style: 'default' }],
-      });
-      return;
-    }
-    if (!description.trim()) {
-      showAlert({
-        title: 'Required',
-        message: 'Please enter a description',
-        icon: 'warning',
-        buttons: [{ text: 'OK', style: 'default' }],
-      });
-      return;
-    }
-    if (!targetWeight || parseFloat(targetWeight) <= 0) {
-      showAlert({
-        title: 'Required',
-        message: 'Please enter a valid target weight (kg)',
-        icon: 'warning',
-        buttons: [{ text: 'OK', style: 'default' }],
-      });
-      return;
-    }
-    if (endDate <= startDate) {
-      showAlert({
-        title: 'Invalid',
-        message: 'End date must be after start date',
-        icon: 'warning',
-        buttons: [{ text: 'OK', style: 'default' }],
-      });
-      return;
-    }
+    if (!title.trim()) return showAlert({ title: 'Required', message: 'Enter a challenge title', icon: 'warning', buttons: [{ text: 'OK', style: 'default' }] });
+    if (!target || parseFloat(target) <= 0) return showAlert({ title: 'Required', message: `Enter a valid target (${meta.unit})`, icon: 'warning', buttons: [{ text: 'OK', style: 'default' }] });
+    if (endDate <= startDate) return showAlert({ title: 'Invalid', message: 'End date must be after start date', icon: 'warning', buttons: [{ text: 'OK', style: 'default' }] });
 
     try {
       setSaving(true);
-
       const challengeData = {
         title: title.trim(),
         description: description.trim(),
         challengeType: 'exercise',
         exercises: [selectedLift],
-        metricType: 'weight',
-        target: parseFloat(targetWeight),
+        metricType: meta.metricType,
+        target: parseFloat(target),
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
         regionScope: 'global',
         reward: parseInt(reward) || 100,
         rules: rules.trim(),
-        completionType: 'best_effort', // Highest single lift wins
+        completionType: meta.type === 'timed' ? 'best_effort' : 'best_effort',
         winnerCriteria: 'best_single',
         requiresVideo,
         maxParticipants: 0,
+        gender: gender || null,
       };
 
       let response;
       if (isEdit && challenge) {
         const challengeId = getChallengeId(challenge);
-        if (!challengeId) {
-          throw new Error('Challenge ID is missing.');
-        }
+        if (!challengeId) throw new Error('Challenge ID is missing.');
         response = await api.updateChallenge(challengeId, challengeData);
       } else {
         response = await api.createChallenge(challengeData);
@@ -134,281 +128,219 @@ export default function ChallengeBuilderScreen({ navigation, route }) {
       if (response.success) {
         showAlert({
           title: 'Success',
-          message: isEdit ? 'Challenge updated successfully' : 'Challenge created successfully',
+          message: isEdit ? 'Challenge updated' : 'Challenge created',
           icon: 'success',
-          buttons: [
-            {
-              text: 'OK',
-              onPress: () => navigation.goBack(),
-            },
-          ],
+          buttons: [{ text: 'OK', onPress: () => navigation.goBack() }],
         });
       }
     } catch (err) {
-      showAlert({
-        title: 'Error',
-        message: err.message || 'Failed to save challenge',
-        icon: 'error',
-        buttons: [{ text: 'OK', style: 'default' }],
-      });
+      showAlert({ title: 'Error', message: err.message || 'Failed to save', icon: 'error', buttons: [{ text: 'OK', style: 'default' }] });
     } finally {
       setSaving(false);
     }
   };
 
-  const selectedLiftData = COMPETITIVE_LIFTS.find((l) => l.id === selectedLift);
+  const daysLeft = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+  const selectedLiftData = COMPETITIVE_LIFTS.find(l => l.id === selectedLift);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + S.lg }]}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={20} color={C.white} />
         </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={styles.pageTitle}>{isEdit ? 'EDIT CHALLENGE' : 'CREATE CHALLENGE'}</Text>
-          <Text style={styles.pageSubtitle}>COMPETITIVE LIFT CHALLENGE</Text>
-        </View>
+        <Text style={styles.headerTitle}>{isEdit ? 'Edit Challenge' : 'New Challenge'}</Text>
         <TouchableOpacity
-          style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+          style={[styles.saveBtn, saving && styles.saveBtnDisabled]}
           onPress={handleSave}
           disabled={saving}
         >
-          {saving ? (
-            <ActivityIndicator size="small" color={C.white} />
-          ) : (
-            <>
-              <Ionicons name="checkmark" size={16} color={C.white} />
-              <Text style={styles.saveButtonText}>SAVE</Text>
-            </>
+          {saving ? <ActivityIndicator size="small" color={C.white} /> : (
+            <><Ionicons name="checkmark" size={16} color={C.white} /><Text style={styles.saveBtnText}>Save</Text></>
           )}
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.content} keyboardShouldPersistTaps="handled">
-        {/* Lift Selection - Big 3 */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="barbell" size={14} color={C.accent} />
-            <Text style={styles.sectionTitle}>SELECT LIFT</Text>
-          </View>
-          <Text style={styles.sectionSubtitle}>Choose one of the big 3 compound lifts</Text>
-          <View style={styles.liftSelector}>
-            {COMPETITIVE_LIFTS.map((lift) => (
-              <TouchableOpacity
-                key={lift.id}
-                style={[styles.liftButton, selectedLift === lift.id && styles.liftButtonActive]}
-                onPress={() => setSelectedLift(lift.id)}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.liftIconContainer, selectedLift === lift.id && styles.liftIconActive]}>
-                  <Ionicons
-                    name={lift.id === 'bench_press' ? 'barbell-outline' : lift.id === 'deadlift' ? 'fitness-outline' : 'trending-up-outline'}
-                    size={22}
-                    color={selectedLift === lift.id ? C.accent : C.textSubtle}
-                  />
-                </View>
-                <Text style={[styles.liftButtonText, selectedLift === lift.id && styles.liftButtonTextActive]}>
-                  {lift.label}
-                </Text>
-                {selectedLift === lift.id && (
-                  <View style={styles.liftCheckBadge}>
-                    <Ionicons name="checkmark-circle" size={16} color={C.accent} />
-                  </View>
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
+      <ScrollView style={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        {/* Exercise Type Tabs */}
+        <View style={styles.catRow}>
+          {CATEGORIES.map(cat => (
+            <TouchableOpacity
+              key={cat.key}
+              style={[styles.catBtn, activeCategory === cat.key && styles.catBtnActive]}
+              onPress={() => handleCategoryChange(cat.key)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name={cat.icon} size={14} color={activeCategory === cat.key ? C.accent : C.textSubtle} />
+              <Text style={[styles.catText, activeCategory === cat.key && styles.catTextActive]}>{cat.label}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
-        {/* Title & Description */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="create" size={14} color={C.info} />
-            <Text style={styles.sectionTitle}>CHALLENGE DETAILS</Text>
-          </View>
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>TITLE</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter challenge title..."
-              placeholderTextColor={C.textSubtle}
-              value={title}
-              onChangeText={setTitle}
-            />
-          </View>
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>DESCRIPTION</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Describe what competitors need to achieve..."
-              placeholderTextColor={C.textSubtle}
-              value={description}
-              onChangeText={setDescription}
-              multiline
-              numberOfLines={3}
-            />
-          </View>
+        {/* Exercise Grid */}
+        <View style={styles.exerciseGrid}>
+          {filteredLifts.map(lift => (
+            <TouchableOpacity
+              key={lift.id}
+              style={[styles.exerciseBtn, selectedLift === lift.id && styles.exerciseBtnActive]}
+              onPress={() => { setSelectedLift(lift.id); setTarget(''); }}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.exerciseLabel, selectedLift === lift.id && styles.exerciseLabelActive]}>
+                {lift.label}
+              </Text>
+              {selectedLift === lift.id && <Ionicons name="checkmark" size={12} color={C.accent} style={{ marginLeft: 4 }} />}
+            </TouchableOpacity>
+          ))}
         </View>
 
-        {/* Target Weight */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="trophy" size={14} color={C.warning} />
-            <Text style={styles.sectionTitle}>TARGET WEIGHT</Text>
-          </View>
-          <Text style={styles.sectionSubtitle}>
-            The weight competitors must lift (in kg)
-          </Text>
-          <View style={styles.targetInputContainer}>
+        {/* Title */}
+        <TextInput
+          style={styles.titleInput}
+          placeholder="Challenge title"
+          placeholderTextColor={C.textSubtle}
+          value={title}
+          onChangeText={setTitle}
+        />
+
+        {/* Target + Unit */}
+        <View style={styles.targetRow}>
+          <View style={styles.targetField}>
             <TextInput
               style={styles.targetInput}
               placeholder="0"
               placeholderTextColor={C.textSubtle}
-              value={targetWeight}
-              onChangeText={setTargetWeight}
+              value={target}
+              onChangeText={setTarget}
               keyboardType="numeric"
             />
-            <View style={styles.targetUnitBadge}>
-              <Text style={styles.targetUnit}>KG</Text>
-            </View>
           </View>
-          {targetWeight && parseFloat(targetWeight) > 0 && (
-            <View style={styles.targetHint}>
-              <Ionicons name="information-circle" size={14} color={C.textSubtle} />
-              <Text style={styles.targetHintText}>
-                Competitors must lift {targetWeight}kg in {selectedLiftData?.label || 'the selected lift'}
-              </Text>
-            </View>
-          )}
+          <View style={styles.targetUnitBadge}>
+            <Text style={styles.targetUnitText}>{meta.unit.toUpperCase()}</Text>
+          </View>
+          <View style={styles.targetDesc}>
+            <Text style={styles.targetDescText}>
+              {meta.type === 'weighted'
+                ? `Min ${selectedLiftData?.label} weight`
+                : meta.type === 'timed'
+                ? `Min ${selectedLiftData?.label} hold`
+                : `Min ${selectedLiftData?.label} reps`}
+            </Text>
+          </View>
         </View>
 
-        {/* Dates */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="calendar" size={14} color={C.success} />
-            <Text style={styles.sectionTitle}>CHALLENGE DURATION</Text>
-          </View>
-          <TouchableOpacity
-            style={styles.dateButton}
-            onPress={() => setShowStartDatePicker(true)}
-            activeOpacity={0.7}
-          >
-            <View style={styles.dateButtonLeft}>
-              <View style={[styles.dateIconBadge, { backgroundColor: C.success + '20' }]}>
-                <Ionicons name="play" size={12} color={C.success} />
-              </View>
-              <Text style={styles.dateButtonLabel}>START DATE</Text>
-            </View>
-            <Text style={styles.dateButtonValue}>{startDate.toLocaleDateString()}</Text>
+        {/* Description */}
+        <TextInput
+          style={styles.descInput}
+          placeholder="Description (optional)"
+          placeholderTextColor={C.textSubtle}
+          value={description}
+          onChangeText={setDescription}
+          multiline
+          numberOfLines={2}
+        />
+
+        {/* Duration Row */}
+        <View style={styles.dateRow}>
+          <TouchableOpacity style={styles.dateBtn} onPress={() => setShowStartDatePicker(true)} activeOpacity={0.7}>
+            <Ionicons name="calendar-outline" size={14} color={C.textSubtle} />
+            <Text style={styles.dateText}>{startDate.toLocaleDateString()}</Text>
+            <Text style={styles.dateLabel}>start</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.dateButton}
-            onPress={() => setShowEndDatePicker(true)}
-            activeOpacity={0.7}
-          >
-            <View style={styles.dateButtonLeft}>
-              <View style={[styles.dateIconBadge, { backgroundColor: C.danger + '20' }]}>
-                <Ionicons name="stop" size={12} color={C.danger} />
-              </View>
-              <Text style={styles.dateButtonLabel}>END DATE</Text>
-            </View>
-            <Text style={styles.dateButtonValue}>{endDate.toLocaleDateString()}</Text>
+          <View style={styles.dateArrow}>
+            <Ionicons name="arrow-forward" size={14} color={C.textSubtle} />
+            <Text style={styles.daysBadge}>{daysLeft}d</Text>
+          </View>
+          <TouchableOpacity style={styles.dateBtn} onPress={() => setShowEndDatePicker(true)} activeOpacity={0.7}>
+            <Ionicons name="calendar-outline" size={14} color={C.textSubtle} />
+            <Text style={styles.dateText}>{endDate.toLocaleDateString()}</Text>
+            <Text style={styles.dateLabel}>end</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Reward */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="star" size={14} color={C.warning} />
-            <Text style={styles.sectionTitle}>REWARD POINTS</Text>
-          </View>
-          <Text style={styles.sectionSubtitle}>
-            Bonus points awarded when challenge is completed
-          </Text>
-          <View style={styles.rewardInputContainer}>
-            <TextInput
-              style={styles.rewardInput}
-              placeholder="100"
-              placeholderTextColor={C.textSubtle}
-              value={reward}
-              onChangeText={setReward}
-              keyboardType="numeric"
-            />
-            <Text style={styles.rewardUnit}>XP</Text>
-          </View>
-        </View>
-
-        {/* Rules */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="document-text" size={14} color={C.textSubtle} />
-            <Text style={styles.sectionTitle}>RULES (OPTIONAL)</Text>
-          </View>
-          <TextInput
-            style={[styles.input, styles.textArea, styles.rulesInput]}
-            placeholder="Enter any specific rules or requirements..."
-            placeholderTextColor={C.textSubtle}
-            value={rules}
-            onChangeText={setRules}
-            multiline
-            numberOfLines={4}
-          />
-        </View>
-
-        {/* Video Requirement */}
-        <View style={styles.section}>
-          <View style={styles.toggleCard}>
-            <View style={styles.toggleLeft}>
-              <View style={[styles.toggleIconBadge, requiresVideo && { backgroundColor: C.accent + '20' }]}>
-                <Ionicons name="videocam" size={18} color={requiresVideo ? C.accent : C.textSubtle} />
-              </View>
-              <View>
-                <Text style={styles.toggleLabel}>Require Video Proof</Text>
-                <Text style={styles.toggleHint}>All lifts must be verified via video</Text>
-              </View>
+        {/* Settings Row: Reward + Gender + Video */}
+        <View style={styles.settingsRow}>
+          {/* Reward */}
+          <View style={styles.settingCard}>
+            <Text style={styles.settingLabel}>Reward</Text>
+            <View style={styles.rewardRow}>
+              <TextInput
+                style={styles.rewardInput}
+                value={reward}
+                onChangeText={setReward}
+                keyboardType="numeric"
+                placeholderTextColor={C.textSubtle}
+              />
+              <Text style={styles.rewardUnit}>XP</Text>
             </View>
+          </View>
+
+          {/* Gender */}
+          <View style={styles.settingCard}>
+            <Text style={styles.settingLabel}>Gender</Text>
+            <View style={styles.genderRow}>
+              {[{ v: null, l: 'All' }, { v: 'male', l: 'M' }, { v: 'female', l: 'F' }].map(opt => (
+                <TouchableOpacity
+                  key={String(opt.v)}
+                  style={[styles.genderChip, gender === opt.v && styles.genderChipActive]}
+                  onPress={() => setGender(opt.v)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.genderChipText, gender === opt.v && styles.genderChipTextActive]}>{opt.l}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Video */}
+          <View style={styles.settingCard}>
+            <Text style={styles.settingLabel}>Video</Text>
             <TouchableOpacity
               style={[styles.toggle, requiresVideo && styles.toggleActive]}
               onPress={() => setRequiresVideo(!requiresVideo)}
               activeOpacity={0.7}
             >
-              <Ionicons
-                name={requiresVideo ? 'checkmark' : 'close'}
-                size={16}
-                color={requiresVideo ? C.black : C.textSubtle}
-              />
+              <Ionicons name={requiresVideo ? 'checkmark' : 'close'} size={14} color={requiresVideo ? C.black : C.textSubtle} />
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Info Box */}
-        <View style={styles.infoBox}>
-          <View style={styles.infoBoxIcon}>
-            <Ionicons name="information-circle" size={20} color={C.accent} />
-          </View>
-          <View style={styles.infoBoxContent}>
-            <Text style={styles.infoTitle}>CHALLENGE FORMAT</Text>
-            <Text style={styles.infoText}>
-              Challenges are <Text style={styles.infoHighlight}>best effort</Text> - the highest
-              single lift above the target weight wins. All submissions require video verification.
+        {/* Rules (collapsed) */}
+        <TextInput
+          style={styles.rulesInput}
+          placeholder="Rules (optional)"
+          placeholderTextColor={C.textSubtle}
+          value={rules}
+          onChangeText={setRules}
+          multiline
+          numberOfLines={2}
+        />
+
+        {/* Preview */}
+        {title.trim() && target ? (
+          <View style={styles.preview}>
+            <View style={styles.previewHeader}>
+              <Ionicons name="eye-outline" size={12} color={C.textSubtle} />
+              <Text style={styles.previewLabel}>Preview</Text>
+            </View>
+            <Text style={styles.previewTitle}>{title}</Text>
+            <Text style={styles.previewSub}>
+              {selectedLiftData?.label} · {target} {meta.unit} · {reward} XP · {daysLeft} days
+              {gender ? ` · ${gender === 'male' ? 'Men only' : 'Women only'}` : ''}
             </Text>
           </View>
-        </View>
+        ) : null}
 
-        <View style={styles.bottomSpacer} />
+        <View style={{ height: 80 }} />
       </ScrollView>
 
-      {/* Date Pickers */}
       {showStartDatePicker && (
         <DateTimePicker
           value={startDate}
           mode="date"
           minimumDate={new Date()}
-          onChange={(event, date) => {
-            setShowStartDatePicker(false);
-            if (date) setStartDate(date);
-          }}
+          onChange={(event, date) => { setShowStartDatePicker(false); if (date) setStartDate(date); }}
         />
       )}
       {showEndDatePicker && (
@@ -416,14 +348,10 @@ export default function ChallengeBuilderScreen({ navigation, route }) {
           value={endDate}
           mode="date"
           minimumDate={new Date(startDate.getTime() + 24 * 60 * 60 * 1000)}
-          onChange={(event, date) => {
-            setShowEndDatePicker(false);
-            if (date) setEndDate(date);
-          }}
+          onChange={(event, date) => { setShowEndDatePicker(false); if (date) setEndDate(date); }}
         />
       )}
 
-      {/* Custom Alert */}
       <CustomAlert {...alertConfig} onClose={hideAlert} />
     </View>
   );
@@ -436,15 +364,15 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: S.xl,
-    paddingBottom: S.lg,
+    paddingHorizontal: S.lg,
+    paddingBottom: S.md,
     backgroundColor: C.panel,
     borderBottomWidth: 1,
     borderBottomColor: C.border,
   },
-  backButton: {
-    width: 40,
-    height: 40,
+  backBtn: {
+    width: 36,
+    height: 36,
     borderRadius: R.sm,
     backgroundColor: C.card,
     alignItems: 'center',
@@ -452,150 +380,84 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: C.border,
   },
-  headerCenter: {
+  headerTitle: {
     flex: 1,
     marginLeft: S.md,
-  },
-  pageTitle: {
     fontSize: 16,
-    fontWeight: '900',
+    fontWeight: '800',
     color: C.text,
-    letterSpacing: 1,
   },
-  pageSubtitle: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: C.textSubtle,
-    letterSpacing: 2,
-    marginTop: 2,
-  },
-  saveButton: {
+  saveBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: C.accent,
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 9,
     borderRadius: R.sm,
     gap: 4,
   },
-  saveButtonDisabled: {
-    backgroundColor: C.surface,
-  },
-  saveButtonText: {
-    color: C.white,
-    fontWeight: '800',
-    fontSize: 12,
-    letterSpacing: 0.5,
-  },
+  saveBtnDisabled: { backgroundColor: C.surface },
+  saveBtnText: { color: C.white, fontWeight: '800', fontSize: 12 },
 
-  // Content
-  content: {
+  // Scroll
+  scroll: { flex: 1, padding: S.lg },
+
+  // Category tabs
+  catRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  catBtn: {
     flex: 1,
-    padding: S.xl,
-  },
-  bottomSpacer: {
-    height: 60,
-  },
-
-  // Section
-  section: {
-    marginBottom: S.xl,
-  },
-  sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
-    gap: S.xs,
+    justifyContent: 'center',
+    gap: 5,
+    paddingVertical: 10,
+    borderRadius: R.sm,
+    backgroundColor: C.card,
+    borderWidth: 1,
+    borderColor: C.border,
   },
-  sectionTitle: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: C.textSubtle,
-    letterSpacing: 2,
-  },
-  sectionSubtitle: {
-    fontSize: 11,
-    color: C.textSubtle,
-    marginBottom: 12,
-    marginTop: 4,
-  },
+  catBtnActive: { borderColor: C.accent, backgroundColor: C.accent + '10' },
+  catText: { fontSize: 12, fontWeight: '700', color: C.textSubtle },
+  catTextActive: { color: C.text },
 
-  // Lift Selector
-  liftSelector: {
-    gap: 10,
-    marginTop: 8,
-  },
-  liftButton: {
+  // Exercise grid
+  exerciseGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 },
+  exerciseBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: C.card,
     borderRadius: R.sm,
-    padding: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     borderWidth: 1,
     borderColor: C.border,
   },
-  liftButtonActive: {
-    borderColor: C.accent,
-    backgroundColor: C.accent + '10',
-  },
-  liftIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: R.xs,
-    backgroundColor: C.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: S.md,
-  },
-  liftIconActive: {
-    backgroundColor: C.accent + '20',
-  },
-  liftButtonText: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '700',
-    color: C.textSubtle,
-  },
-  liftButtonTextActive: {
-    color: C.text,
-  },
-  liftCheckBadge: {
-    marginLeft: S.sm,
-  },
+  exerciseBtnActive: { borderColor: C.accent, backgroundColor: C.accent + '10' },
+  exerciseLabel: { fontSize: 13, fontWeight: '700', color: C.textSubtle },
+  exerciseLabelActive: { color: C.text },
 
-  // Input
-  inputGroup: {
-    marginBottom: 12,
-  },
-  inputLabel: {
-    fontSize: 9,
-    fontWeight: '800',
-    color: C.textSubtle,
-    letterSpacing: 1.5,
-    marginBottom: 6,
-  },
-  input: {
+  // Title input
+  titleInput: {
     backgroundColor: C.panel,
     borderRadius: R.sm,
-    padding: 12,
+    padding: 14,
     color: C.text,
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 16,
+    fontWeight: '700',
     borderWidth: 1,
     borderColor: C.border,
-  },
-  textArea: {
-    minHeight: 80,
-    textAlignVertical: 'top',
-  },
-  rulesInput: {
-    minHeight: 100,
+    marginBottom: 12,
   },
 
-  // Target Input
-  targetInputContainer: {
+  // Target row
+  targetRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
+  },
+  targetField: {
+    flex: 1,
     backgroundColor: C.card,
     borderRadius: R.sm,
     borderWidth: 2,
@@ -603,179 +465,145 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   targetInput: {
-    flex: 1,
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '900',
     color: C.text,
-    padding: 16,
+    padding: 12,
     textAlign: 'center',
   },
   targetUnitBadge: {
     backgroundColor: C.accent,
-    paddingHorizontal: 14,
-    paddingVertical: 16,
-  },
-  targetUnit: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: C.white,
-    letterSpacing: 1,
-  },
-  targetHint: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 10,
-    gap: 6,
-  },
-  targetHintText: {
-    fontSize: 11,
-    color: C.textSubtle,
-    fontStyle: 'italic',
-    flex: 1,
-  },
-
-  // Date Button
-  dateButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: C.card,
     borderRadius: R.sm,
-    padding: 14,
-    marginBottom: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+  },
+  targetUnitText: { fontSize: 12, fontWeight: '800', color: C.white, letterSpacing: 1 },
+  targetDesc: { flex: 1.5 },
+  targetDescText: { fontSize: 11, color: C.textSubtle, fontStyle: 'italic' },
+
+  // Description
+  descInput: {
+    backgroundColor: C.panel,
+    borderRadius: R.sm,
+    padding: 12,
+    color: C.text,
+    fontSize: 13,
     borderWidth: 1,
     borderColor: C.border,
-  },
-  dateButtonLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  dateIconBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: R.xs,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: S.sm,
-  },
-  dateButtonLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: C.textSubtle,
-    letterSpacing: 1,
-  },
-  dateButtonValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: C.text,
+    minHeight: 60,
+    textAlignVertical: 'top',
+    marginBottom: 12,
   },
 
-  // Reward Input
-  rewardInputContainer: {
+  // Date row
+  dateRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: C.panel,
+    gap: 8,
+    marginBottom: 12,
+  },
+  dateBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: C.card,
     borderRadius: R.sm,
     padding: 12,
     borderWidth: 1,
     borderColor: C.border,
   },
-  rewardInput: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: '700',
-    color: C.warning,
-    textAlign: 'center',
+  dateText: { fontSize: 12, fontWeight: '700', color: C.text, flex: 1 },
+  dateLabel: { fontSize: 9, fontWeight: '700', color: C.textSubtle, letterSpacing: 1 },
+  dateArrow: { alignItems: 'center', gap: 2 },
+  daysBadge: { fontSize: 9, fontWeight: '800', color: C.accent },
+
+  // Settings row
+  settingsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 12,
   },
-  rewardUnit: {
-    fontSize: 12,
+  settingCard: {
+    flex: 1,
+    backgroundColor: C.card,
+    borderRadius: R.sm,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: C.border,
+    alignItems: 'center',
+    gap: 6,
+  },
+  settingLabel: {
+    fontSize: 9,
     fontWeight: '800',
-    color: C.warning,
-    marginLeft: 8,
+    color: C.textSubtle,
     letterSpacing: 1,
   },
 
-  // Toggle Card
-  toggleCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: C.card,
-    borderRadius: R.sm,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: C.border,
+  // Reward
+  rewardRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  rewardInput: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: C.warning,
+    textAlign: 'center',
+    minWidth: 40,
+    padding: 0,
   },
-  toggleLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  toggleIconBadge: {
-    width: 36,
-    height: 36,
+  rewardUnit: { fontSize: 10, fontWeight: '800', color: C.warning },
+
+  // Gender
+  genderRow: { flexDirection: 'row', gap: 4 },
+  genderChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: R.xs,
     backgroundColor: C.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: S.md,
+    borderWidth: 1,
+    borderColor: C.border,
   },
-  toggleLabel: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: C.text,
-  },
-  toggleHint: {
-    fontSize: 11,
-    color: C.textSubtle,
-    marginTop: 2,
-  },
+  genderChipActive: { borderColor: C.accent, backgroundColor: C.accent + '10' },
+  genderChipText: { fontSize: 11, fontWeight: '800', color: C.textSubtle },
+  genderChipTextActive: { color: C.text },
+
+  // Toggle
   toggle: {
-    width: 44,
-    height: 26,
-    borderRadius: 13,
+    width: 40,
+    height: 24,
+    borderRadius: 12,
     backgroundColor: C.surface,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: C.border,
   },
-  toggleActive: {
-    backgroundColor: C.accent,
-    borderColor: C.accent,
+  toggleActive: { backgroundColor: C.accent, borderColor: C.accent },
+
+  // Rules
+  rulesInput: {
+    backgroundColor: C.panel,
+    borderRadius: R.sm,
+    padding: 12,
+    color: C.text,
+    fontSize: 12,
+    borderWidth: 1,
+    borderColor: C.border,
+    minHeight: 50,
+    textAlignVertical: 'top',
+    marginBottom: 16,
   },
 
-  // Info Box
-  infoBox: {
-    flexDirection: 'row',
+  // Preview
+  preview: {
     backgroundColor: C.card,
     borderRadius: R.sm,
     padding: 14,
     borderWidth: 1,
-    borderColor: C.border,
-    marginBottom: S.xl,
+    borderColor: C.accent + '30',
   },
-  infoBoxIcon: {
-    marginRight: S.md,
-    marginTop: 2,
-  },
-  infoBoxContent: {
-    flex: 1,
-  },
-  infoTitle: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: C.textSubtle,
-    letterSpacing: 1.5,
-    marginBottom: 4,
-  },
-  infoText: {
-    fontSize: 12,
-    color: C.textSubtle,
-    lineHeight: 18,
-  },
-  infoHighlight: {
-    color: C.accent,
-    fontWeight: '700',
-  },
+  previewHeader: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 6 },
+  previewLabel: { fontSize: 9, fontWeight: '800', color: C.textSubtle, letterSpacing: 1.5 },
+  previewTitle: { fontSize: 14, fontWeight: '800', color: C.text, marginBottom: 4 },
+  previewSub: { fontSize: 11, color: C.textSubtle, lineHeight: 16 },
 });

@@ -1,5 +1,5 @@
 {
-  "name": "unyielding",
+  "name": "unyield",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -15,14 +15,18 @@
     "postinstall": "node scripts/patchExpoNgrokTimeout.js"
   },
   "dependencies": {
+    "@expo-google-fonts/space-grotesk": "^0.4.1",
     "@expo/vector-icons": "^15.0.3",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-native-community/datetimepicker": "8.4.4",
+    "@react-native-firebase/analytics": "^24.0.0",
+    "@react-native-firebase/app": "^24.0.0",
     "@react-navigation/bottom-tabs": "^7.9.0",
     "@react-navigation/native": "^7.1.26",
     "@react-navigation/native-stack": "^7.9.0",
     "bcryptjs": "^3.0.3",
     "expo": "^54.0.33",
+    "expo-apple-authentication": "~8.0.8",
     "expo-asset": "^12.0.12",
     "expo-av": "^16.0.8",
     "expo-camera": "^17.0.10",
@@ -36,6 +40,7 @@
     "expo-status-bar": "~3.0.9",
     "expo-vector-icons": "^10.0.1",
     "expo-video-thumbnails": "~10.0.8",
+    "firebase": "^12.12.1",
     "oci-common": "^2.122.2",
     "oci-sdk": "^2.122.2",
     "pg": "^8.17.2",

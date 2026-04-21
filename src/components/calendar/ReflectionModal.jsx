@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContainer: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1e1e20',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
   moodButton: {
     flex: 1,
     minWidth: '30%',
-    backgroundColor: '#0a0a0a',
+    backgroundColor: '#121214',
     borderRadius: 12,
     padding: 12,
     alignItems: 'center',
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   energyContainer: {
-    backgroundColor: '#0a0a0a',
+    backgroundColor: '#121214',
     borderRadius: 12,
     padding: 14,
   },
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#9b2c2c',
   },
   notesInput: {
-    backgroundColor: '#0a0a0a',
+    backgroundColor: '#121214',
     borderRadius: 12,
     padding: 14,
     fontSize: 15,
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: '#0a0a0a',
+    backgroundColor: '#121214',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
   },

@@ -197,7 +197,7 @@ export default function AccoladePickerModal({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0a0a',
+    backgroundColor: '#121214',
   },
   header: {
     flexDirection: 'row',
@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
   accoladeItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1e1e20',
     borderRadius: 16,
     padding: 16,
     borderWidth: 2,

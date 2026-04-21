@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContainer: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1e1e20',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   exerciseInfo: {
-    backgroundColor: '#0a0a0a',
+    backgroundColor: '#121214',
     borderRadius: 12,
     padding: 14,
     marginBottom: 16,
@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
     fontWeight: '400',
   },
   noteInput: {
-    backgroundColor: '#0a0a0a',
+    backgroundColor: '#121214',
     borderRadius: 12,
     padding: 14,
     fontSize: 15,
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   cancelButton: {
-    backgroundColor: '#0a0a0a',
+    backgroundColor: '#121214',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
   },

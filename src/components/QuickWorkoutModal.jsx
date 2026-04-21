@@ -25,14 +25,11 @@ export default function QuickWorkoutModal({ visible, onClose, onGenerate }) {
 
     setIsGenerating(true);
     try {
-      // Generate workout
       const workout = generateQuickWorkout(selectedMuscleGroup, selectedLocation);
       const workoutName = getWorkoutName(selectedMuscleGroup, selectedLocation);
 
-      // Call the onGenerate callback with the workout data
       await onGenerate(workout, workoutName, selectedMuscleGroup, selectedLocation);
 
-      // Close modal
       handleClose();
     } catch (error) {
       console.error('Error generating workout:', error);
@@ -56,16 +53,19 @@ export default function QuickWorkoutModal({ visible, onClose, onGenerate }) {
       transparent
       onRequestClose={handleClose}
     >
-      <View style={styles.modalContainer}>
-        <View style={[styles.modalContent, { paddingBottom: insets.bottom + 16 }]}>
+      <View style={styles.modalOverlay}>
+        <View style={[styles.modalCard, { paddingBottom: insets.bottom + 16 }]}>
+          {/* Handle */}
+          <View style={styles.modalHandle} />
+
           {/* Header */}
-          <View style={styles.header}>
+          <View style={styles.modalHeader}>
             <View>
-              <Text style={styles.title}>Quick Workout</Text>
-              <Text style={styles.subtitle}>Generate a workout instantly</Text>
+              <Text style={styles.modalTitle}>QUICK WORKOUT</Text>
+              <Text style={styles.modalSub}>Generate a workout instantly</Text>
             </View>
-            <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-              <Ionicons name="close" size={28} color="#fff" />
+            <TouchableOpacity onPress={handleClose} style={styles.closeBtn}>
+              <Ionicons name="close" size={20} color="#a1a1aa" />
             </TouchableOpacity>
           </View>
 
@@ -74,50 +74,28 @@ export default function QuickWorkoutModal({ visible, onClose, onGenerate }) {
             <View style={styles.section}>
               <Text style={styles.sectionLabel}>LOCATION</Text>
               <View style={styles.locationToggle}>
-                <TouchableOpacity
-                  style={[
-                    styles.locationOption,
-                    selectedLocation === 'home' && styles.locationOptionActive,
-                  ]}
-                  onPress={() => setSelectedLocation('home')}
-                >
-                  <Ionicons
-                    name="home"
-                    size={20}
-                    color={selectedLocation === 'home' ? '#fff' : '#888'}
-                  />
-                  <Text
-                    style={[
-                      styles.locationText,
-                      selectedLocation === 'home' && styles.locationTextActive,
-                    ]}
-                  >
-                    Home
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.locationOption,
-                    selectedLocation === 'gym' && styles.locationOptionActive,
-                  ]}
-                  onPress={() => setSelectedLocation('gym')}
-                >
-                  <Ionicons
-                    name="barbell"
-                    size={20}
-                    color={selectedLocation === 'gym' ? '#fff' : '#888'}
-                  />
-                  <Text
-                    style={[
-                      styles.locationText,
-                      selectedLocation === 'gym' && styles.locationTextActive,
-                    ]}
-                  >
-                    Gym
-                  </Text>
-                </TouchableOpacity>
+                {['home', 'gym'].map((loc) => {
+                  const isActive = selectedLocation === loc;
+                  const icon = loc === 'home' ? 'home-outline' : 'barbell-outline';
+                  return (
+                    <TouchableOpacity
+                      key={loc}
+                      style={[
+                        styles.locationBtn,
+                        isActive && styles.locationBtnActive,
+                      ]}
+                      onPress={() => setSelectedLocation(loc)}
+                      activeOpacity={0.85}
+                    >
+                      <Ionicons name={icon} size={18} color={isActive ? '#fafafa' : '#71717a'} />
+                      <Text style={[styles.locationText, isActive && styles.locationTextActive]}>
+                        {loc.charAt(0).toUpperCase() + loc.slice(1)}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
-              <Text style={styles.locationDescription}>
+              <Text style={styles.locationDesc}>
                 {LOCATION_OPTIONS.find(l => l.id === selectedLocation)?.description}
               </Text>
             </View>
@@ -134,14 +112,16 @@ export default function QuickWorkoutModal({ visible, onClose, onGenerate }) {
                       style={[
                         styles.muscleCard,
                         isSelected && styles.muscleCardActive,
+                        isSelected && { borderColor: '#DC2626' },
                       ]}
                       onPress={() => setSelectedMuscleGroup(group.id)}
+                      activeOpacity={0.85}
                     >
                       <View style={[styles.muscleIcon, isSelected && styles.muscleIconActive]}>
                         <Ionicons
                           name={group.icon}
-                          size={24}
-                          color={isSelected ? '#fff' : theme.primary}
+                          size={20}
+                          color={isSelected ? '#fafafa' : '#DC2626'}
                         />
                       </View>
                       <Text style={[styles.muscleName, isSelected && styles.muscleNameActive]}>
@@ -156,18 +136,19 @@ export default function QuickWorkoutModal({ visible, onClose, onGenerate }) {
             {/* Generate Button */}
             <TouchableOpacity
               style={[
-                styles.generateButton,
-                (!selectedMuscleGroup || isGenerating) && styles.generateButtonDisabled,
+                styles.generateBtn,
+                (!selectedMuscleGroup || isGenerating) && styles.generateBtnDisabled,
               ]}
               onPress={handleGenerate}
               disabled={!selectedMuscleGroup || isGenerating}
+              activeOpacity={0.85}
             >
               {isGenerating ? (
-                <ActivityIndicator color="#fff" size="small" />
+                <ActivityIndicator color="#fafafa" size="small" />
               ) : (
                 <>
-                  <Ionicons name="flash" size={20} color="#fff" />
-                  <Text style={styles.generateButtonText}>Generate Workout</Text>
+                  <Ionicons name="flash" size={18} color="#fafafa" />
+                  <Text style={styles.generateBtnText}>GENERATE WORKOUT</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -182,148 +163,176 @@ export default function QuickWorkoutModal({ visible, onClose, onGenerate }) {
 
 function createStyles(theme) {
   return StyleSheet.create({
-    modalContainer: {
+    modalOverlay: {
       flex: 1,
       justifyContent: 'flex-end',
-      backgroundColor: 'rgba(0,0,0,0.7)',
+      backgroundColor: 'rgba(9, 9, 11, 0.92)',
     },
-    modalContent: {
-      backgroundColor: '#1a1a1a',
-      borderTopLeftRadius: 24,
-      borderTopRightRadius: 24,
-      paddingHorizontal: 20,
-      paddingTop: 20,
+    modalCard: {
+      backgroundColor: '#121214',
+      borderTopLeftRadius: 16,
+      borderTopRightRadius: 16,
+      borderWidth: 1,
+      borderColor: '#27272a',
+      borderBottomWidth: 0,
       maxHeight: '85%',
+      overflow: 'hidden',
     },
-    header: {
+    modalHandle: {
+      width: 40,
+      height: 4,
+      backgroundColor: '#27272a',
+      borderRadius: 2,
+      alignSelf: 'center',
+      marginTop: 12,
+      marginBottom: 16,
+    },
+    modalHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: 24,
+      paddingHorizontal: 16,
+      paddingBottom: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: '#27272a',
     },
-    title: {
-      fontSize: 24,
-      fontWeight: '800',
-      color: '#fff',
-      letterSpacing: 1,
+    modalTitle: {
+      fontSize: 14,
+      fontWeight: '900',
+      fontFamily: 'SpaceGroteskBold',
+      color: '#fafafa',
+      letterSpacing: 1.5,
     },
-    subtitle: {
-      fontSize: 13,
-      color: '#888',
+    modalSub: {
+      fontSize: 11,
+      fontFamily: 'SpaceGrotesk',
+      color: '#71717a',
       marginTop: 2,
     },
-    closeButton: {
+    closeBtn: {
       width: 36,
       height: 36,
-      borderRadius: 18,
-      backgroundColor: '#0a0a0a',
+      borderRadius: 10,
+      backgroundColor: '#18181b',
+      borderWidth: 1,
+      borderColor: '#27272a',
       justifyContent: 'center',
       alignItems: 'center',
     },
+
     scroll: {
-      // flex: 1, // Removed to allow content to determine height
+      paddingHorizontal: 16,
     },
     section: {
-      marginBottom: 24,
+      marginTop: 16,
+      marginBottom: 8,
     },
     sectionLabel: {
-      fontSize: 12,
-      fontWeight: '700',
-      color: '#888',
-      letterSpacing: 1,
-      marginBottom: 12,
-      textTransform: 'uppercase',
+      fontSize: 10,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#71717a',
+      letterSpacing: 1.5,
+      marginBottom: 10,
     },
+
+    // --- Location Toggle ---
     locationToggle: {
       flexDirection: 'row',
-      backgroundColor: '#0a0a0a',
-      borderRadius: 12,
-      padding: 4,
-      gap: 4,
+      gap: 8,
     },
-    locationOption: {
+    locationBtn: {
       flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
       gap: 8,
       paddingVertical: 12,
-      borderRadius: 10,
+      borderRadius: 12,
+      backgroundColor: '#18181b',
+      borderWidth: 1,
+      borderColor: '#27272a',
     },
-    locationOptionActive: {
-      backgroundColor: theme.primary,
+    locationBtnActive: {
+      backgroundColor: 'rgba(220, 38, 38, 0.1)',
+      borderColor: '#DC2626',
     },
     locationText: {
-      fontSize: 14,
-      fontWeight: '600',
-      color: '#888',
+      fontSize: 12,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#71717a',
+      letterSpacing: 0.5,
     },
     locationTextActive: {
-      color: '#fff',
+      color: '#fafafa',
     },
-    locationDescription: {
-      fontSize: 12,
-      color: '#666',
+    locationDesc: {
+      fontSize: 10,
+      fontFamily: 'SpaceGrotesk',
+      color: '#52525b',
       marginTop: 8,
       textAlign: 'center',
     },
+
+    // --- Muscle Grid ---
     muscleGrid: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: 10,
+      gap: 8,
     },
     muscleCard: {
       width: '48%',
-      backgroundColor: '#0a0a0a',
-      borderRadius: 14,
-      padding: 14,
+      backgroundColor: '#18181b',
+      borderRadius: 12,
+      padding: 12,
       alignItems: 'center',
-      borderWidth: 2,
-      borderColor: 'transparent',
+      borderWidth: 1,
+      borderColor: '#27272a',
     },
     muscleCardActive: {
-      backgroundColor: 'rgba(155, 44, 44, 0.15)',
-      borderColor: theme.primary,
+      backgroundColor: 'rgba(220, 38, 38, 0.06)',
     },
     muscleIcon: {
-      width: 48,
-      height: 48,
-      borderRadius: 24,
-      backgroundColor: 'rgba(155, 44, 44, 0.1)',
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      backgroundColor: 'rgba(220, 38, 38, 0.08)',
       justifyContent: 'center',
       alignItems: 'center',
       marginBottom: 8,
     },
     muscleIconActive: {
-      backgroundColor: theme.primary,
+      backgroundColor: '#DC2626',
     },
     muscleName: {
-      fontSize: 13,
-      fontWeight: '700',
-      color: '#fff',
-      textAlign: 'center',
+      fontSize: 12,
+      fontWeight: '600',
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#a1a1aa',
     },
     muscleNameActive: {
-      color: theme.primary,
+      color: '#fafafa',
     },
-    generateButton: {
+
+    // --- Generate Button ---
+    generateBtn: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: theme.primary,
-      paddingVertical: 16,
-      borderRadius: 14,
-      gap: 10,
-      marginTop: 8,
+      backgroundColor: '#DC2626',
+      paddingVertical: 14,
+      borderRadius: 12,
+      gap: 8,
+      marginTop: 16,
     },
-    generateButtonDisabled: {
-      backgroundColor: '#333',
+    generateBtnDisabled: {
+      backgroundColor: '#27272a',
     },
-    generateButtonText: {
-      fontSize: 16,
+    generateBtnText: {
+      fontSize: 12,
       fontWeight: '700',
-      color: '#fff',
-      letterSpacing: 0.5,
+      fontFamily: 'SpaceGroteskBold',
+      color: '#fafafa',
+      letterSpacing: 1,
     },
   });
 }

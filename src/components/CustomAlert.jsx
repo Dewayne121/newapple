@@ -14,7 +14,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const ICON_CONFIG = {
   success: { name: 'checkmark-circle', color: '#00d4aa' },
-  error: { name: 'alert-circle', color: '#ff003c' },
+  error: { name: 'alert-circle', color: '#ff2d55' },
   warning: { name: 'warning', color: '#eab308' },
   info: { name: 'information-circle', color: '#3b82f6' },
 };
@@ -62,9 +62,9 @@ const CustomAlert = ({
     }
   }, [visible]);
 
-  const handleButtonPress = (button) => {
+  const handleButtonPress = async (button) => {
     if (button.onPress) {
-      button.onPress();
+      await button.onPress();
     }
     onClose();
   };
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   alertContainer: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1e1e20',
     borderRadius: 16,
     padding: 24,
     width: Math.min(SCREEN_WIDTH - 48, 320),
@@ -210,13 +210,15 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#ffffff',
+    fontFamily: 'SpaceGroteskSemiBold',
+    color: '#fafafa',
     textAlign: 'center',
     marginBottom: 8,
   },
   message: {
     fontSize: 14,
-    color: '#888888',
+    color: '#a1a1aa',
+    fontFamily: 'SpaceGrotesk',
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 24,
@@ -236,28 +238,29 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   defaultButton: {
-    backgroundColor: '#9b2c2c',
+    backgroundColor: '#ff2d55',
   },
   cancelButton: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#666666',
+    borderColor: '#a1a1aa',
   },
   destructiveButton: {
-    backgroundColor: '#ff003c',
+    backgroundColor: '#ff2d55',
   },
   buttonText: {
     fontSize: 16,
     fontWeight: '600',
+    fontFamily: 'SpaceGroteskSemiBold',
   },
   defaultButtonText: {
-    color: '#ffffff',
+    color: '#fafafa',
   },
   cancelButtonText: {
-    color: '#888888',
+    color: '#a1a1aa',
   },
   destructiveButtonText: {
-    color: '#ffffff',
+    color: '#fafafa',
   },
 });
 
