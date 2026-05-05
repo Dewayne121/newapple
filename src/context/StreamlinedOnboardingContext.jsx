@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect, use
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import api from '../services/api';
+import { Analytics } from '../utils/analytics';
 
 // Global callback to refresh user data after onboarding completes
 let globalRefreshUserCallback = null;
@@ -329,11 +330,13 @@ export const StreamlinedOnboardingProvider = ({ children }) => {
 
   const goToStep = useCallback((stepIndex) => {
     if (stepIndex >= 0 && stepIndex < STEP_ORDER.length) {
+      const currentStep = STEP_ORDER[currentStepIndex];
+      Analytics.logEvent('onboarding_step_completed', { step_name: currentStep, step_index: currentStepIndex, total_steps: STEP_ORDER.length });
       setCurrentStepIndex(stepIndex);
       AsyncStorage.setItem(ONBOARDING_STEP_KEY, String(stepIndex));
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-  }, []);
+  }, [currentStepIndex]);
 
   const goToNextStep = useCallback(() => {
     if (currentStepIndex < STEP_ORDER.length - 1) {
@@ -536,6 +539,7 @@ export const StreamlinedOnboardingProvider = ({ children }) => {
       }
 
       setIsCompleted(true);
+      Analytics.logEvent('onboarding_completed', { total_duration_seconds: 0, steps_completed: STEP_ORDER.length });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
       console.error('Error completing onboarding:', error);

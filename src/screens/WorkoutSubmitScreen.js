@@ -13,6 +13,7 @@ import { useTheme } from '../context/ThemeContext';
 import { SKINS } from '../constants/colors';
 import api from '../services/api';
 import CustomAlert, { useCustomAlert } from '../components/CustomAlert';
+import { Analytics } from '../utils/analytics';
 
 const LS_WORKOUT_VIDEOS = 'unyield_workout_videos';
 
@@ -542,6 +543,8 @@ export default function WorkoutSubmitScreen({ navigation }) {
 
     setIsSubmitting(true);
 
+    Analytics.logEvent('workout_started', { exercise_id: exercise?.id, exercise_name: exercise?.name });
+
     // Convert weight to kg for storage (always store as kg internally)
     const weightInKg = weightUnit === 'lbs' ? weight / 2.20462 : weight;
 
@@ -639,6 +642,7 @@ export default function WorkoutSubmitScreen({ navigation }) {
           stack: err.stack?.substring(0, 500),
           response: err.response
         });
+        Analytics.logEvent('video_upload_failed', { exercise_name: exercise?.name, error_message: err?.message });
         showAlert({
           title: 'Video Upload Error',
           message: err.message || 'Video upload failed. The workout was saved locally.',
@@ -653,6 +657,7 @@ export default function WorkoutSubmitScreen({ navigation }) {
     }
 
     await addLog(log);
+    Analytics.logWorkoutCompleted({ exercise_id: exercise?.id, exercise_name: exercise?.name, reps, weight_kg: weightInKg });
     setIsSubmitting(false);
     navigation.replace('WorkoutSummary', {
       report,

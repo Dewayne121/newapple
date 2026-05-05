@@ -20,6 +20,7 @@ import { useTheme } from '../context/ThemeContext';
 import { getWeightClassLabel } from '../context/AppContext';
 import { COMPETITIVE_LIFTS, resolveCompetitiveLiftId } from '../constants/competitiveLifts';
 import api from '../services/api';
+import * as purchaseService from '../services/purchaseService';
 import CustomAlert, { useCustomAlert } from '../components/CustomAlert';
 
 const WEIGHT_CLASSES = [
@@ -46,6 +47,21 @@ const LOCATION_TYPES = [
   { id: 'home', label: 'HOME' },
   { id: 'gym', label: 'GYM' },
 ];
+
+const HOME_LIFTS = ['pushups', 'plank', 'bodyweight_squat', 'incline_pushup', 'step_ups', 'pullups'];
+const GYM_LIFTS = ['bench_press', 'deadlift', 'squat', 'barbell_row', 'overhead_press', 'hip_thrust', 'lat_pulldown', 'goblet_squat', 'romanian_deadlift'];
+
+const LOCATION_TABS = [
+  { key: null, label: 'All', icon: 'trophy-outline' },
+  { key: 'home', label: 'Home', icon: 'home-outline' },
+  { key: 'gym', label: 'Gym', icon: 'barbell-outline' },
+];
+
+const getLiftsForLocation = (location) => {
+  if (!location) return COMPETITIVE_LIFTS;
+  const ids = location === 'home' ? HOME_LIFTS : GYM_LIFTS;
+  return COMPETITIVE_LIFTS.filter(l => ids.includes(l.id));
+};
 
 const getRankStyle = (rank) => {
   if (rank === 1) return { color: '#FFD700' };
@@ -137,6 +153,15 @@ export default function LeaderboardScreen({ route }) {
       setEntryLocationType(selectedLocationType);
     }
   }, [selectedLocationType]);
+
+  // Reset lift selection if it's invalid for the current location
+  useEffect(() => {
+    if (leaderboardType !== 'core') return;
+    const visibleLifts = getLiftsForLocation(selectedLocationType);
+    if (visibleLifts.length > 0 && !visibleLifts.find(l => l.id === selectedLift)) {
+      setSelectedLift(visibleLifts[0].id);
+    }
+  }, [selectedLocationType, leaderboardType]);
 
   const fetchLeaderboard = useCallback(async () => {
     try {
@@ -494,135 +519,205 @@ export default function LeaderboardScreen({ route }) {
 
   const renderCoreLiftEntryForm = () => (
     <View style={styles.entryCard}>
-      <Text style={styles.entryCardTitle}>
-        {selectedLiftObj.label.toUpperCase()} ENTRY
-      </Text>
-      <Text style={styles.entryCardHint}>Enter your best set. Estimated 1RM is calculated automatically.</Text>
-
-      <View style={styles.entryInputRow}>
-        <View style={styles.entryField}>
-          <Text style={styles.entryFieldLabel}>WEIGHT ({weightUnit.toUpperCase()})</Text>
-          <TextInput
-            value={entryWeight}
-            onChangeText={(value) => setEntryWeight(value.replace(/[^0-9.,]/g, ''))}
-            placeholder={`e.g. ${weightUnit === 'lbs' ? '225' : '100'}`}
-            placeholderTextColor="#71717a"
-            keyboardType="decimal-pad"
-            style={styles.entryInput}
-            returnKeyType="done"
-          />
+      {/* Lift Type Header */}
+      <View style={styles.entryLiftHeader}>
+        <View style={styles.entryLiftIconWrap}>
+          <Ionicons name="barbell-outline" size={18} color="#DC2626" />
         </View>
-        <View style={styles.entryField}>
-          <Text style={styles.entryFieldLabel}>REPS</Text>
-          <TextInput
-            value={entryReps}
-            onChangeText={(value) => setEntryReps(value.replace(/[^0-9]/g, ''))}
-            placeholder="e.g. 5"
-            placeholderTextColor="#71717a"
-            keyboardType="number-pad"
-            style={styles.entryInput}
-            returnKeyType="done"
-          />
+        <View style={styles.entryLiftInfo}>
+          <Text style={styles.entryLiftName}>{selectedLiftObj.label}</Text>
+          <Text style={styles.entryLiftHint}>Your best set. 1RM is auto-calculated.</Text>
         </View>
       </View>
 
-      <Text style={styles.entryFieldLabel}>LOCATION</Text>
-      <View style={styles.entryLocationRow}>
-        {['gym', 'home'].map((location) => (
+      {/* Step 1: Weight & Reps */}
+      <View style={styles.entryStep}>
+        <View style={styles.entryStepHeader}>
+          <View style={styles.entryStepDot}>
+            <Text style={styles.entryStepDotText}>1</Text>
+          </View>
+          <Text style={styles.entryStepTitle}>What did you lift?</Text>
+        </View>
+        <View style={styles.entryInputRow}>
+          <View style={styles.entryField}>
+            <Text style={styles.entryFieldLabel}>Weight ({weightUnit})</Text>
+            <View style={styles.entryInputWrap}>
+              <Ionicons name="scale-outline" size={16} color="#52525b" />
+              <TextInput
+                value={entryWeight}
+                onChangeText={(value) => setEntryWeight(value.replace(/[^0-9.,]/g, ''))}
+                placeholder={weightUnit === 'lbs' ? '225' : '100'}
+                placeholderTextColor="#3f3f46"
+                keyboardType="decimal-pad"
+                style={styles.entryInput}
+                returnKeyType="done"
+              />
+              <Text style={styles.entryInputUnit}>{weightUnit}</Text>
+            </View>
+          </View>
+          <View style={styles.entryField}>
+            <Text style={styles.entryFieldLabel}>Reps</Text>
+            <View style={styles.entryInputWrap}>
+              <Ionicons name="repeat-outline" size={16} color="#52525b" />
+              <TextInput
+                value={entryReps}
+                onChangeText={(value) => setEntryReps(value.replace(/[^0-9]/g, ''))}
+                placeholder="5"
+                placeholderTextColor="#3f3f46"
+                keyboardType="number-pad"
+                style={styles.entryInput}
+                returnKeyType="done"
+              />
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* Step 2: Location */}
+      <View style={styles.entryStep}>
+        <View style={styles.entryStepHeader}>
+          <View style={styles.entryStepDot}>
+            <Text style={styles.entryStepDotText}>2</Text>
+          </View>
+          <Text style={styles.entryStepTitle}>Where did you lift?</Text>
+        </View>
+        <View style={styles.entryLocationRow}>
           <TouchableOpacity
-            key={location}
             style={[
-              styles.entryLocationButton,
-              entryLocationType === location && styles.entryLocationButtonActive,
-              entryLocationType === location && { borderColor: theme.primary },
+              styles.entryLocationCard,
+              entryLocationType === 'gym' && styles.entryLocationCardActive,
             ]}
-            onPress={() => setEntryLocationType(location)}
-            activeOpacity={0.85}
+            onPress={() => setEntryLocationType('gym')}
+            activeOpacity={0.7}
           >
-            <Text
-              style={[
-                styles.entryLocationButtonText,
-                entryLocationType === location && styles.entryLocationButtonTextActive,
-              ]}
-            >
-              {location.toUpperCase()}
+            <Ionicons
+              name="business-outline"
+              size={20}
+              color={entryLocationType === 'gym' ? '#DC2626' : '#71717a'}
+            />
+            <Text style={[
+              styles.entryLocationLabel,
+              entryLocationType === 'gym' && styles.entryLocationLabelActive,
+            ]}>
+              Gym
             </Text>
           </TouchableOpacity>
-        ))}
-      </View>
-
-      <Text style={styles.entryFieldLabel}>PROOF VIDEO (REQUIRED)</Text>
-      <View style={styles.entryVideoActionsRow}>
-        <TouchableOpacity
-          style={styles.entryVideoActionButton}
-          onPress={recordEntryVideo}
-          disabled={submittingCoreLift}
-          activeOpacity={0.85}
-        >
-          <Ionicons name="videocam-outline" size={14} color="#fafafa" />
-          <Text style={styles.entryVideoActionButtonText}>RECORD</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.entryVideoActionButton}
-          onPress={pickEntryVideoFromGallery}
-          disabled={submittingCoreLift}
-          activeOpacity={0.85}
-        >
-          <Ionicons name="images-outline" size={14} color="#fafafa" />
-          <Text style={styles.entryVideoActionButtonText}>UPLOAD</Text>
-        </TouchableOpacity>
-      </View>
-
-      {entryVideoUri ? (
-        <View style={styles.entryVideoSelectedRow}>
-          <Ionicons name="checkmark-circle" size={14} color="#22c55e" />
-          <Text style={styles.entryVideoSelectedText}>
-            VIDEO READY {entryVideoDuration > 0 ? `(${entryVideoDuration}s)` : ''}
-            {entryVideoSource ? ` | ${String(entryVideoSource).toUpperCase()}` : ''}
-          </Text>
           <TouchableOpacity
-            onPress={() => {
-              setEntryVideoUri(null);
-              setEntryVideoDuration(0);
-              setEntryVideoSource(null);
-            }}
-            disabled={submittingCoreLift}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            style={[
+              styles.entryLocationCard,
+              entryLocationType === 'home' && styles.entryLocationCardActive,
+            ]}
+            onPress={() => setEntryLocationType('home')}
+            activeOpacity={0.7}
           >
-            <Ionicons name="close-circle" size={16} color="#a1a1aa" />
+            <Ionicons
+              name="home-outline"
+              size={20}
+              color={entryLocationType === 'home' ? '#DC2626' : '#71717a'}
+            />
+            <Text style={[
+              styles.entryLocationLabel,
+              entryLocationType === 'home' && styles.entryLocationLabelActive,
+            ]}>
+              Home
+            </Text>
           </TouchableOpacity>
         </View>
-      ) : (
-        <Text style={styles.entryVideoHint}>No video selected yet.</Text>
-      )}
+      </View>
 
-      <Text style={styles.entryFieldLabel}>NOTES (OPTIONAL)</Text>
-      <TextInput
-        value={entryNotes}
-        onChangeText={setEntryNotes}
-        placeholder="Any context for this lift..."
-        placeholderTextColor="#71717a"
-        style={[styles.entryInput, styles.entryNotesInput]}
-        multiline
-        maxLength={120}
-      />
+      {/* Step 3: Video Proof */}
+      <View style={styles.entryStep}>
+        <View style={styles.entryStepHeader}>
+          <View style={styles.entryStepDot}>
+            <Text style={styles.entryStepDotText}>3</Text>
+          </View>
+          <Text style={styles.entryStepTitle}>Video proof (required)</Text>
+        </View>
 
+        {entryVideoUri ? (
+          <View style={styles.entryVideoConfirmed}>
+            <View style={styles.entryVideoConfirmedLeft}>
+              <View style={styles.entryVideoConfirmedDot}>
+                <Ionicons name="checkmark" size={12} color="#22c55e" />
+              </View>
+              <View>
+                <Text style={styles.entryVideoConfirmedTitle}>Video ready</Text>
+                <Text style={styles.entryVideoConfirmedSub}>
+                  {entryVideoDuration > 0 ? `${entryVideoDuration}s ` : ''}
+                  {entryVideoSource ? String(entryVideoSource).toUpperCase() : ''}
+                </Text>
+              </View>
+            </View>
+            <TouchableOpacity
+              onPress={() => {
+                setEntryVideoUri(null);
+                setEntryVideoDuration(0);
+                setEntryVideoSource(null);
+              }}
+              disabled={submittingCoreLift}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="close" size={18} color="#71717a" />
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={styles.entryVideoActionsRow}>
+            <TouchableOpacity
+              style={styles.entryVideoCard}
+              onPress={recordEntryVideo}
+              disabled={submittingCoreLift}
+              activeOpacity={0.7}
+            >
+              <View style={styles.entryVideoCardIcon}>
+                <Ionicons name="videocam-outline" size={20} color="#DC2626" />
+              </View>
+              <Text style={styles.entryVideoCardLabel}>Record</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.entryVideoCard}
+              onPress={pickEntryVideoFromGallery}
+              disabled={submittingCoreLift}
+              activeOpacity={0.7}
+            >
+              <View style={styles.entryVideoCardIcon}>
+                <Ionicons name="images-outline" size={20} color="#a1a1aa" />
+              </View>
+              <Text style={styles.entryVideoCardLabel}>Upload</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+
+      {/* Notes */}
+      <View style={styles.entryNotesSection}>
+        <Text style={styles.entryNotesLabel}>Notes (optional)</Text>
+        <TextInput
+          value={entryNotes}
+          onChangeText={setEntryNotes}
+          placeholder="Any context for this lift..."
+          placeholderTextColor="#3f3f46"
+          style={styles.entryNotesInput}
+          multiline
+          maxLength={120}
+        />
+      </View>
+
+      {/* Submit */}
       <TouchableOpacity
         style={[
           styles.entrySubmitButton,
-          { backgroundColor: theme.primary },
           submittingCoreLift && styles.entrySubmitButtonDisabled,
         ]}
         onPress={handleSubmitCoreLift}
         disabled={submittingCoreLift}
-        activeOpacity={0.85}
+        activeOpacity={0.7}
       >
         {submittingCoreLift ? (
-          <ActivityIndicator size="small" color="#DC2626" />
+          <ActivityIndicator size="small" color="#fafafa" />
         ) : (
           <>
-            <Ionicons name="barbell-outline" size={14} color="#fafafa" />
-            <Text style={styles.entrySubmitButtonText}>SUBMIT TO LEADERBOARD</Text>
+            <Text style={styles.entrySubmitButtonText}>Submit to Leaderboard</Text>
+            <Ionicons name="chevron-forward" size={16} color="#fafafa" />
           </>
         )}
       </TouchableOpacity>
@@ -699,6 +794,30 @@ export default function LeaderboardScreen({ route }) {
             {leaderboardType === 'challenge' && <View style={styles.typeTabIndicator} />}
           </TouchableOpacity>
         </View>
+
+        {/* Location Toggle */}
+        <View style={styles.locationToggleWrap}>
+          {LOCATION_TABS.map((tab) => {
+            const isActive = selectedLocationType === tab.key;
+            return (
+              <TouchableOpacity
+                key={tab.key ?? 'all'}
+                style={[styles.locationTab, isActive && styles.locationTabActive]}
+                onPress={() => setSelectedLocationType(tab.key)}
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name={tab.icon}
+                  size={15}
+                  color={isActive ? '#fafafa' : '#71717a'}
+                />
+                <Text style={[styles.locationTabText, isActive && styles.locationTabTextActive]}>
+                  {tab.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </View>
 
       <View style={styles.fixedHeader}>
@@ -734,7 +853,7 @@ export default function LeaderboardScreen({ route }) {
                     showsHorizontalScrollIndicator={false}
                     contentContainerStyle={styles.selectorScrollContent}
                   >
-                    {COMPETITIVE_LIFTS.map((lift) => (
+                    {getLiftsForLocation(selectedLocationType).map((lift) => (
                       <TouchableOpacity
                         key={lift.id}
                         style={[
@@ -815,36 +934,6 @@ export default function LeaderboardScreen({ route }) {
                     ))}
                   </ScrollView>
                 </View>
-
-                {/* Location Selector */}
-                <View style={styles.selectorSection}>
-                  <Text style={styles.selectorLabel}>LOCATION</Text>
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.selectorScrollContent}
-                  >
-                    {LOCATION_TYPES.map((location) => (
-                      <TouchableOpacity
-                        key={location.id || 'all'}
-                        style={[
-                          styles.selectorPill,
-                          selectedLocationType === location.id && styles.selectorPillActive,
-                          selectedLocationType === location.id && { borderColor: '#DC2626' }
-                        ]}
-                        onPress={() => setSelectedLocationType(location.id)}
-                        activeOpacity={0.85}
-                      >
-                        <Text style={[
-                          styles.selectorPillText,
-                          selectedLocationType === location.id && styles.selectorPillTextActive
-                        ]}>
-                          {location.label}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </View>
               </>
             )}
           </>
@@ -917,8 +1006,23 @@ export default function LeaderboardScreen({ route }) {
               <Text style={styles.podiumLabel}>TOP CONTENDERS</Text>
               {topThree.map((item) => {
                 const medalColor = item.rank === 1 ? '#FFD700' : item.rank === 2 ? '#C0C0D0' : '#CD7F32';
+                const isHighlighted = item.isCurrentUser && purchaseService.hasRankHighlight();
                 return (
-                  <View key={item.id} style={styles.podiumCard}>
+                  <View
+                    key={item.id}
+                    style={[
+                      styles.podiumCard,
+                      isHighlighted && {
+                        borderColor: '#FFD700',
+                        borderWidth: 2,
+                        shadowColor: '#FFD700',
+                        shadowOpacity: 0.3,
+                        shadowRadius: 12,
+                        elevation: 8,
+                        backgroundColor: 'rgba(255, 215, 0, 0.04)',
+                      },
+                    ]}
+                  >
                     <View style={[styles.podiumColorBar, { backgroundColor: medalColor }]} />
                     <View style={styles.podiumCardContent}>
                       <Text style={[styles.podiumRankNumber, { color: medalColor }]}>
@@ -942,6 +1046,11 @@ export default function LeaderboardScreen({ route }) {
                           : formatChallengeProgress(item.progress, item.target)}
                       </Text>
                     </View>
+                    {isHighlighted && (
+                      <View style={styles.rankHighlightStar}>
+                        <Ionicons name="star" size={14} color="#FFD700" />
+                      </View>
+                    )}
                   </View>
                 );
               })}
@@ -951,6 +1060,7 @@ export default function LeaderboardScreen({ route }) {
           {/* Rank List */}
           {(topThree.length >= 3 ? restEntries : entries).map((item) => {
             const rankColor = getRankStyle(item.rank);
+            const isHighlighted = item.isCurrentUser && purchaseService.hasRankHighlight();
             return (
               <TouchableOpacity
                 key={item.id}
@@ -959,6 +1069,15 @@ export default function LeaderboardScreen({ route }) {
                 style={[
                   styles.rankCard,
                   item.isCurrentUser && styles.rankCardCurrentUser,
+                  isHighlighted && {
+                    borderColor: '#FFD700',
+                    borderWidth: 2,
+                    shadowColor: '#FFD700',
+                    shadowOpacity: 0.3,
+                    shadowRadius: 12,
+                    elevation: 8,
+                    backgroundColor: 'rgba(255, 215, 0, 0.04)',
+                  },
                 ]}
               >
                 {/* Subtle left color bar inside card */}
@@ -993,6 +1112,12 @@ export default function LeaderboardScreen({ route }) {
                       : formatChallengeProgress(item.progress, item.target)}
                   </Text>
                 </View>
+
+                {isHighlighted && (
+                  <View style={styles.rankHighlightStar}>
+                    <Ionicons name="star" size={14} color="#FFD700" />
+                  </View>
+                )}
               </TouchableOpacity>
             );
           })}
@@ -1039,23 +1164,33 @@ export default function LeaderboardScreen({ route }) {
       <Modal
         visible={leaderboardType === 'core' && showCoreLiftForm}
         transparent
-        animationType="fade"
+        animationType="slide"
         onRequestClose={() => setShowCoreLiftForm(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            {/* Handle bar */}
-            <View style={styles.modalHandle} />
+          <TouchableOpacity
+            style={styles.modalBackdrop}
+            activeOpacity={1}
+            onPress={() => setShowCoreLiftForm(false)}
+          />
+          <View style={[styles.modalSheet, { paddingBottom: insets.bottom + 12 }]}>
+            {/* Handle */}
+            <View style={styles.modalHandleWrap}>
+              <View style={styles.modalHandle} />
+            </View>
 
             {/* Header */}
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>SUBMIT LIFT</Text>
+              <View style={styles.modalHeaderLeft}>
+                <Ionicons name="barbell-outline" size={18} color="#DC2626" />
+                <Text style={styles.modalTitle}>Submit Lift</Text>
+              </View>
               <TouchableOpacity
                 onPress={() => setShowCoreLiftForm(false)}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 style={styles.modalCloseBtn}
               >
-                <Ionicons name="close" size={20} color="#a1a1aa" />
+                <Ionicons name="close" size={18} color="#a1a1aa" />
               </TouchableOpacity>
             </View>
 
@@ -1175,6 +1310,39 @@ function createStyles(theme, insets) {
       right: 0,
       height: 2,
       backgroundColor: '#DC2626',
+    },
+
+    // --- Location Toggle ---
+    locationToggleWrap: {
+      flexDirection: 'row',
+      marginTop: 16,
+      marginBottom: 16,
+      gap: 8,
+    },
+    locationTab: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      paddingVertical: 10,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: '#27272a',
+      backgroundColor: '#121214',
+    },
+    locationTabActive: {
+      borderColor: '#DC2626',
+      backgroundColor: 'rgba(220, 38, 38, 0.1)',
+    },
+    locationTabText: {
+      fontSize: 12,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#71717a',
+      letterSpacing: 0.5,
+    },
+    locationTabTextActive: {
+      color: '#fafafa',
     },
 
     // --- Fixed Header / Filter Area ---
@@ -1474,6 +1642,11 @@ function createStyles(theme, insets) {
       letterSpacing: 1,
       textTransform: 'uppercase',
     },
+    rankHighlightStar: {
+      position: 'absolute',
+      top: 8,
+      right: 8,
+    },
     rankValuePill: {
       paddingHorizontal: 10,
       paddingVertical: 5,
@@ -1538,202 +1711,319 @@ function createStyles(theme, insets) {
     // --- Core Lift Modal ---
     modalOverlay: {
       flex: 1,
-      backgroundColor: 'rgba(9, 9, 11, 0.92)',
-      justifyContent: 'center',
-      paddingHorizontal: 16,
+      justifyContent: 'flex-end',
     },
-    modalCard: {
-      backgroundColor: '#121214',
-      borderRadius: 16,
+    modalBackdrop: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    },
+    modalSheet: {
+      backgroundColor: '#0f0f11',
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
       borderWidth: 1,
+      borderBottomWidth: 0,
       borderColor: '#27272a',
-      maxHeight: '85%',
+      maxHeight: '92%',
       overflow: 'hidden',
     },
+    modalHandleWrap: {
+      alignItems: 'center',
+      paddingTop: 10,
+      paddingBottom: 4,
+    },
     modalHandle: {
-      width: 40,
+      width: 36,
       height: 4,
-      backgroundColor: '#27272a',
+      backgroundColor: '#3f3f46',
       borderRadius: 2,
-      alignSelf: 'center',
-      marginTop: 12,
-      marginBottom: 16,
     },
     modalHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      paddingHorizontal: 16,
-      paddingBottom: 16,
+      paddingHorizontal: 20,
+      paddingVertical: 12,
       borderBottomWidth: 1,
-      borderBottomColor: '#27272a',
+      borderBottomColor: '#1e1e20',
+    },
+    modalHeaderLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
     },
     modalTitle: {
-      fontSize: 13,
+      fontSize: 16,
       fontFamily: 'SpaceGroteskBold',
       color: '#fafafa',
-      letterSpacing: 1.5,
-      textTransform: 'uppercase',
+      letterSpacing: -0.3,
     },
     modalCloseBtn: {
-      width: 32,
-      height: 32,
-      borderRadius: 8,
+      width: 36,
+      height: 36,
+      borderRadius: 18,
       backgroundColor: '#18181b',
       alignItems: 'center',
       justifyContent: 'center',
     },
     modalContent: {
-      paddingHorizontal: 16,
-      paddingBottom: 20,
+      paddingHorizontal: 20,
+      paddingVertical: 16,
     },
 
     // --- Entry Form ---
     entryCard: {
-      gap: 0,
+      gap: 20,
     },
-    entryCardTitle: {
-      fontSize: 13,
+
+    // Lift header
+    entryLiftHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      backgroundColor: '#18181b',
+      borderWidth: 1,
+      borderColor: '#27272a',
+      borderRadius: 14,
+      padding: 14,
+    },
+    entryLiftIconWrap: {
+      width: 40,
+      height: 40,
+      borderRadius: 10,
+      backgroundColor: 'rgba(220, 38, 38, 0.1)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    entryLiftInfo: {
+      flex: 1,
+    },
+    entryLiftName: {
+      fontSize: 15,
       fontFamily: 'SpaceGroteskBold',
       color: '#fafafa',
-      letterSpacing: 1,
-      textTransform: 'uppercase',
-      marginBottom: 4,
+      letterSpacing: -0.2,
     },
-    entryCardHint: {
-      fontSize: 11,
+    entryLiftHint: {
+      fontSize: 12,
       fontFamily: 'SpaceGrotesk',
       color: '#71717a',
-      letterSpacing: 0.3,
-      marginBottom: 16,
+      marginTop: 2,
     },
+
+    // Steps
+    entryStep: {
+      gap: 12,
+    },
+    entryStepHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    entryStepDot: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      backgroundColor: '#DC2626',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    entryStepDotText: {
+      fontSize: 11,
+      fontFamily: 'SpaceGroteskBold',
+      color: '#fafafa',
+    },
+    entryStepTitle: {
+      fontSize: 13,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#d4d4d8',
+    },
+
+    // Input fields
     entryInputRow: {
       flexDirection: 'row',
-      gap: 12,
-      marginBottom: 16,
+      gap: 10,
     },
     entryField: {
       flex: 1,
+      gap: 6,
     },
     entryFieldLabel: {
-      fontSize: 10,
+      fontSize: 11,
       fontFamily: 'SpaceGroteskSemiBold',
       color: '#71717a',
-      letterSpacing: 1.5,
-      textTransform: 'uppercase',
-      marginBottom: 8,
+      letterSpacing: 0.5,
+    },
+    entryInputWrap: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#18181b',
+      borderWidth: 1,
+      borderColor: '#27272a',
+      borderRadius: 12,
+      paddingHorizontal: 12,
+      gap: 8,
+      height: 48,
     },
     entryInput: {
+      flex: 1,
+      color: '#fafafa',
+      fontSize: 16,
+      fontFamily: 'SpaceGroteskSemiBold',
+      padding: 0,
+    },
+    entryInputUnit: {
+      fontSize: 12,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#52525b',
+      letterSpacing: 0.5,
+    },
+
+    // Location cards
+    entryLocationRow: {
+      flexDirection: 'row',
+      gap: 10,
+    },
+    entryLocationCard: {
+      flex: 1,
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      borderWidth: 1,
+      borderColor: '#27272a',
+      borderRadius: 14,
+      paddingVertical: 16,
+      backgroundColor: '#18181b',
+    },
+    entryLocationCardActive: {
+      borderColor: '#DC2626',
+      backgroundColor: 'rgba(220, 38, 38, 0.08)',
+    },
+    entryLocationLabel: {
+      fontSize: 12,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#71717a',
+    },
+    entryLocationLabelActive: {
+      color: '#fafafa',
+    },
+
+    // Video section
+    entryVideoActionsRow: {
+      flexDirection: 'row',
+      gap: 10,
+    },
+    entryVideoCard: {
+      flex: 1,
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      backgroundColor: '#18181b',
+      borderWidth: 1,
+      borderColor: '#27272a',
+      borderRadius: 14,
+      paddingVertical: 18,
+    },
+    entryVideoCardIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      backgroundColor: '#121214',
+      borderWidth: 1,
+      borderColor: '#27272a',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    entryVideoCardLabel: {
+      fontSize: 12,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#a1a1aa',
+    },
+
+    // Video confirmed
+    entryVideoConfirmed: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: 'rgba(34, 197, 94, 0.06)',
+      borderWidth: 1,
+      borderColor: 'rgba(34, 197, 94, 0.2)',
+      borderRadius: 14,
+      padding: 14,
+    },
+    entryVideoConfirmedLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    entryVideoConfirmedDot: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      backgroundColor: 'rgba(34, 197, 94, 0.15)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    entryVideoConfirmedTitle: {
+      fontSize: 13,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#4ade80',
+    },
+    entryVideoConfirmedSub: {
+      fontSize: 11,
+      fontFamily: 'SpaceGrotesk',
+      color: '#166534',
+      marginTop: 1,
+    },
+
+    // Notes
+    entryNotesSection: {
+      gap: 6,
+    },
+    entryNotesLabel: {
+      fontSize: 11,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#71717a',
+      letterSpacing: 0.5,
+    },
+    entryNotesInput: {
       backgroundColor: '#18181b',
       borderWidth: 1,
       borderColor: '#27272a',
       borderRadius: 12,
       color: '#fafafa',
       fontSize: 14,
-      fontFamily: 'SpaceGroteskSemiBold',
+      fontFamily: 'SpaceGrotesk',
       paddingHorizontal: 14,
       paddingVertical: 12,
-    },
-    entryLocationRow: {
-      flexDirection: 'row',
-      gap: 10,
-      marginBottom: 16,
-    },
-    entryLocationButton: {
-      flex: 1,
-      borderWidth: 1,
-      borderColor: '#27272a',
-      borderRadius: 12,
-      paddingVertical: 12,
-      alignItems: 'center',
-      backgroundColor: '#18181b',
-    },
-    entryLocationButtonActive: {
-      backgroundColor: 'rgba(220, 38, 38, 0.1)',
-      borderColor: '#DC2626',
-    },
-    entryLocationButtonText: {
-      fontSize: 10,
-      fontFamily: 'SpaceGroteskSemiBold',
-      color: '#71717a',
-      letterSpacing: 1.5,
-      textTransform: 'uppercase',
-    },
-    entryLocationButtonTextActive: {
-      color: '#fafafa',
-    },
-    entryVideoActionsRow: {
-      flexDirection: 'row',
-      gap: 10,
-      marginBottom: 12,
-    },
-    entryVideoActionButton: {
-      flex: 1,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 8,
-      backgroundColor: '#18181b',
-      borderWidth: 1,
-      borderColor: '#27272a',
-      borderRadius: 12,
-      paddingVertical: 12,
-    },
-    entryVideoActionButtonText: {
-      fontSize: 10,
-      fontFamily: 'SpaceGroteskSemiBold',
-      color: '#a1a1aa',
-      letterSpacing: 1.5,
-      textTransform: 'uppercase',
-    },
-    entryVideoSelectedRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-      marginBottom: 12,
-      paddingHorizontal: 12,
-      paddingVertical: 10,
-      borderRadius: 12,
-      borderWidth: 1,
-      borderColor: 'rgba(34, 197, 94, 0.2)',
-      backgroundColor: 'rgba(34, 197, 94, 0.06)',
-    },
-    entryVideoSelectedText: {
-      flex: 1,
-      fontSize: 10,
-      fontFamily: 'SpaceGroteskSemiBold',
-      color: '#4ade80',
-      letterSpacing: 0.5,
-    },
-    entryVideoHint: {
-      fontSize: 10,
-      fontFamily: 'SpaceGrotesk',
-      color: '#71717a',
-      marginBottom: 12,
-      letterSpacing: 0.5,
-    },
-    entryNotesInput: {
-      minHeight: 68,
+      minHeight: 64,
       textAlignVertical: 'top',
-      marginBottom: 12,
     },
+
+    // Submit button
     entrySubmitButton: {
-      borderRadius: 12,
-      paddingVertical: 14,
+      backgroundColor: '#DC2626',
+      borderRadius: 14,
+      paddingVertical: 16,
+      flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      flexDirection: 'row',
-      gap: 8,
+      gap: 6,
     },
     entrySubmitButtonDisabled: {
-      opacity: 0.5,
+      opacity: 0.4,
     },
     entrySubmitButtonText: {
-      fontSize: 11,
+      fontSize: 14,
       fontFamily: 'SpaceGroteskBold',
       color: '#fafafa',
-      letterSpacing: 1,
-      textTransform: 'uppercase',
+      letterSpacing: 0.3,
     },
   });
 }

@@ -14,6 +14,7 @@ import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
 import api from '../services/api';
 import CustomAlert, { useCustomAlert } from '../components/CustomAlert';
+import { Analytics } from '../utils/analytics';
 import {
   COMPETITIVE_LIFTS,
   getCompetitiveLiftLabel,
@@ -26,10 +27,62 @@ const FILTERS = [
   { key: 'all', label: 'All' },
 ];
 
-const LIFT_FILTERS = [{ id: null, label: 'All' }, ...COMPETITIVE_LIFTS.map((lift) => ({
-  id: lift.id,
-  label: lift.label,
-}))];
+const HOME_LIFTS = ['pushups', 'plank', 'bodyweight_squat', 'incline_pushup', 'step_ups', 'pullups'];
+const GYM_LIFTS = ['bench_press', 'deadlift', 'squat', 'barbell_row', 'overhead_press', 'hip_thrust', 'lat_pulldown', 'goblet_squat', 'romanian_deadlift'];
+
+const LOCATION_TABS = [
+  { key: 'all', label: 'All', icon: 'trophy-outline' },
+  { key: 'home', label: 'Home', icon: 'home-outline' },
+  { key: 'gym', label: 'Gym', icon: 'barbell-outline' },
+];
+
+const getLiftsForLocation = (location) => {
+  const ids = location === 'home' ? HOME_LIFTS : location === 'gym' ? GYM_LIFTS : COMPETITIVE_LIFTS.map(l => l.id);
+  return [
+    { id: null, label: 'All' },
+    ...COMPETITIVE_LIFTS.filter(l => ids.includes(l.id)).map(lift => ({ id: lift.id, label: lift.label })),
+  ];
+};
+
+// Mock weekly paid challenges (will come from backend later)
+const WEEKLY_PAID_CHALLENGES = [
+  {
+    id: 'weekly_bench_0427',
+    title: 'Bench Press Weekly War',
+    exercise: 'bench_press',
+    metricType: 'weight',
+    target: 100,
+    endDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+    reward: 500,
+    participantCount: 48,
+    entryFee: 1.99,
+    prize: 'Exclusive Badge + 500 XP',
+  },
+  {
+    id: 'weekly_deadlift_0427',
+    title: 'Deadlift Max Week',
+    exercise: 'deadlift',
+    metricType: 'weight',
+    target: 140,
+    endDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+    reward: 500,
+    participantCount: 32,
+    entryFee: 1.99,
+    prize: 'Exclusive Badge + 500 XP',
+  },
+  {
+    id: 'weekly_squat_0427',
+    title: 'Squat Endurance Battle',
+    exercise: 'squat',
+    metricType: 'reps',
+    target: 50,
+    endDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+    reward: 500,
+    participantCount: 27,
+    entryFee: 1.99,
+    prize: 'Exclusive Badge + 500 XP',
+  },
+];
 
 export default function CompeteScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -41,8 +94,11 @@ export default function CompeteScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const [challenges, setChallenges] = useState([]);
   const [selectedFilter, setSelectedFilter] = useState('active');
+  const [selectedLocation, setSelectedLocation] = useState('all');
   const [selectedLift, setSelectedLift] = useState(null);
   const [joining, setJoining] = useState(null);
+
+  const locationLiftFilters = getLiftsForLocation(selectedLocation);
 
   const getChallengeId = (challenge) => challenge?.id || challenge?._id || null;
   const getChallengeLiftId = (challenge) => {
@@ -58,8 +114,12 @@ export default function CompeteScreen({ navigation }) {
   };
 
   useEffect(() => {
+    setSelectedLift(null);
+  }, [selectedLocation]);
+
+  useEffect(() => {
     loadChallenges();
-  }, [selectedFilter, selectedLift]);
+  }, [selectedFilter, selectedLocation, selectedLift]);
 
   const loadChallenges = async () => {
     try {
@@ -76,9 +136,17 @@ export default function CompeteScreen({ navigation }) {
       const response = await api.getChallenges(params);
 
       if (response.success) {
+        const locationIds = selectedLocation === 'all'
+          ? null
+          : selectedLocation === 'home' ? HOME_LIFTS : GYM_LIFTS;
+
         const filtered = (response.data || []).filter((challenge) => {
           const liftId = getChallengeLiftId(challenge);
           if (!(selectedLift ? liftId === selectedLift : !!liftId)) {
+            return false;
+          }
+
+          if (locationIds && !locationIds.includes(liftId)) {
             return false;
           }
 
@@ -138,6 +206,7 @@ export default function CompeteScreen({ navigation }) {
         )));
       } else {
         await api.joinChallenge(challengeId);
+        Analytics.logChallengeJoined(challengeId);
         setChallenges(prev => prev.map(c => (
           getChallengeId(c) === challengeId ? { ...c, joined: true, progress: 0 } : c
         )));
@@ -196,6 +265,30 @@ export default function CompeteScreen({ navigation }) {
         </View>
       </View>
 
+      {/* Location Toggle */}
+      <View style={styles.locationToggleWrap}>
+        {LOCATION_TABS.map((tab) => {
+          const isActive = selectedLocation === tab.key;
+          return (
+            <TouchableOpacity
+              key={tab.key}
+              style={[styles.locationTab, isActive && styles.locationTabActive]}
+              onPress={() => setSelectedLocation(tab.key)}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name={tab.icon}
+                size={15}
+                color={isActive ? '#fafafa' : '#71717a'}
+              />
+              <Text style={[styles.locationTabText, isActive && styles.locationTabTextActive]}>
+                {tab.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
       {/* Tabs */}
       <View style={styles.tabNav}>
         {FILTERS.map((filter) => (
@@ -220,7 +313,7 @@ export default function CompeteScreen({ navigation }) {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.liftFilterScroll}
         >
-          {LIFT_FILTERS.map((lift) => {
+          {locationLiftFilters.map((lift) => {
             const isActive = selectedLift === lift.id;
             return (
               <TouchableOpacity
@@ -250,6 +343,80 @@ export default function CompeteScreen({ navigation }) {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#DC2626" />}
           showsVerticalScrollIndicator={false}
         >
+          {/* ── WEEKLY PAID CHALLENGES (COMING SOON) ── */}
+          {(() => {
+            const filteredPaid = WEEKLY_PAID_CHALLENGES.filter((wc) => {
+              if (selectedLift && wc.exercise !== selectedLift) return false;
+              const locationIds = selectedLocation === 'all'
+                ? null
+                : selectedLocation === 'home' ? HOME_LIFTS : GYM_LIFTS;
+              if (locationIds && !locationIds.includes(wc.exercise)) return false;
+              return true;
+            });
+            if (filteredPaid.length === 0) return null;
+            return (
+              <View style={styles.paidSection}>
+                <View style={styles.paidSectionHeader}>
+                  <View style={styles.paidSectionHeaderLeft}>
+                    <Ionicons name="diamond" size={15} color="#3f3f46" />
+                    <Text style={styles.paidSectionTitleGrey}>WEEKLY CHALLENGES</Text>
+                  </View>
+                  <View style={styles.comingSoonBadge}>
+                    <Text style={styles.comingSoonText}>COMING SOON</Text>
+                  </View>
+                </View>
+
+                {filteredPaid.map((wc) => {
+                  const liftLabel = getCompetitiveLiftLabel(wc.exercise) || wc.exercise;
+
+                  return (
+                    <View key={wc.id} style={styles.paidCardGrey}>
+                      <View style={styles.paidCardAccentGrey} />
+                      <View style={styles.paidCardBody}>
+                        <View style={styles.paidCardTop}>
+                          <View style={styles.paidCardTitleRow}>
+                            <Ionicons name="crown" size={14} color="#52525b" />
+                            <Text style={styles.paidCardTitleGrey} numberOfLines={1}>{wc.title}</Text>
+                          </View>
+                          <View style={styles.paidPillFeeGrey}>
+                            <Ionicons name="lock-closed" size={10} color="#52525b" />
+                            <Text style={styles.paidPillFeeTextGrey}>{`\u00A3${wc.entryFee.toFixed(2)}`}</Text>
+                          </View>
+                        </View>
+
+                        <View style={styles.paidCardLift}>
+                          <Ionicons name="barbell-outline" size={10} color="#3f3f46" />
+                          <Text style={styles.paidCardLiftTextGrey}>{liftLabel}</Text>
+                        </View>
+
+                        <View style={styles.paidCardMeta}>
+                          <View style={styles.paidMetaItem}>
+                            <Ionicons name="time-outline" size={12} color="#3f3f46" />
+                            <Text style={styles.paidMetaValueGrey}>5d 0h left</Text>
+                          </View>
+                          <View style={styles.paidMetaItem}>
+                            <Ionicons name="people-outline" size={12} color="#3f3f46" />
+                            <Text style={styles.paidMetaValueGrey}>{wc.participantCount}</Text>
+                          </View>
+                          <View style={styles.paidMetaItem}>
+                            <Ionicons name="star-outline" size={12} color="#3f3f46" />
+                            <Text style={styles.paidMetaValueGrey}>+{wc.reward} XP</Text>
+                          </View>
+                        </View>
+
+                        <View style={styles.paidComingSoonRow}>
+                          <Ionicons name="hourglass-outline" size={12} color="#52525b" />
+                          <Text style={styles.paidComingSoonText}>{wc.prize}</Text>
+                        </View>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            );
+          })()}
+
+          {/* ── REGULAR CHALLENGES ── */}
           {challenges.length > 0 ? (
             <View style={styles.cardList}>
               {challenges.map((challenge, index) => {
@@ -401,6 +568,7 @@ export default function CompeteScreen({ navigation }) {
       )}
 
       <CustomAlert {...alertConfig} onClose={hideAlert} />
+
     </View>
   );
 }
@@ -452,6 +620,39 @@ function createStyles(theme, insets) {
       borderColor: '#27272a',
       justifyContent: 'center',
       alignItems: 'center',
+    },
+
+    // --- Location Toggle ---
+    locationToggleWrap: {
+      flexDirection: 'row',
+      marginHorizontal: 16,
+      marginTop: 16,
+      gap: 8,
+    },
+    locationTab: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      paddingVertical: 10,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: '#27272a',
+      backgroundColor: '#121214',
+    },
+    locationTabActive: {
+      borderColor: '#DC2626',
+      backgroundColor: 'rgba(220, 38, 38, 0.1)',
+    },
+    locationTabText: {
+      fontSize: 12,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#71717a',
+      letterSpacing: 0.5,
+    },
+    locationTabTextActive: {
+      color: '#fafafa',
     },
 
     // --- Tabs ---
@@ -799,6 +1000,138 @@ function createStyles(theme, insets) {
       fontFamily: 'SpaceGrotesk',
       color: '#52525b',
       marginTop: 4,
+    },
+
+    // ── Weekly Paid Challenges (Coming Soon / Greyed Out) ──
+    paidSection: {
+      paddingHorizontal: 16,
+      marginBottom: 8,
+    },
+    paidSectionHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 10,
+    },
+    paidSectionHeaderLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    paidSectionTitleGrey: {
+      fontSize: 12,
+      fontFamily: 'SpaceGroteskBold',
+      color: '#52525b',
+      letterSpacing: 1.5,
+    },
+    comingSoonBadge: {
+      backgroundColor: 'rgba(63, 63, 70, 0.3)',
+      borderWidth: 1,
+      borderColor: '#3f3f46',
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: 6,
+      overflow: 'hidden',
+    },
+    comingSoonText: {
+      fontSize: 9,
+      fontFamily: 'SpaceGroteskBold',
+      color: '#71717a',
+      letterSpacing: 1.5,
+    },
+    paidCardGrey: {
+      backgroundColor: '#0d0d0f',
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: '#1e1e22',
+      overflow: 'hidden',
+      marginBottom: 10,
+    },
+    paidCardAccentGrey: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      width: 4,
+      height: '100%',
+      backgroundColor: '#27272a',
+    },
+    paidCardBody: {
+      padding: 14,
+      paddingLeft: 18,
+    },
+    paidCardTop: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: 6,
+    },
+    paidCardTitleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      flex: 1,
+      paddingRight: 8,
+    },
+    paidCardTitleGrey: {
+      fontSize: 16,
+      fontFamily: 'SpaceGroteskBold',
+      color: '#52525b',
+      letterSpacing: -0.2,
+    },
+    paidPillFeeGrey: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: 'rgba(63, 63, 70, 0.15)',
+      borderWidth: 1,
+      borderColor: '#27272a',
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: 8,
+    },
+    paidPillFeeTextGrey: {
+      fontSize: 10,
+      fontFamily: 'SpaceGroteskBold',
+      color: '#52525b',
+      letterSpacing: 0.5,
+    },
+    paidCardLift: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      marginBottom: 8,
+    },
+    paidCardLiftTextGrey: {
+      fontSize: 10,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#3f3f46',
+      letterSpacing: 0.5,
+      textTransform: 'uppercase',
+    },
+    paidCardMeta: {
+      flexDirection: 'row',
+      gap: 14,
+      marginBottom: 10,
+    },
+    paidMetaItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    paidMetaValueGrey: {
+      fontSize: 11,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#3f3f46',
+    },
+    paidComingSoonRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+    },
+    paidComingSoonText: {
+      fontSize: 11,
+      fontFamily: 'SpaceGroteskSemiBold',
+      color: '#52525b',
     },
   });
 }

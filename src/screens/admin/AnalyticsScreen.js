@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Dimensions } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api from '../../services/api';
+import AnalyticsEventStream from '../../components/admin/AnalyticsEventStream';
+import { FunnelCharts, RetentionGrid, ErrorTable } from '../../components/admin/AnalyticsCharts';
 import {
   ADMIN_COLORS,
   ADMIN_SPACING,
@@ -18,10 +20,43 @@ const S = ADMIN_SPACING;
 const R = ADMIN_RADIUS;
 const T = ADMIN_TYPOGRAPHY;
 
+const TABS = [
+  { key: 'overview', label: 'Overview', icon: 'grid' },
+  { key: 'stream', label: 'Stream', icon: 'pulse' },
+  { key: 'funnels', label: 'Funnels', icon: 'funnel' },
+  { key: 'retention', label: 'Retention', icon: 'calendar' },
+  { key: 'errors', label: 'Errors', icon: 'warning' },
+];
+
+const StatCard = ({ title, value, subtitle, icon, color }) => (
+  <View style={styles.statCard}>
+    <View style={[styles.statIconContainer, { backgroundColor: color + '15' }]}>
+      <Ionicons name={icon} size={20} color={color} />
+    </View>
+    <Text style={styles.statValue}>{value?.toLocaleString() || 0}</Text>
+    <Text style={styles.statTitle}>{title}</Text>
+    {subtitle !== undefined && <Text style={styles.statSubtitle}>{subtitle}</Text>}
+  </View>
+);
+
+const ChartBar = ({ label, value, maxValue, color }) => {
+  const percentage = maxValue > 0 ? (value / maxValue) * 100 : 0;
+  return (
+    <View style={styles.chartBarContainer}>
+      <Text style={styles.chartBarLabel}>{label}</Text>
+      <View style={styles.chartBarTrack}>
+        <View style={[styles.chartBarFill, { width: percentage + '%', backgroundColor: color }]} />
+      </View>
+      <Text style={styles.chartBarValue}>{value?.toLocaleString()}</Text>
+    </View>
+  );
+};
+
 export default function AnalyticsScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
+  const [activeTab, setActiveTab] = useState('overview');
 
   const loadStats = async () => {
     try {
@@ -55,28 +90,20 @@ export default function AnalyticsScreen({ navigation }) {
     );
   }
 
-  const StatCard = ({ title, value, subtitle, icon, color }) => (
-    <View style={styles.statCard}>
-      <View style={[styles.statIconContainer, { backgroundColor: color + '15' }]}>
-        <Ionicons name={icon} size={20} color={color} />
-      </View>
-      <Text style={styles.statValue}>{value?.toLocaleString() || 0}</Text>
-      <Text style={styles.statTitle}>{title}</Text>
-      {subtitle !== undefined && <Text style={styles.statSubtitle}>{subtitle}</Text>}
-    </View>
-  );
-
-  const ChartBar = ({ label, value, maxValue, color }) => {
-    const percentage = maxValue > 0 ? (value / maxValue) * 100 : 0;
-    return (
-      <View style={styles.chartBarContainer}>
-        <Text style={styles.chartBarLabel}>{label}</Text>
-        <View style={styles.chartBarTrack}>
-          <View style={[styles.chartBarFill, { width: percentage + '%', backgroundColor: color }]} />
-        </View>
-        <Text style={styles.chartBarValue}>{value?.toLocaleString()}</Text>
-      </View>
-    );
+  // Render tab content
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'stream':
+        return <AnalyticsEventStream />;
+      case 'funnels':
+        return <FunnelCharts />;
+      case 'retention':
+        return <RetentionGrid />;
+      case 'errors':
+        return <ErrorTable />;
+      default:
+        return <OverviewContent stats={stats} loadStats={loadStats} />;
+    }
   };
 
   return (
@@ -92,7 +119,167 @@ export default function AnalyticsScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+      {/* Tab Bar */}
+      <View style={styles.tabBar}>
+        {TABS.map(tab => (
+          <TouchableOpacity
+            key={tab.key}
+            style={[styles.tab, activeTab === tab.key && styles.tabActive]}
+            onPress={() => setActiveTab(tab.key)}
+          >
+            <Ionicons
+              name={tab.icon}
+              size={14}
+              color={activeTab === tab.key ? C.accent : C.textSubtle}
+            />
+            <Text style={[styles.tabLabel, activeTab === tab.key && styles.tabLabelActive]}>
+              {tab.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Content */}
+      <View style={styles.contentArea}>
+        {renderTabContent()}
+      </View>
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Overview content (extracted from original render)
+// ---------------------------------------------------------------------------
+function formatShortDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+}
+
+function OverviewContent({ stats, loadStats }) {
+  const C = ADMIN_COLORS;
+  const S = ADMIN_SPACING;
+  const [dauData, setDauData] = useState(null);
+  const [currentOnline, setCurrentOnline] = useState(0);
+  const [dauLoading, setDauLoading] = useState(true);
+
+  const loadDAU = useCallback(async () => {
+    try {
+      setDauLoading(true);
+      const res = await api.getAnalyticsDAU(30);
+      if (res?.data) setDauData(res.data);
+      if (res?.currentOnline != null) setCurrentOnline(res.currentOnline);
+    } catch {
+      // Backend not available yet
+    } finally {
+      setDauLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadDAU(); }, [loadDAU]);
+
+  const maxDAU = dauData ? Math.max(...dauData.map(d => d.users), 1) : 1;
+  const todayUsers = dauData?.length > 0 ? dauData[dauData.length - 1].users : 0;
+
+  return (
+    <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+        {/* Live & DAU Cards */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="pulse" size={16} color={C.accent} />
+            <Text style={styles.sectionTitle}>ACTIVE USERS</Text>
+          </View>
+          <View style={styles.statsGrid}>
+            <StatCard
+              title="Online Now"
+              value={currentOnline}
+              subtitle="Last 5 minutes"
+              icon="radio-button-on"
+              color="#14B87A"
+            />
+            <StatCard
+              title="Users Today"
+              value={todayUsers}
+              subtitle="Daily active"
+              icon="today"
+              color={C.accent}
+            />
+          </View>
+        </View>
+
+        {/* DAU Line Graph */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="trending-up" size={16} color={C.info} />
+            <Text style={styles.sectionTitle}>DAILY ACTIVE USERS (30 DAYS)</Text>
+          </View>
+          {dauLoading ? (
+            <View style={styles.chartLoading}>
+              <ActivityIndicator size="small" color={C.accent} />
+            </View>
+          ) : dauData && dauData.length > 0 ? (
+            <View style={styles.lineChartCard}>
+              <View style={styles.lineChartArea}>
+                {/* Y-axis labels + chart */}
+                <View style={styles.lineYAxis}>
+                  <Text style={styles.lineYLabel}>{maxDAU}</Text>
+                  <Text style={styles.lineYLabel}>{Math.round(maxDAU / 2)}</Text>
+                  <Text style={styles.lineYLabel}>0</Text>
+                </View>
+                <View style={styles.lineChartPlot}>
+                  {/* Grid lines */}
+                  <View style={styles.lineGridLine} />
+                  <View style={[styles.lineGridLine, { top: '50%' }]} />
+                  {/* Area fill + Line */}
+                  <View style={styles.lineSvgRow}>
+                    {dauData.map((d, i) => {
+                      const pct = maxDAU > 0 ? (d.users / maxDAU) * 100 : 0;
+                      const barW = 100 / dauData.length;
+                      return (
+                        <View key={i} style={[styles.lineDotCol, { width: barW + '%' }]}>
+                          <View style={[styles.lineBar, { height: pct + '%', backgroundColor: C.accent + '25' }]}>
+                            <View style={styles.lineBarStroke} />
+                          </View>
+                        </View>
+                      );
+                    })}
+                  </View>
+                  {/* Dots on top */}
+                  <View style={[styles.lineSvgRow, { zIndex: 2 }]} pointerEvents="none">
+                    {dauData.map((d, i) => {
+                      const pct = maxDAU > 0 ? (d.users / maxDAU) * 100 : 0;
+                      const barW = 100 / dauData.length;
+                      return (
+                        <View key={i} style={[styles.lineDotCol, { width: barW + '%', justifyContent: 'flex-end' }]}>
+                          <View style={[styles.lineDot, { bottom: pct + '%' }]} />
+                        </View>
+                      );
+                    })}
+                  </View>
+                </View>
+              </View>
+              {/* X-axis: show first, middle, last date */}
+              <View style={styles.lineXAxis}>
+                {dauData.length > 0 && (
+                  <Text style={styles.lineXLabel}>{formatShortDate(dauData[0].day)}</Text>
+                )}
+                <View style={{ flex: 1 }} />
+                {dauData.length > 2 && (
+                  <Text style={styles.lineXLabel}>{formatShortDate(dauData[Math.floor(dauData.length / 2)].day)}</Text>
+                )}
+                <View style={{ flex: 1 }} />
+                {dauData.length > 1 && (
+                  <Text style={styles.lineXLabel}>{formatShortDate(dauData[dauData.length - 1].day)}</Text>
+                )}
+              </View>
+            </View>
+          ) : (
+            <View style={styles.chartEmpty}>
+              <Text style={styles.chartEmptyText}>No user activity data yet</Text>
+            </View>
+          )}
+        </View>
+
         {/* User Metrics */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -350,7 +537,6 @@ export default function AnalyticsScreen({ navigation }) {
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
-    </View>
   );
 }
 
@@ -390,6 +576,44 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: C.border,
+  },
+
+  // Tab Bar
+  tabBar: {
+    flexDirection: 'row',
+    paddingHorizontal: S.lg,
+    paddingVertical: S.sm,
+    backgroundColor: C.panel,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+    gap: S.xs,
+  },
+  tab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: S.md,
+    paddingVertical: S.xs + 2,
+    borderRadius: R.xs,
+    backgroundColor: C.card,
+    borderWidth: 1,
+    borderColor: C.border,
+    gap: 5,
+  },
+  tabActive: {
+    backgroundColor: 'rgba(220, 38, 38, 0.12)',
+    borderColor: 'rgba(220, 38, 38, 0.4)',
+  },
+  tabLabel: {
+    fontSize: 10,
+    fontFamily: 'SpaceGroteskSemiBold',
+    color: C.textSubtle,
+    letterSpacing: 0.5,
+  },
+  tabLabelActive: {
+    color: C.accent,
+  },
+  contentArea: {
+    flex: 1,
   },
 
   // Center Container
@@ -479,6 +703,126 @@ const styles = StyleSheet.create({
   },
 
   // Chart Container
+  chartLoading: {
+    height: 200,
+    backgroundColor: C.card,
+    borderRadius: R.md,
+    borderWidth: 1,
+    borderColor: C.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  chartEmpty: {
+    height: 120,
+    backgroundColor: C.card,
+    borderRadius: R.md,
+    borderWidth: 1,
+    borderColor: C.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  chartEmptyText: {
+    fontSize: 12,
+    fontFamily: 'SpaceGrotesk',
+    color: C.textSubtle,
+  },
+
+  // Line Chart
+  lineChartCard: {
+    backgroundColor: C.card,
+    borderRadius: R.md,
+    borderWidth: 1,
+    borderColor: C.border,
+    padding: S.md,
+  },
+  lineChartArea: {
+    flexDirection: 'row',
+    height: 180,
+  },
+  lineYAxis: {
+    width: 36,
+    justifyContent: 'space-between',
+    paddingVertical: 2,
+    paddingRight: 6,
+  },
+  lineYLabel: {
+    fontSize: 8,
+    fontFamily: 'SpaceGroteskBold',
+    color: C.textSubtle,
+    textAlign: 'right',
+  },
+  lineChartPlot: {
+    flex: 1,
+    position: 'relative',
+    overflow: 'hidden',
+    borderLeftWidth: 1,
+    borderLeftColor: C.border,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+  },
+  lineGridLine: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: '0%',
+    height: 1,
+    backgroundColor: C.border,
+    opacity: 0.5,
+  },
+  lineSvgRow: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+  },
+  lineDotCol: {
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    height: '100%',
+  },
+  lineBar: {
+    width: '60%',
+    borderTopLeftRadius: 2,
+    borderTopRightRadius: 2,
+    minHeight: 2,
+    position: 'relative',
+  },
+  lineBarStroke: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 2,
+    backgroundColor: C.accent,
+    borderTopLeftRadius: 2,
+    borderTopRightRadius: 2,
+  },
+  lineDot: {
+    position: 'absolute',
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: C.accent,
+    marginLeft: 'auto',
+    marginRight: 'auto',
+    left: 0,
+    right: 0,
+  },
+  lineXAxis: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 6,
+    paddingLeft: 36,
+  },
+  lineXLabel: {
+    fontSize: 8,
+    fontFamily: 'SpaceGrotesk',
+    color: C.textSubtle,
+  },
+
   chartContainer: {
     flexDirection: 'row',
     height: 160,

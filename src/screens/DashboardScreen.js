@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,19 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../context/AppContext';
 import { getUserTier, getTierProgress } from '../constants/tiers';
+import { Analytics } from '../utils/analytics';
 import api from '../services/api';
+import AvatarFrame from '../components/AvatarFrame';
+import PurchaseModal, { BoostSelectModal } from '../components/PurchaseModal';
+import * as purchaseService from '../services/purchaseService';
+import { PRODUCTS, formatPrice } from '../constants/store';
+
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
 
 // --- Segmented Progress Bar ---
 function SegmentedBar({ percentage, color }) {
@@ -49,14 +61,27 @@ export default function DashboardScreen({ navigation }) {
   const [userRank, setUserRank] = useState(null);
   const [totalUsers, setTotalUsers] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [activeBoost, setActiveBoost] = useState(null);
+  const [showBoostModal, setShowBoostModal] = useState(false);
+  const [showBoostPurchase, setShowBoostPurchase] = useState(false);
+  const [pendingBoost, setPendingBoost] = useState(null);
+
+  useEffect(() => {
+    const check = () => setActiveBoost(purchaseService.getActiveBoost());
+    check();
+    const interval = setInterval(check, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   const totalPoints = Number(user?.totalPoints || 0);
   const currentTier = getUserTier(totalPoints) || { name: 'Bronze', color: '#FFD700' };
   const tierProgress = getTierProgress(totalPoints) || { percentage: 0, nextTier: null };
+  const firstName = (user?.name || user?.username || 'Athlete').split(' ')[0];
 
   useFocusEffect(
     useCallback(() => {
       if (!user) return;
+      Analytics.logEvent('app_opened', {});
       let active = true;
       (async () => {
         try {
@@ -119,100 +144,167 @@ export default function DashboardScreen({ navigation }) {
       <ScrollView
         style={styles.scroll}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingTop: insets.top + 20, paddingBottom: 100 }}
+        contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: 100 }}
       >
         {/* Header Section */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Text style={styles.headerName}>
-              {(user?.name || user?.username || 'Athlete').split(' ')[0].toUpperCase()}
-            </Text>
-            <Text style={styles.headerSub}>
-              Rank: <Text style={{ color: currentTier.color, fontWeight: '700' }}>{currentTier.name}</Text>
-            </Text>
+            <Text style={styles.headerGreeting}>{getGreeting()}</Text>
+            <Text style={styles.headerName}>{firstName.toUpperCase()}</Text>
           </View>
 
-          <View style={styles.avatarContainer}>
-            <View style={styles.avatarCrossTL} />
-            <View style={styles.avatarCrossBR} />
-            <View style={styles.avatarFrame}>
-              {(user?.profileImage || user?.photoURL) ? (
-                <Image source={{ uri: user.profileImage || user.photoURL }} style={styles.avatarImage} />
-              ) : (
-                <View style={styles.avatarFallbackInner}>
-                  <Text style={styles.avatarInitial}>
-                    {(user?.name || user?.username || 'A').charAt(0).toUpperCase()}
-                  </Text>
-                </View>
-              )}
-            </View>
-          </View>
-        </View>
-
-        {/* Telemetry Grid — Rank & Leaderboard */}
-        <View style={styles.telemetryGrid}>
-
-          {/* Main Stats Block */}
-          <View style={styles.statsBlock}>
-            <Text style={styles.monoLabel}>Total Points</Text>
-            <View style={styles.pointsRow}>
-              <Text style={styles.pointsValue}>{totalPoints.toLocaleString()}</Text>
-              <Text style={styles.pointsUnit}>PTS</Text>
-            </View>
-
-            <View style={styles.progressSection}>
-              <View style={styles.progressHeader}>
-                <Text style={styles.monoLabel}>Rank Progress</Text>
-                <Text style={styles.monoValue}>
-                  {tierProgress.nextTier ? `${tierProgress.percentage.toFixed(0)}%` : 'MAX'}
-                </Text>
-              </View>
-              <SegmentedBar percentage={tierProgress.percentage} color={currentTier.color} />
-              <View style={styles.tierLabels}>
-                <Text style={styles.tierLabelSmall}>Current: {currentTier.name}</Text>
-                <Text style={styles.tierLabelSmall}>Next: {tierProgress.nextTier ? tierProgress.nextTier.name : 'N/A'}</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Leaderboard Block */}
           <TouchableOpacity
-            style={styles.leaderboardBlock}
-            onPress={() => navigation.navigate('CoreLiftLeaderboard')}
+            style={styles.avatarContainer}
+            onPress={() => navigation.navigate('Stats')}
             activeOpacity={0.7}
           >
-            <View style={styles.lbAccent} />
-            <View style={styles.lbContent}>
-              <View style={styles.lbHeader}>
-                <Ionicons name="locate" size={16} color="#a1a1aa" />
-                <Text style={styles.monoLabel}>Global Leaderboard</Text>
+            <AvatarFrame
+              size={52}
+              imageUri={user?.profileImage || user?.photoURL}
+              fallbackText={firstName.charAt(0).toUpperCase()}
+              frameId={purchaseService.getActiveFrame()}
+            />
+          </TouchableOpacity>
+        </View>
+
+        {/* XP Boost Banner */}
+        {activeBoost && (
+          <View style={styles.boostBanner}>
+            <Ionicons name="flash" size={16} color="#FFD700" />
+            <Text style={styles.boostBannerText}>1.5X XP ACTIVE</Text>
+            <Text style={styles.boostBannerTimer}>
+              {Math.max(0, Math.round((new Date(activeBoost.expiresAt) - new Date()) / 60000))}m left
+            </Text>
+          </View>
+        )}
+
+        {/* Quick Actions */}
+        <View style={styles.quickActions}>
+          <TouchableOpacity
+            style={styles.ctaCard}
+            onPress={() => navigation.navigate('Compete')}
+            activeOpacity={0.8}
+          >
+            <View style={styles.ctaContent}>
+              <View style={styles.ctaIconWrap}>
+                <Ionicons name="trophy" size={22} color="#DC2626" />
               </View>
-
-              {userRank && totalUsers > 0 ? (
-                <>
-                  <View style={styles.lbRankRow}>
-                    <Text style={styles.lbRankValue}>#{userRank.toLocaleString()}</Text>
-                    <Text style={styles.lbRankOf}>/ {totalUsers.toLocaleString()}</Text>
-                  </View>
-
-                  <View style={styles.lbDivider}>
-                    <View style={styles.lbDividerLine} />
-                  </View>
-
-                  <View style={styles.lbPercentileRow}>
-                    <Text style={styles.monoLabel}>Top Percentile</Text>
-                    <Text style={styles.lbPercentileValue}>
-                      Top {Math.max(1, Math.round((userRank / totalUsers) * 100))}%
-                    </Text>
-                  </View>
-                </>
-              ) : (
-                <View style={styles.lbEmpty}>
-                  <Text style={styles.lbEmptyText}>Complete a core lift to rank</Text>
-                </View>
-              )}
+              <View style={styles.ctaTextWrap}>
+                <Text style={styles.ctaLabel}>Join a Challenge</Text>
+                <Text style={styles.ctaSub}>Compete and earn points</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#52525b" />
             </View>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.ctaCard}
+            onPress={() => navigation.navigate('Leagues')}
+            activeOpacity={0.8}
+          >
+            <View style={styles.ctaContent}>
+              <View style={[styles.ctaIconWrap, styles.ctaIconWrapSecondary]}>
+                <Ionicons name="barbell-outline" size={22} color="#a1a1aa" />
+              </View>
+              <View style={styles.ctaTextWrap}>
+                <Text style={styles.ctaLabel}>Submit a Lift</Text>
+                <Text style={styles.ctaSub}>Get ranked on the leaderboard</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#52525b" />
+            </View>
+          </TouchableOpacity>
+
+          {/* XP Boost CTA */}
+          <TouchableOpacity
+            style={styles.ctaCard}
+            onPress={() => setShowBoostModal(true)}
+            activeOpacity={0.8}
+          >
+            <View style={styles.ctaContent}>
+              <View style={[styles.ctaIconWrap, { backgroundColor: 'rgba(255, 215, 0, 0.08)' }]}>
+                <Ionicons name="flash" size={22} color="#FFD700" />
+              </View>
+              <View style={styles.ctaTextWrap}>
+                <Text style={styles.ctaLabel}>XP Boost</Text>
+                <Text style={styles.ctaSub}>{activeBoost ? '1.5x active now' : 'Multiply your earnings'}</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#52525b" />
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {/* Stats Row — Level & Rank side by side */}
+        <View style={styles.statsRow}>
+          {/* Level Card */}
+          <View style={styles.statCard}>
+            <View style={styles.statCardHeader}>
+              <Ionicons name="shield-outline" size={13} color="#71717a" />
+              <Text style={styles.statCardLabel}>YOUR LEVEL</Text>
+            </View>
+            <View style={styles.statTierRow}>
+              <View style={[styles.tierDot, { backgroundColor: currentTier.color }]} />
+              <Text style={styles.statTierName}>{currentTier.name}</Text>
+            </View>
+            <Text style={styles.statPointsValue}>{totalPoints.toLocaleString()}</Text>
+            <Text style={styles.statPointsSub}>points earned</Text>
+
+            {tierProgress.nextTier ? (
+              <View style={styles.statProgressSection}>
+                <SegmentedBar percentage={tierProgress.percentage} color={currentTier.color} />
+                <Text style={styles.statProgressHint}>
+                  {tierProgress.percentage.toFixed(0)}% to {tierProgress.nextTier.name}
+                </Text>
+              </View>
+            ) : (
+              <Text style={styles.statMaxHint}>MAX LEVEL</Text>
+            )}
+          </View>
+
+          {/* Rank Card */}
+          <TouchableOpacity
+            style={styles.statCard}
+            onPress={() => navigation.navigate('Leagues')}
+            activeOpacity={0.7}
+          >
+            <View style={styles.statCardHeader}>
+              <Ionicons name="podium-outline" size={13} color="#71717a" />
+              <Text style={styles.statCardLabel}>YOUR RANK</Text>
+            </View>
+
+            {userRank && totalUsers > 0 ? (
+              <>
+                <Text style={styles.statRankValue}>#{userRank.toLocaleString()}</Text>
+                <Text style={styles.statRankOf}>out of {totalUsers.toLocaleString()} athletes</Text>
+                <View style={styles.statRankBar}>
+                  <View style={[
+                    styles.statRankBarFill,
+                    { width: `${Math.max(5, 100 - ((userRank / totalUsers) * 100))}%` },
+                  ]} />
+                </View>
+                <Text style={styles.statRankPercentile}>
+                  Top {Math.max(1, Math.round((userRank / totalUsers) * 100))}%
+                </Text>
+              </>
+            ) : (
+              <>
+                <View style={styles.statRankEmpty}>
+                  <Ionicons name="barbell-outline" size={20} color="#3f3f46" />
+                </View>
+                <Text style={styles.statRankEmptyText}>Submit a lift to{'\n'}get ranked</Text>
+              </>
+            )}
+
+            <View style={styles.statCardFooter}>
+              <Text style={styles.statCardFooterText}>View Leaderboard</Text>
+              <Ionicons name="chevron-forward" size={12} color="#DC2626" />
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {/* Challenges Section */}
+        <View style={styles.sectionHeader}>
+          <Ionicons name="flash-outline" size={15} color="#DC2626" />
+          <Text style={styles.sectionTitle}>CHALLENGES</Text>
         </View>
 
         {/* Tab Navigation */}
@@ -223,8 +315,9 @@ export default function DashboardScreen({ navigation }) {
             activeOpacity={0.7}
           >
             <View style={styles.tabBtnRow}>
+              <Ionicons name="calendar-outline" size={13} color={activeTab === 'upcoming' ? '#fafafa' : '#71717a'} />
               <Text style={[styles.tabBtnText, activeTab === 'upcoming' && styles.tabBtnTextActive]}>
-                Upcoming
+                Active
               </Text>
               {upcomingChallenges.length > 0 && (
                 <View style={styles.tabBadgeRed}>
@@ -240,9 +333,12 @@ export default function DashboardScreen({ navigation }) {
             onPress={() => setActiveTab('past')}
             activeOpacity={0.7}
           >
-            <Text style={[styles.tabBtnText, activeTab === 'past' && styles.tabBtnTextActive]}>
-              Past
-            </Text>
+            <View style={styles.tabBtnRow}>
+              <Ionicons name="checkmark-done-outline" size={13} color={activeTab === 'past' ? '#fafafa' : '#71717a'} />
+              <Text style={[styles.tabBtnText, activeTab === 'past' && styles.tabBtnTextActive]}>
+                Finished
+              </Text>
+            </View>
             {activeTab === 'past' && <View style={styles.tabIndicatorGray} />}
           </TouchableOpacity>
         </View>
@@ -251,10 +347,22 @@ export default function DashboardScreen({ navigation }) {
         <View style={styles.challengeList}>
           {displayChallenges.length === 0 ? (
             <View style={styles.emptyState}>
-              <Ionicons name="flag-outline" size={24} color="#555" />
-              <Text style={styles.emptyText}>
-                {activeTab === 'upcoming' ? 'NO UPCOMING CHALLENGES' : 'NO PAST CHALLENGES'}
+              <View style={styles.emptyIcon}>
+                <Ionicons name="flag-outline" size={24} color="#52525b" />
+              </View>
+              <Text style={styles.emptyTitle}>
+                {activeTab === 'upcoming' ? 'No active challenges' : 'No finished challenges yet'}
               </Text>
+              {activeTab === 'upcoming' && (
+                <TouchableOpacity
+                  style={styles.emptyAction}
+                  onPress={() => navigation.navigate('Compete')}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="trophy-outline" size={14} color="#DC2626" />
+                  <Text style={styles.emptyActionText}>Browse Challenges</Text>
+                </TouchableOpacity>
+              )}
             </View>
           ) : (
             displayChallenges.map((challenge) => (
@@ -269,6 +377,35 @@ export default function DashboardScreen({ navigation }) {
         </View>
 
       </ScrollView>
+
+      {/* XP Boost Selection */}
+      <BoostSelectModal
+        visible={showBoostModal}
+        onClose={() => setShowBoostModal(false)}
+        onSelect={(boost) => {
+          setPendingBoost(boost);
+          setShowBoostModal(false);
+          setShowBoostPurchase(true);
+        }}
+      />
+
+      {/* XP Boost Purchase Confirmation */}
+      <PurchaseModal
+        visible={showBoostPurchase}
+        onClose={() => { setShowBoostPurchase(false); setPendingBoost(null); }}
+        product={{
+          name: pendingBoost ? pendingBoost.name : '',
+          description: pendingBoost?.description,
+          price: pendingBoost?.price,
+        }}
+        onPurchaseComplete={async () => {
+          if (!pendingBoost) return;
+          await purchaseService.purchaseXpBoost(pendingBoost.id, pendingBoost.price, pendingBoost.durationHours, pendingBoost.multiplier);
+          setActiveBoost(purchaseService.getActiveBoost());
+          setShowBoostPurchase(false);
+          setPendingBoost(null);
+        }}
+      />
     </View>
   );
 }
@@ -282,7 +419,6 @@ function ChallengeCard({ challenge, isPast, onPress }) {
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
-      {/* Accent Line */}
       <View style={[styles.cardAccent, { backgroundColor: accentColor }]} />
 
       <View style={styles.cardBody}>
@@ -292,7 +428,8 @@ function ChallengeCard({ challenge, isPast, onPress }) {
 
           {isPast ? (
             <View style={styles.pillEnded}>
-              <Text style={styles.pillEndedText}>Ended</Text>
+              <Ionicons name="checkmark" size={10} color="#71717a" />
+              <Text style={styles.pillEndedText}>Done</Text>
             </View>
           ) : challenge.joined ? (
             <View style={styles.pillJoined}>
@@ -315,21 +452,23 @@ function ChallengeCard({ challenge, isPast, onPress }) {
         <View style={styles.cardFooter}>
           {/* Time */}
           <View style={styles.metaBlock}>
-            <Text style={styles.metaLabel}>
-              <Ionicons name="time-outline" size={12} color="#a1a1aa" /> Time Left
-            </Text>
+            <View style={styles.metaIconRow}>
+              <Ionicons name="time-outline" size={12} color="#a1a1aa" />
+              <Text style={styles.metaLabel}>{!isPast ? 'Time left' : 'Ended'}</Text>
+            </View>
             <Text style={styles.metaValue}>
-              {!isPast && endDate ? `${daysLeft} Days` : isPast && endDate ? endDate.toLocaleDateString() : 'N/A'}
+              {!isPast && endDate ? `${daysLeft} day${daysLeft !== 1 ? 's' : ''}` : isPast && endDate ? endDate.toLocaleDateString() : 'N/A'}
             </Text>
           </View>
 
           {/* Reward */}
           {challenge.reward ? (
             <View style={styles.metaBlock}>
-              <Text style={styles.metaLabel}>
-                <Ionicons name="star" size={12} color="#a1a1aa" /> Reward
-              </Text>
-              <Text style={styles.metaReward}>{challenge.reward} PTS</Text>
+              <View style={styles.metaIconRow}>
+                <Ionicons name="star-outline" size={12} color="#FFD700" />
+                <Text style={styles.metaLabel}>Reward</Text>
+              </View>
+              <Text style={styles.metaReward}>+{challenge.reward} pts</Text>
             </View>
           ) : null}
 
@@ -337,9 +476,10 @@ function ChallengeCard({ challenge, isPast, onPress }) {
           {challenge.joined && !isPast && challenge.progress !== undefined ? (
             <View style={[styles.metaBlock, styles.metaBlockProgress]}>
               <View style={styles.progressRow}>
-                <Text style={styles.metaLabelProgress}>
-                  <Ionicons name="flame" size={12} color="#DC2626" /> Progress
-                </Text>
+                <View style={styles.metaIconRow}>
+                  <Ionicons name="flame" size={12} color="#DC2626" />
+                  <Text style={styles.metaLabelProgress}>Progress</Text>
+                </View>
                 <Text style={styles.progressPercent}>{Math.round(challenge.progress)}%</Text>
               </View>
               <View style={styles.progressBarOuter}>
@@ -373,13 +513,20 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 12,
-    marginBottom: 8,
+    paddingTop: 8,
+    marginBottom: 20,
   },
   headerLeft: {
     flex: 1,
+  },
+  headerGreeting: {
+    fontSize: 13,
+    fontFamily: 'SpaceGroteskSemiBold',
+    color: '#71717a',
+    letterSpacing: 0.5,
+    marginBottom: 2,
   },
   headerName: {
     fontSize: 28,
@@ -389,222 +536,293 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: -0.5,
   },
-  headerSub: {
-    fontSize: 13,
-    fontFamily: 'SpaceGroteskSemiBold',
-    color: '#a1a1aa',
-    letterSpacing: 0.5,
-    marginTop: 4,
-  },
   avatarContainer: {
     position: 'relative',
   },
-  avatarCrossTL: {
-    position: 'absolute',
-    top: -3,
-    left: -3,
-    width: 8,
-    height: 8,
-    borderTopWidth: 2,
-    borderLeftWidth: 2,
-    borderColor: '#DC2626',
-    zIndex: 2,
-  },
-  avatarCrossBR: {
-    position: 'absolute',
-    bottom: -3,
-    right: -3,
-    width: 8,
-    height: 8,
-    borderBottomWidth: 2,
-    borderRightWidth: 2,
-    borderColor: '#DC2626',
-    zIndex: 2,
-  },
   avatarFrame: {
-    width: 64,
-    height: 64,
+    width: 52,
+    height: 52,
     borderWidth: 2,
     borderColor: '#27272a',
     backgroundColor: '#18181b',
-    padding: 4,
-    borderRadius: 12,
+    padding: 3,
+    borderRadius: 14,
     overflow: 'hidden',
   },
   avatarImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 8,
+    borderRadius: 10,
   },
   avatarFallbackInner: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#27272a',
-    borderRadius: 8,
+    borderRadius: 10,
   },
   avatarInitial: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
     fontFamily: 'SpaceGroteskBold',
     color: '#fff',
   },
 
-  // Telemetry Grid
-  telemetryGrid: {
+  // Quick Actions
+  quickActions: {
+    flexDirection: 'column',
     gap: 12,
     paddingHorizontal: 16,
-    marginTop: 8,
+    marginBottom: 20,
   },
-  statsBlock: {
+
+  // XP Boost Banner
+  boostBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: 'rgba(255, 215, 0, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.2)',
+    borderRadius: 12,
+  },
+  boostBannerText: {
+    fontSize: 11,
+    fontFamily: 'SpaceGroteskBold',
+    color: '#FFD700',
+    letterSpacing: 1,
+    flex: 1,
+  },
+  boostBannerTimer: {
+    fontSize: 11,
+    fontFamily: 'SpaceGroteskSemiBold',
+    color: '#FFD700',
+  },
+
+  // CTA Card
+  ctaCard: {
+    backgroundColor: '#121214',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#27272a',
+  },
+
+  // Content
+  ctaContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    position: 'relative',
+    zIndex: 1,
+  },
+  ctaIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: 'rgba(220, 38, 38, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ctaIconWrapSecondary: {
+    backgroundColor: '#18181b',
+    borderWidth: 1,
+    borderColor: '#27272a',
+  },
+  ctaTextWrap: {
+    flex: 1,
+  },
+  ctaLabel: {
+    fontSize: 15,
+    fontFamily: 'SpaceGroteskBold',
+    color: '#fafafa',
+    letterSpacing: -0.2,
+  },
+  ctaSub: {
+    fontSize: 11,
+    fontFamily: 'SpaceGrotesk',
+    color: '#71717a',
+    marginTop: 2,
+  },
+
+  // Stats Row
+  statsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingHorizontal: 16,
+    marginBottom: 24,
+  },
+  statCard: {
+    flex: 1,
     borderWidth: 1,
     borderColor: '#27272a',
     backgroundColor: '#121214',
-    padding: 16,
-    borderRadius: 12,
+    borderRadius: 14,
+    padding: 14,
   },
-  monoLabel: {
-    fontSize: 11,
+  statCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginBottom: 10,
+  },
+  statCardLabel: {
+    fontSize: 10,
     fontFamily: 'SpaceGroteskSemiBold',
     color: '#71717a',
-    letterSpacing: 1,
+    letterSpacing: 1.5,
     textTransform: 'uppercase',
   },
-  monoValue: {
-    fontSize: 12,
-    fontFamily: 'SpaceGroteskSemiBold',
-    color: '#d4d4d8',
-    letterSpacing: 0.5,
-  },
-  pointsRow: {
+  statTierRow: {
     flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 8,
-    marginTop: 4,
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
   },
-  pointsValue: {
-    fontSize: 36,
+  tierDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  statTierName: {
+    fontSize: 16,
+    fontFamily: 'SpaceGroteskBold',
+    fontWeight: '700',
+    color: '#fafafa',
+    letterSpacing: -0.3,
+  },
+  statPointsValue: {
+    fontSize: 24,
     fontWeight: '700',
     fontFamily: 'SpaceGroteskBold',
-    color: '#fff',
-    letterSpacing: -1.5,
+    color: '#fafafa',
+    letterSpacing: -1,
   },
-  pointsUnit: {
-    fontSize: 14,
-    fontFamily: 'SpaceGroteskBold',
-    color: '#DC2626',
-    fontWeight: '700',
+  statPointsSub: {
+    fontSize: 11,
+    fontFamily: 'SpaceGrotesk',
+    color: '#71717a',
+    marginTop: 2,
   },
-  progressSection: {
-    marginTop: 20,
-  },
-  progressHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    marginBottom: 8,
+  statProgressSection: {
+    marginTop: 12,
   },
   segBarRow: {
     flexDirection: 'row',
     gap: 2,
-    height: 12,
+    height: 8,
   },
   segBarSegment: {
     flex: 1,
     borderRadius: 1,
     transform: [{ skewX: '-15deg' }],
   },
-  tierLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
-  },
-  tierLabelSmall: {
+  statProgressHint: {
     fontSize: 10,
     fontFamily: 'SpaceGroteskSemiBold',
     color: '#71717a',
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
+    marginTop: 6,
   },
-
-  // Leaderboard Block
-  leaderboardBlock: {
-    borderWidth: 1,
-    borderColor: '#27272a',
-    backgroundColor: '#121214',
-    borderRadius: 12,
-    overflow: 'hidden',
+  statMaxHint: {
+    fontSize: 10,
+    fontFamily: 'SpaceGroteskBold',
+    color: '#FFD700',
+    letterSpacing: 1,
+    marginTop: 8,
   },
-  lbAccent: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: 5,
-    height: '100%',
-    backgroundColor: '#27272a',
-  },
-  lbContent: {
-    paddingLeft: 16,
-    padding: 16,
-  },
-  lbHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
-  },
-  lbRankRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 6,
-  },
-  lbRankValue: {
-    fontSize: 32,
+  statRankValue: {
+    fontSize: 28,
     fontWeight: '700',
     fontFamily: 'SpaceGroteskBold',
-    color: '#fff',
+    color: '#fafafa',
     letterSpacing: -1.5,
+    marginBottom: 2,
   },
-  lbRankOf: {
-    fontSize: 12,
-    fontFamily: 'SpaceGroteskSemiBold',
+  statRankOf: {
+    fontSize: 11,
+    fontFamily: 'SpaceGrotesk',
     color: '#71717a',
+    marginBottom: 10,
   },
-  lbDivider: {
-    marginTop: 16,
+  statRankBar: {
+    height: 4,
+    backgroundColor: '#27272a',
+    borderRadius: 99,
+    overflow: 'hidden',
+    marginBottom: 4,
   },
-  lbDividerLine: {
-    borderTopWidth: 1,
-    borderTopColor: '#27272a',
+  statRankBarFill: {
+    height: '100%',
+    backgroundColor: '#DC2626',
+    borderRadius: 99,
   },
-  lbPercentileRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  lbPercentileValue: {
-    fontSize: 12,
+  statRankPercentile: {
+    fontSize: 11,
     fontFamily: 'SpaceGroteskBold',
     color: '#DC2626',
     fontWeight: '700',
   },
-  lbEmpty: {
-    paddingVertical: 12,
+  statRankEmpty: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: '#18181b',
+    borderWidth: 1,
+    borderColor: '#27272a',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
   },
-  lbEmptyText: {
-    fontSize: 14,
+  statRankEmptyText: {
+    fontSize: 11,
     fontFamily: 'SpaceGrotesk',
     color: '#71717a',
+    lineHeight: 16,
+  },
+  statCardFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 12,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#27272a',
+  },
+  statCardFooterText: {
+    fontSize: 10,
+    fontFamily: 'SpaceGroteskSemiBold',
+    color: '#DC2626',
+    letterSpacing: 0.5,
+  },
+
+  // Section Header
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    marginBottom: 8,
+  },
+  sectionTitle: {
+    fontSize: 12,
+    fontFamily: 'SpaceGroteskBold',
+    color: '#a1a1aa',
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
   },
 
   // Tab Navigation
   tabNav: {
     flexDirection: 'row',
-    marginTop: 24,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#27272a',
+    marginBottom: 4,
   },
   tabBtn: {
     paddingBottom: 12,
@@ -631,7 +849,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#DC2626',
     paddingHorizontal: 5,
     paddingVertical: 1,
-    marginLeft: 6,
+    marginLeft: 2,
     borderRadius: 6,
   },
   tabBadgeRedText: {
@@ -661,7 +879,7 @@ const styles = StyleSheet.create({
   challengeList: {
     paddingHorizontal: 16,
     gap: 12,
-    marginTop: 12,
+    marginTop: 8,
   },
 
   // Challenge Card
@@ -701,6 +919,9 @@ const styles = StyleSheet.create({
 
   // Status Pills
   pillEnded: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     borderWidth: 1,
     borderColor: '#27272a',
     backgroundColor: '#18181b',
@@ -720,8 +941,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     borderWidth: 1,
-    borderColor: 'rgba(255,45,85,0.3)',
-    backgroundColor: 'rgba(255,45,85,0.1)',
+    borderColor: 'rgba(220, 38, 38, 0.3)',
+    backgroundColor: 'rgba(220, 38, 38, 0.1)',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
@@ -778,6 +999,11 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 120,
   },
+  metaIconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   metaLabel: {
     fontSize: 10,
     fontFamily: 'SpaceGroteskSemiBold',
@@ -832,17 +1058,44 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#27272a',
     backgroundColor: '#121214',
-    padding: 40,
+    padding: 32,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 12,
   },
-  emptyText: {
-    fontSize: 11,
+  emptyIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: '#18181b',
+    borderWidth: 1,
+    borderColor: '#27272a',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  emptyTitle: {
+    fontSize: 13,
     fontFamily: 'SpaceGroteskSemiBold',
-    color: '#71717a',
-    letterSpacing: 1.5,
-    textTransform: 'uppercase',
-    marginTop: 12,
+    color: '#a1a1aa',
+    letterSpacing: 0.3,
+    marginBottom: 16,
+  },
+  emptyAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(220, 38, 38, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(220, 38, 38, 0.3)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  emptyActionText: {
+    fontSize: 12,
+    fontFamily: 'SpaceGroteskSemiBold',
+    color: '#DC2626',
+    letterSpacing: 0.5,
   },
 });

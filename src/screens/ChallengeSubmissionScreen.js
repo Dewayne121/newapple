@@ -23,10 +23,13 @@ import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo
 import * as ImagePicker from 'expo-image-picker';
 import { useTheme } from '../context/ThemeContext';
 import api from '../services/api';
+import { Analytics } from '../utils/analytics';
 import { EXERCISES } from '../constants/exercises';
 import { COMPETITIVE_LIFTS, resolveCompetitiveLiftId } from '../constants/competitiveLifts';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../constants/colors';
 import CustomAlert, { useCustomAlert } from '../components/CustomAlert';
+import * as purchaseService from '../services/purchaseService';
+import { PRODUCTS } from '../constants/store';
 
 // Helper component for form sections - Operator Style
 const FormSection = ({ title, children, required, theme, styles }) => (
@@ -388,6 +391,21 @@ export default function ChallengeSubmissionScreen({ navigation, route }) {
   };
 
   const handleSubmit = async () => {
+    // Attempt limit check
+    const challengeId = challenge?.id || challenge?._id;
+    const currentSubmissions = route.params?.submissionCount ?? 0;
+    const freeAttempts = PRODUCTS.FREE_ATTEMPTS;
+    const extraAttempts = purchaseService.getExtraAttempts(challengeId);
+    const totalAllowed = freeAttempts + extraAttempts;
+    if (currentSubmissions >= totalAllowed) {
+      return showAlert({
+        title: 'No Attempts Remaining',
+        message: 'You have used all your attempts for this challenge. Purchase an extra attempt to submit again.',
+        icon: 'warning',
+        buttons: [{ text: 'OK', style: 'default' }]
+      });
+    }
+
     if (challenge?.challengeType === 'exercise' && !selectedExercise) {
       return showAlert({
         title: 'Missing Info',
@@ -440,6 +458,7 @@ export default function ChallengeSubmissionScreen({ navigation, route }) {
       });
 
       if (response.success) {
+        Analytics.logChallengeSubmitted(challengeId);
         const message = 'Your entry is now pending admin approval. XP will be confirmed once verified.';
         showAlert({
           title: 'Entry Submitted',
@@ -559,7 +578,22 @@ export default function ChallengeSubmissionScreen({ navigation, route }) {
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeBtn}>
                 <Ionicons name="arrow-back" size={24} color={theme.textMain} />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>SUBMIT ENTRY</Text>
+            <View style={{ flex: 1, alignItems: 'center' }}>
+              <Text style={styles.headerTitle}>SUBMIT ENTRY</Text>
+              {(() => {
+                const cid = challenge?.id || challenge?._id;
+                const subCount = route.params?.submissionCount ?? 0;
+                const free = PRODUCTS.FREE_ATTEMPTS;
+                const extra = purchaseService.getExtraAttempts(cid);
+                const total = free + extra;
+                const nextAttempt = subCount + 1;
+                return (
+                  <Text style={styles.attemptIndicator}>
+                    ATTEMPT {nextAttempt}/{total}
+                  </Text>
+                );
+              })()}
+            </View>
             <View style={{ width: 40 }} />
         </View>
       </View>
@@ -743,6 +777,7 @@ function createStyles(theme) {
       header: { paddingHorizontal: 24, paddingBottom: 16, backgroundColor: theme.bgPanel, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
       headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
       headerTitle: { fontSize: 16, fontWeight: '800', color: theme.textMain, letterSpacing: 1 },
+      attemptIndicator: { fontSize: 10, fontWeight: '700', color: theme.textMuted, letterSpacing: 1, marginTop: 2 },
       content: { flex: 1 },
       scrollContent: { padding: 20 },
       

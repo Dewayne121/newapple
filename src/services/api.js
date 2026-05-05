@@ -1131,6 +1131,40 @@ class ApiService {
     console.log('[API] detectFaces is disabled');
     return { success: false, error: 'Face detection has been disabled' };
   }
+
+  // ---------------------------------------------------------------------------
+  // Analytics — event tracking + admin queries
+  // ---------------------------------------------------------------------------
+  async trackEvent(event) {
+    return this.post('/api/analytics/track', event);
+  }
+
+  async trackBatch(events) {
+    return this.post('/api/analytics/batch', { events });
+  }
+
+  async getAnalyticsEvents(params = {}) {
+    const query = Object.entries(params).filter(([, v]) => v != null).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+    return this.get(`/api/admin/analytics/events${query ? `?${query}` : ''}`);
+  }
+
+  async getAnalyticsFunnels(params = {}) {
+    const query = Object.entries(params).filter(([, v]) => v != null).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+    return this.get(`/api/admin/analytics/funnels${query ? `?${query}` : ''}`);
+  }
+
+  async getAnalyticsRetention(params = {}) {
+    const query = Object.entries(params).filter(([, v]) => v != null).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+    return this.get(`/api/admin/analytics/retention${query ? `?${query}` : ''}`);
+  }
+
+  async getAnalyticsRealtime() {
+    return this.get('/api/admin/analytics/realtime');
+  }
+
+  async getAnalyticsDAU(days = 30) {
+    return this.get(`/api/admin/analytics/dau?days=${days}`);
+  }
 }
 
 export const api = new ApiService();

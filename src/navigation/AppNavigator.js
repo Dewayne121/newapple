@@ -31,6 +31,7 @@ import TrainingReportScreen from '../screens/TrainingReportScreen';
 import NotificationSettingsScreen from '../screens/NotificationSettingsScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
 import CoreLiftLeaderboardScreen from '../screens/CoreLiftLeaderboardScreen';
+import ProfileFrameStoreScreen from '../screens/ProfileFrameStoreScreen';
 
 // Admin Screens
 import AdminDashboardScreen from '../screens/admin/AdminDashboardScreen';
@@ -179,6 +180,7 @@ function RootNavigator() {
       <Stack.Screen name="ChallengeDetail" component={ChallengeDetailScreen} options={{ presentation: 'card' }} />
       <Stack.Screen name="ChallengeSubmission" component={ChallengeSubmissionScreen} options={{ presentation: 'fullScreenModal' }} />
       <Stack.Screen name="CoreLiftLeaderboard" component={CoreLiftLeaderboardScreen} options={{ presentation: 'card' }} />
+      <Stack.Screen name="ProfileFrameStore" component={ProfileFrameStoreScreen} options={{ presentation: 'card' }} />
 
       {/* Admin Routes */}
       <Stack.Screen name="AdminDashboard" component={AdminDashboardScreen} options={{ presentation: 'card' }} />
@@ -219,14 +221,15 @@ export default function AppNavigator() {
         onReady={() => {
           routeNameRef.current = NavigationService.getRef()?.getCurrentRoute()?.name;
         }}
-        onStateChange={async () => {
-          const previousRouteName = routeNameRef.current;
-          const currentRouteName = NavigationService.getRef()?.getCurrentRoute()?.name;
-
-          if (previousRouteName !== currentRouteName) {
-            await Analytics.logScreenView(currentRouteName);
-          }
-          routeNameRef.current = currentRouteName;
+        onStateChange={() => {
+          try {
+            const prev = routeNameRef.current;
+            const current = NavigationService.getRef()?.getCurrentRoute()?.name;
+            if (prev !== current && current) {
+              Analytics.logScreenView(current);
+            }
+            routeNameRef.current = current;
+          } catch {}
         }}
       >
         <RootNavigator />

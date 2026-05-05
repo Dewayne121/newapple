@@ -13,9 +13,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { Typography } from '../constants/colors';
 import api from '../services/api';
+import { Analytics } from '../utils/analytics';
 import { EXERCISES } from '../constants/exercises';
 import { getCompetitiveLiftLabel, resolveCompetitiveLiftId } from '../constants/competitiveLifts';
 import CustomAlert, { useCustomAlert } from '../components/CustomAlert';
+import * as purchaseService from '../services/purchaseService';
+import PurchaseModal from '../components/PurchaseModal';
+import { PRODUCTS, formatPrice } from '../constants/store';
 
 // Rank Movement Component for Leaderboard Changes
 const RankMovement = ({ rank, previousRank, styles }) => {
@@ -52,6 +56,7 @@ export default function ChallengeDetailScreen({ navigation, route }) {
   const [joining, setJoining] = useState(false);
   const [coreLiftSubmittingId, setCoreLiftSubmittingId] = useState(null);
   const [addedToCoreLiftIds, setAddedToCoreLiftIds] = useState([]);
+  const [showAttemptPurchase, setShowAttemptPurchase] = useState(false);
   const getChallengeId = (item) => item?.id || item?._id || null;
 
   // Initialize styles at the top level
@@ -68,6 +73,7 @@ export default function ChallengeDetailScreen({ navigation, route }) {
 
       if (found) {
         setChallenge(found);
+        Analytics.logEvent('challenge_viewed', { challenge_id: resolvedChallengeId });
       } else {
         throw new Error('Challenge not found');
       }
@@ -474,6 +480,59 @@ export default function ChallengeDetailScreen({ navigation, route }) {
           )}
         </View>
 
+        {/* Attempt Tracker */}
+        {challenge.joined && (
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Ionicons name="repeat" size={18} color={theme.textMuted} style={{ marginRight: 8 }} />
+              <Text style={styles.cardTitle}>ATTEMPTS</Text>
+            </View>
+            {(() => {
+              const used = mySubmissions.length;
+              const freeAttempts = PRODUCTS.FREE_ATTEMPTS;
+              const extraAttempts = purchaseService.getExtraAttempts(challengeId);
+              const totalAllowed = freeAttempts + extraAttempts;
+              const remaining = totalAllowed - used;
+
+              if (remaining <= 0) {
+                return (
+                  <View>
+                    <View style={styles.attemptRow}>
+                      <Text style={styles.attemptCount}>
+                        {used}/{totalAllowed}
+                      </Text>
+                      <Text style={styles.attemptUsed}>USED</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={[styles.buyAttemptButton, { borderColor: theme.gold }]}
+                      onPress={() => setShowAttemptPurchase(true)}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons name="add-circle-outline" size={16} color={theme.gold} />
+                      <Text style={[styles.buyAttemptText, { color: theme.gold }]}>
+                        BUY EXTRA ATTEMPT - {formatPrice(PRODUCTS.EXTRA_ATTEMPT.price)}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                );
+              }
+
+              return (
+                <View style={styles.attemptRow}>
+                  <Text style={styles.attemptCount}>
+                    {used}/{totalAllowed}
+                  </Text>
+                  {used < freeAttempts ? (
+                    <Text style={styles.attemptFree}>FREE</Text>
+                  ) : (
+                    <Text style={styles.attemptRemaining}>{remaining} LEFT</Text>
+                  )}
+                </View>
+              );
+            })()}
+          </View>
+        )}
+
         {/* My Submissions */}
         {mySubmissions.length > 0 && (
           <View style={styles.card}>
@@ -566,7 +625,18 @@ export default function ChallengeDetailScreen({ navigation, route }) {
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.actionButton, styles.submitButton, { backgroundColor: theme.primary }]}
-                onPress={() => navigation.navigate('ChallengeSubmission', { challenge })}
+                onPress={() => {
+                  const used = mySubmissions.length;
+                  const freeAttempts = PRODUCTS.FREE_ATTEMPTS;
+                  const extraAttempts = purchaseService.getExtraAttempts(challengeId);
+                  const totalAllowed = freeAttempts + extraAttempts;
+
+                  if (used >= totalAllowed) {
+                    setShowAttemptPurchase(true);
+                    return;
+                  }
+                  navigation.navigate('ChallengeSubmission', { challenge, submissionCount: mySubmissions.length });
+                }}
               >
                 <Ionicons name="add" size={20} color="#fff" />
                 <Text style={styles.submitButtonText}>SUBMIT ENTRY</Text>
@@ -589,6 +659,17 @@ export default function ChallengeDetailScreen({ navigation, route }) {
           )}
         </View>
       )}
+
+      {/* Purchase Extra Attempt Modal */}
+      <PurchaseModal
+        visible={showAttemptPurchase}
+        onClose={() => setShowAttemptPurchase(false)}
+        product={{ name: 'Extra Attempt', description: 'One additional submission for this challenge', price: PRODUCTS.EXTRA_ATTEMPT.price }}
+        onPurchaseComplete={async () => {
+          await purchaseService.purchaseExtraAttempt(challengeId);
+          setShowAttemptPurchase(false);
+        }}
+      />
 
       {/* Custom Alert */}
       <CustomAlert {...alertConfig} onClose={hideAlert} />
@@ -993,6 +1074,55 @@ function createStyles(theme) {
         gap: 6,
       },
       coreLiftAddedText: {
+        fontSize: 10,
+        fontWeight: '800',
+        letterSpacing: 1,
+      },
+      attemptRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+      },
+      attemptCount: {
+        fontSize: 16,
+        fontWeight: '800',
+        color: '#fafafa',
+      },
+      attemptFree: {
+        fontSize: 10,
+        fontWeight: '800',
+        color: theme.success,
+        letterSpacing: 1,
+        backgroundColor: 'rgba(0, 212, 170, 0.1)',
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 6,
+        overflow: 'hidden',
+      },
+      attemptRemaining: {
+        fontSize: 10,
+        fontWeight: '700',
+        color: theme.textMuted,
+        letterSpacing: 0.5,
+      },
+      attemptUsed: {
+        fontSize: 10,
+        fontWeight: '800',
+        color: '#ff9500',
+        letterSpacing: 1,
+      },
+      buyAttemptButton: {
+        marginTop: 12,
+        borderWidth: 1,
+        borderRadius: 12,
+        paddingVertical: 10,
+        paddingHorizontal: 14,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        backgroundColor: 'rgba(212, 175, 55, 0.06)',
+      },
+      buyAttemptText: {
         fontSize: 10,
         fontWeight: '800',
         letterSpacing: 1,

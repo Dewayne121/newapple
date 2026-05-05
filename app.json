@@ -2,7 +2,7 @@
   "expo": {
     "name": "UNYIELD",
     "slug": "UNYIELDING",
-    "version": "1.0.0",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -20,7 +20,8 @@
         }
       ],
       "expo-font",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "react-native-iap"
     ],
     "splash": {
       "image": "./assets/splash-icon.png",

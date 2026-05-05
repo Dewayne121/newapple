@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'react-native';
 import { Video } from 'expo-av';
+import VideoPlayer from '../../components/VideoPlayer';
 import api from '../../services/api';
 import {
   ADMIN_COLORS,
@@ -668,14 +669,10 @@ export default function VideoModerationScreen({ navigation }) {
 
               {/* Video Player */}
               {selectedVideo.videoUrl ? (
-                <Video
+                <VideoPlayer
                   key={showOriginal ? 'original' : 'blurred'}
-                  ref={videoRef}
-                  source={{ uri: showOriginal && selectedVideo.originalVideoUrl ? selectedVideo.originalVideoUrl : selectedVideo.videoUrl }}
+                  source={showOriginal && selectedVideo.originalVideoUrl ? selectedVideo.originalVideoUrl : selectedVideo.videoUrl}
                   style={styles.videoPlayer}
-                  useNativeControls
-                  resizeMode="contain"
-                  shouldPlay
                 />
               ) : (
                 <View style={styles.noVideoContainer}>

@@ -3,6 +3,8 @@ import { AppState, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import api from '../services/api';
+import { Analytics } from '../utils/analytics';
+import * as purchaseService from '../services/purchaseService';
 import {
   resetOnboardingForNewUser,
   checkOnboardingAbandoned,
@@ -117,6 +119,7 @@ export function AuthProvider({ children }) {
             });
             setUser(response.data);
             await AsyncStorage.setItem(LS_USER_DATA, JSON.stringify(response.data));
+            await purchaseService.setCurrentUser(response.data._id || response.data.id);
 
             // Check if user has already completed onboarding (has name, region, goal)
             // If they have these fields, mark onboarding as complete
@@ -253,6 +256,10 @@ export function AuthProvider({ children }) {
         await new Promise(resolve => setTimeout(resolve, 50));
         setLoading(false);
 
+        await Analytics.logLogin('email');
+        await Analytics.identify(userData._id || userData.id, { username: userData.username });
+        await purchaseService.setCurrentUser(userData._id || userData.id);
+
         return { success: true, user: userData };
       }
 
@@ -298,6 +305,9 @@ export function AuthProvider({ children }) {
           // Clear any previous onboarding data for fresh start
           await resetOnboardingForNewUser();
           await saveUserData(response.data.user);
+          await Analytics.logSignUp('email');
+          await Analytics.identify(response.data.user._id, { username });
+          await purchaseService.setCurrentUser(response.data.user._id);
           return { success: true, user: response.data.user };
         }
 
@@ -368,6 +378,10 @@ export function AuthProvider({ children }) {
         await new Promise(resolve => setTimeout(resolve, 50));
         setLoading(false);
 
+        await Analytics.logLogin(response.data.isNewUser ? 'apple_new' : 'apple');
+        await Analytics.identify(userData._id, { username: userData.username });
+        await purchaseService.setCurrentUser(userData._id);
+
         return { success: true, user: userData };
       }
 
@@ -391,6 +405,9 @@ export function AuthProvider({ children }) {
         // Clear any previous onboarding data for fresh start
         await resetOnboardingForNewUser();
         await saveUserData(response.data.user);
+        await Analytics.logLogin('anonymous');
+        await Analytics.identify(response.data.user._id || response.data.user.id);
+        await purchaseService.setCurrentUser(response.data.user._id || response.data.user.id);
         return { success: true, user: response.data.user };
       }
 
@@ -405,6 +422,9 @@ export function AuthProvider({ children }) {
   const signOut = useCallback(async () => {
     setAuthError(null);
     try {
+      await Analytics.logEvent('user_signed_out');
+      await Analytics.reset();
+      await purchaseService.clearState();
       await api.logout();
       // Clear all onboarding data
       await resetOnboardingForNewUser();
@@ -422,6 +442,9 @@ export function AuthProvider({ children }) {
   const deleteAccount = useCallback(async () => {
     setAuthError(null);
     try {
+      await Analytics.logEvent('user_deleted_account', { reason: 'user_initiated' });
+      await Analytics.reset();
+      await purchaseService.clearState();
       await api.deleteAccount();
       await AsyncStorage.removeItem(LS_HAS_SEEN_ONBOARDING);
       await AsyncStorage.removeItem(LS_USER_DATA);

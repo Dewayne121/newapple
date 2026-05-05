@@ -6,6 +6,8 @@ import { useNavigation } from '@react-navigation/native';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
 import { getUserTier, getTierProgress } from '../constants/tiers';
+import AvatarFrame from './AvatarFrame';
+import * as purchaseService from '../services/purchaseService';
 
 export default function GlobalHeader() {
   const insets = useSafeAreaInsets();
@@ -38,15 +40,12 @@ export default function GlobalHeader() {
           style={styles.profilePicContainer}
           activeOpacity={0.8}
         >
-          {profileImage ? (
-            <Image source={{ uri: profileImage }} style={styles.profilePic} />
-          ) : (
-            <View style={styles.profilePicPlaceholder}>
-              <Text style={styles.profilePicInitials}>
-                {displayName.substring(0, 2).toUpperCase()}
-              </Text>
-            </View>
-          )}
+          <AvatarFrame
+            size={48}
+            imageUri={profileImage}
+            fallbackText={displayName.substring(0, 2).toUpperCase()}
+            frameId={purchaseService.getActiveFrame()}
+          />
         </TouchableOpacity>
 
         <View style={styles.userInfo}>

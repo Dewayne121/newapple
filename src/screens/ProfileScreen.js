@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Modal
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-import { Video } from 'expo-av';
+import VideoPlayer from '../components/VideoPlayer';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -17,6 +17,11 @@ import CustomAlert, { useCustomAlert } from '../components/CustomAlert';
 import AccoladePickerModal from '../components/AccoladePickerModal';
 import AdminProfileEditModal from '../components/AdminProfileEditModal';
 import TutorialModal from '../components/TutorialModal';
+import AvatarFrame from '../components/AvatarFrame';
+import * as purchaseService from '../services/purchaseService';
+import PurchaseModal, { BoostSelectModal } from '../components/PurchaseModal';
+import { PRODUCTS, formatPrice } from '../constants/store';
+import { Analytics } from '../utils/analytics';
 
 // Conditional import for expo-video-thumbnails (not available on web)
 let VideoThumbnails;
@@ -114,6 +119,11 @@ export default function ProfileScreen({ route, navigation }) {
 
   // Settings modal state
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showRankHighlightPurchase, setShowRankHighlightPurchase] = useState(false);
+  const [showBoostPurchase, setShowBoostPurchase] = useState(false);
+  const [showBoostConfirm, setShowBoostConfirm] = useState(false);
+  const [pendingBoost, setPendingBoost] = useState(null);
+  const [activeBoost, setActiveBoost] = useState(null);
   const [inviteCodes, setInviteCodes] = useState([]);
   const [inviteLimits, setInviteLimits] = useState({
     maxInviteCodes: 3,
@@ -193,6 +203,8 @@ export default function ProfileScreen({ route, navigation }) {
         }
       };
       refreshOnFocus().catch(() => {});
+      setActiveBoost(purchaseService.getActiveBoost());
+      Analytics.logEvent('profile_viewed', { viewed_user_id: viewedUser?._id || viewedUser?.id || currentUser?._id || currentUser?.id, viewed_username: viewedUser?.username || currentUser?.username, source: isViewingOtherUser ? 'other_profile' : 'own_profile' });
     }, [isViewingOtherUser, refreshUser, userId])
   );
 
@@ -414,6 +426,7 @@ export default function ProfileScreen({ route, navigation }) {
 
       const result = await updateUserProfile(updates);
       if (result.success) {
+        Analytics.logEvent('profile_updated', { fields_changed: ['profile'] });
         setViewedUser(result.data);
         setRefreshKey(prev => prev + 1);
         setShowEditProfileModal(false);
@@ -745,13 +758,12 @@ export default function ProfileScreen({ route, navigation }) {
             activeOpacity={isOwnProfile ? 0.8 : 1}
             disabled={!isOwnProfile}
           >
-            {viewedUser?.profileImage ? (
-              <Image source={{ uri: viewedUser.profileImage }} style={styles.avatar} />
-            ) : (
-              <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                <Text style={styles.avatarInitials}>{displayName.substring(0, 2).toUpperCase()}</Text>
-              </View>
-            )}
+            <AvatarFrame
+              size={100}
+              imageUri={viewedUser?.profileImage}
+              fallbackText={displayName.substring(0, 2).toUpperCase()}
+              frameId={isOwnProfile ? purchaseService.getActiveFrame() : 'bronze'}
+            />
             <Image source={userTier.image} style={styles.tierBadgeImage} resizeMode="contain" />
             {isOwnProfile && (
               <View style={styles.cameraBadge}>
@@ -795,7 +807,15 @@ export default function ProfileScreen({ route, navigation }) {
             <View style={styles.tierInfo}>
               <Image source={userTier.image} style={styles.progressTierImage} resizeMode="contain" />
               <View>
-                <Text style={[styles.tierName, { color: userTier.color }]}>{userTier.name.toUpperCase()}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={[styles.tierName, { color: userTier.color }]}>{userTier.name.toUpperCase()}</Text>
+                  {activeBoost && (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: 'rgba(255, 215, 0, 0.1)', borderWidth: 1, borderColor: 'rgba(255, 215, 0, 0.3)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
+                      <Ionicons name="flash" size={10} color="#FFD700" />
+                      <Text style={{ fontSize: 9, fontFamily: 'SpaceGroteskBold', color: '#FFD700', letterSpacing: 0.5 }}>1.5X</Text>
+                    </View>
+                  )}
+                </View>
                 <Text style={styles.tierPoints}>{formatPoints(points)} XP</Text>
               </View>
             </View>
@@ -1011,6 +1031,37 @@ export default function ProfileScreen({ route, navigation }) {
               <TouchableOpacity style={styles.settingItem} activeOpacity={0.8} onPress={handleEditProfile}>
                  <Ionicons name="person" size={20} color="#fafafa" />
                  <Text style={styles.settingText}>EDIT PROFILE</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.settingItem} activeOpacity={0.8} onPress={() => { setShowSettingsModal(false); navigation.navigate('ProfileFrameStore'); Analytics.logEvent('frame_equipped', { frame_id: purchaseService.getActiveFrame(), frame_name: purchaseService.getActiveFrame() }); }}>
+                 <Ionicons name="color-wand-outline" size={20} color="#FFD700" />
+                 <Text style={[styles.settingText, { color: '#FFD700' }]}>PROFILE FRAMES</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.settingItem} activeOpacity={0.8} onPress={() => { if (purchaseService.hasRankHighlight()) { Alert.alert('Rank Highlight', 'Your rank highlight is active! It will expire on ' + new Date(purchaseService.getRankHighlightExpiry()).toLocaleDateString()); } else { setShowSettingsModal(false); setShowRankHighlightPurchase(true); } }}>
+                 <Ionicons name="star" size={20} color={purchaseService.hasRankHighlight() ? '#FFD700' : '#fafafa'} />
+                 <View style={{ flex: 1 }}>
+                   <Text style={styles.settingText}>RANK HIGHLIGHT</Text>
+                   <Text style={{ fontSize: 10, fontFamily: 'SpaceGrotesk', color: '#71717a', marginTop: 1 }}>
+                     {purchaseService.hasRankHighlight() ? 'Active' : `${formatPrice(PRODUCTS.RANK_HIGHLIGHT.price)} / week`}
+                   </Text>
+                 </View>
+                 {purchaseService.hasRankHighlight() ? (
+                   <Ionicons name="checkmark-circle" size={20} color="#FFD700" />
+                 ) : (
+                   <Ionicons name="chevron-forward" size={20} color="#52525b" />
+                 )}
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.settingItem} activeOpacity={0.8} onPress={() => { setShowSettingsModal(false); setShowBoostPurchase(true); }}>
+                 <Ionicons name="flash" size={20} color={activeBoost ? '#FFD700' : '#fafafa'} />
+                 <View style={{ flex: 1 }}>
+                   <Text style={styles.settingText}>XP BOOST</Text>
+                   <Text style={{ fontSize: 10, fontFamily: 'SpaceGrotesk', color: '#71717a', marginTop: 1 }}>
+                     {activeBoost ? `1.5x active` : 'Multiply your XP'}
+                   </Text>
+                 </View>
+                 <Ionicons name="chevron-forward" size={20} color="#52525b" />
               </TouchableOpacity>
 
               {isOwnProfile && (
@@ -1312,7 +1363,7 @@ export default function ProfileScreen({ route, navigation }) {
             <Ionicons name="close" size={32} color="#fafafa" />
           </TouchableOpacity>
           {selectedVideo && (
-            <Video source={{ uri: selectedVideo.uri }} style={styles.fullScreenVideo} useNativeControls resizeMode="contain" shouldPlay />
+            <VideoPlayer source={selectedVideo.uri} style={styles.videoPlayer} />
           )}
         </View>
       </Modal>
@@ -1331,6 +1382,52 @@ export default function ProfileScreen({ route, navigation }) {
 
       {/* Shared Components */}
       <CustomAlert {...alertConfig} onClose={hideAlert} />
+
+      {/* Rank Highlight Purchase */}
+      <PurchaseModal
+        visible={showRankHighlightPurchase}
+        onClose={() => setShowRankHighlightPurchase(false)}
+        product={{
+          name: PRODUCTS.RANK_HIGHLIGHT.label,
+          description: PRODUCTS.RANK_HIGHLIGHT.description,
+          price: PRODUCTS.RANK_HIGHLIGHT.price,
+        }}
+        onPurchaseComplete={async () => {
+          await purchaseService.purchaseRankHighlight();
+          setShowRankHighlightPurchase(false);
+          showAlert({ title: 'Active!', message: 'Your rank is now highlighted on leaderboards for 7 days.', icon: 'success', buttons: [{ text: 'Got it', style: 'default' }] });
+        }}
+      />
+
+      {/* XP Boost Selection */}
+      <BoostSelectModal
+        visible={showBoostPurchase}
+        onClose={() => setShowBoostPurchase(false)}
+        onSelect={(boost) => {
+          setPendingBoost(boost);
+          setShowBoostPurchase(false);
+          setShowBoostConfirm(true);
+        }}
+      />
+
+      {/* XP Boost Purchase Confirmation */}
+      <PurchaseModal
+        visible={showBoostConfirm}
+        onClose={() => { setShowBoostConfirm(false); setPendingBoost(null); }}
+        product={{
+          name: pendingBoost ? pendingBoost.name : '',
+          description: pendingBoost?.description,
+          price: pendingBoost?.price,
+        }}
+        onPurchaseComplete={async () => {
+          if (!pendingBoost) return;
+          await purchaseService.purchaseXpBoost(pendingBoost.id, pendingBoost.price, pendingBoost.durationHours, pendingBoost.multiplier);
+          setActiveBoost(purchaseService.getActiveBoost());
+          setShowBoostConfirm(false);
+          setPendingBoost(null);
+          showAlert({ title: 'Boosted!', message: `1.5x XP active for ${pendingBoost.durationHours === 1 ? '1 hour' : '24 hours'}!`, icon: 'success', buttons: [{ text: 'Nice', style: 'default' }] });
+        }}
+      />
 
       {!isOwnProfile && isAdmin && (
         <>
@@ -2033,6 +2130,9 @@ const styles = StyleSheet.create({
   fullScreenVideo: {
     width: '100%',
     height: '100%'
+  },
+  videoPlayer: {
+    flex: 1,
   },
 
   // --- Error & Information Boxes ---
