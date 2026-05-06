@@ -22,8 +22,11 @@ let _state = null;
 let _currentUserId = null;
 let _connected = false;
 let _productsLoaded = false;
+let _productsBySku = {};
 let _purchaseListener = null;
 let _errorListener = null;
+const _pendingPurchases = new Map();
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 // ---------------------------------------------------------------------------
 // Default persisted state
@@ -71,12 +74,14 @@ export async function init() {
 
     if (_connected) {
       try {
-        const products = await iap.fetchProducts({ apple: { skus: ALL_SKUS }, type: 'in-app' });
+        const products = await iap.fetchProducts({ skus: ALL_SKUS, type: 'in-app' });
         _productsLoaded = Array.isArray(products) && products.length > 0;
+        _productsBySku = Object.fromEntries((products || []).map((product) => [product.id || product.productId, product]));
         console.log('[IAP] Products loaded:', _productsLoaded ? products.length : 0);
       } catch (e) {
         console.warn('[IAP] fetchProducts failed:', e.message);
         _productsLoaded = false;
+        _productsBySku = {};
       }
 
       _purchaseListener = iap.purchaseUpdatedListener(async (purchase) => {
@@ -88,6 +93,7 @@ export async function init() {
 
       _errorListener = iap.purchaseErrorListener((error) => {
         console.warn('IAP purchase error:', error.message);
+        settlePendingPurchase(error?.productId, { success: false, error });
       });
 
       try {
@@ -186,6 +192,11 @@ function mergeServerState(purchases) {
 export function shutdown() {
   _purchaseListener?.remove();
   _errorListener?.remove();
+  for (const pending of _pendingPurchases.values()) {
+    clearTimeout(pending.timeout);
+    pending.reject(Object.assign(new Error('Purchase cancelled'), { code: 'E_PURCHASE_CANCELLED' }));
+  }
+  _pendingPurchases.clear();
   if (iap) {
     try { iap.endConnection(); } catch {}
   }
@@ -198,18 +209,33 @@ async function handleIAPPurchase(purchase) {
   const sku = purchase.productId;
   ensureLoaded();
 
+  if (!sku) return;
+
   const tx = {
-    id: purchase.transactionId || `tx_${Date.now()}`,
+    id: purchase.transactionId || purchase.id || purchase.purchaseToken || `tx_${Date.now()}`,
     sku,
     timestamp: purchase.transactionDate ? new Date(Number(purchase.transactionDate)).toISOString() : new Date().toISOString(),
     status: 'completed',
+    purchaseToken: purchase.purchaseToken || null,
   };
-  _state.transactions.unshift(tx);
-  if (_state.transactions.length > 100) _state.transactions = _state.transactions.slice(0, 100);
+  const alreadyRecorded = _state.transactions.some((existing) => existing.id === tx.id);
+  if (!alreadyRecorded) {
+    _state.transactions.unshift(tx);
+    if (_state.transactions.length > 100) _state.transactions = _state.transactions.slice(0, 100);
+  }
 
   applySkuToState(sku);
   await save();
-  await recordOnServer(tx.id, sku);
+  const pending = _pendingPurchases.get(sku);
+  await recordOnServer(tx.id, sku, {
+    ...(pending?.extra || {}),
+    purchaseToken: purchase.purchaseToken,
+    purchaseId: purchase.id,
+    transactionDate: purchase.transactionDate,
+    store: purchase.store,
+    platform: Platform.OS,
+  });
+  settlePendingPurchase(sku, { success: true, purchase, transactionId: tx.id });
 }
 
 function applySkuToState(sku) {
@@ -245,38 +271,105 @@ function applySkuToState(sku) {
 async function recordOnServer(transactionId, sku, extra = {}) {
   try {
     const api = require('./api').default || require('./api');
+    const payload = {
+      ...extra,
+    };
+    if (extra.challengeId && !extra.challenge_id) payload.challenge_id = extra.challengeId;
     await api.post('/api/purchases/record', {
       sku,
       transactionId,
       userId: _currentUserId,
-      ...extra,
+      ...payload,
     });
   } catch {}
+}
+
+function settlePendingPurchase(sku, result) {
+  if (!sku || !_pendingPurchases.has(sku)) return;
+  const pending = _pendingPurchases.get(sku);
+  clearTimeout(pending.timeout);
+  _pendingPurchases.delete(sku);
+
+  if (result.success) {
+    pending.resolve(result);
+    return;
+  }
+
+  const source = result.error || {};
+  const err = new Error(source.message || 'Purchase failed');
+  err.code = source.code || 'E_PURCHASE_FAILED';
+  pending.reject(err);
+}
+
+function clearPendingPurchase(sku) {
+  if (!sku || !_pendingPurchases.has(sku)) return;
+  const pending = _pendingPurchases.get(sku);
+  clearTimeout(pending.timeout);
+  _pendingPurchases.delete(sku);
 }
 
 // ---------------------------------------------------------------------------
 // Core purchase — triggers native StoreKit payment sheet
 // ---------------------------------------------------------------------------
-export async function purchaseSKU(sku) {
+export async function purchaseSKU(sku, extra = {}) {
   ensureLoaded();
 
   // ── Real StoreKit path ──
   if (_connected && iap) {
     try {
-      const purchase = await iap.requestPurchase({
-        apple: { sku },
-        type: 'in-app',
+      if (_productsLoaded && !_productsBySku[sku]) {
+        const err = new Error('Product is not available from the App Store yet');
+        err.code = 'E_NOT_AVAILABLE';
+        throw err;
+      }
+
+      const purchasePromise = new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          _pendingPurchases.delete(sku);
+          const err = new Error('Purchase timed out before StoreKit confirmed the transaction');
+          err.code = 'E_PURCHASE_TIMEOUT';
+          reject(err);
+        }, 120000);
+        _pendingPurchases.set(sku, { resolve, reject, timeout, extra });
       });
+      purchasePromise.catch(() => {});
+
+      const request = Platform.OS === 'ios'
+        ? {
+            request: {
+              apple: {
+                sku,
+                appAccountToken: UUID_RE.test(_currentUserId || '') ? _currentUserId : undefined,
+              },
+            },
+            type: 'in-app',
+          }
+        : {
+            request: {
+              google: {
+                skus: [sku],
+                obfuscatedAccountId: _currentUserId || undefined,
+              },
+            },
+            type: 'in-app',
+          };
+
+      const purchase = await iap.requestPurchase(request);
+
+      // Some native implementations still return a purchase directly. Handle it
+      // while keeping the event-listener path as the source of truth.
       if (purchase) {
         const p = Array.isArray(purchase) ? purchase[0] : purchase;
-        if (p) {
+        if (p?.productId) {
           await handleIAPPurchase(p);
           try { await iap.finishTransaction({ purchase: p }); } catch {}
         }
       }
-      return { success: true, purchase };
+
+      return await purchasePromise;
     } catch (error) {
-      if (error?.code === 'E_USER_CANCELLED') {
+      clearPendingPurchase(sku);
+      if (error?.code === 'E_USER_CANCELLED' || error?.code === 'user-cancelled') {
         return { success: false, cancelled: true };
       }
       // StoreKit failed — throw so caller shows the error
@@ -290,6 +383,22 @@ export async function purchaseSKU(sku) {
   const err = new Error('STORE_UNAVAILABLE');
   err.code = 'STORE_UNAVAILABLE';
   throw err;
+}
+
+export async function restorePurchases() {
+  ensureLoaded();
+  if (!_connected || !iap) {
+    const err = new Error('STORE_UNAVAILABLE');
+    err.code = 'STORE_UNAVAILABLE';
+    throw err;
+  }
+
+  const available = await iap.getAvailablePurchases();
+  for (const purchase of available || []) {
+    await handleIAPPurchase(purchase);
+    try { await iap.finishTransaction({ purchase }); } catch {}
+  }
+  return { success: true, restored: available?.length || 0 };
 }
 
 // ---------------------------------------------------------------------------
@@ -316,7 +425,7 @@ export async function purchaseChallengeEntry(challengeId) {
   if (_state.paidChallengeEntries[challengeId]) {
     return { success: true, transactionId: 'already_purchased' };
   }
-  const result = await purchaseSKU('com.unyield.challenge_entry');
+  const result = await purchaseSKU('com.unyield.challenge_entry', { challengeId });
   if (result.success) {
     _state.paidChallengeEntries[challengeId] = {
       purchasedAt: new Date().toISOString(),
@@ -409,7 +518,7 @@ export function getTotalAttempts(challengeId, freeAttempts = 1) {
 
 export async function purchaseExtraAttempt(challengeId) {
   ensureLoaded();
-  const result = await purchaseSKU('com.unyield.extra_attempt');
+  const result = await purchaseSKU('com.unyield.extra_attempt', { challengeId });
   if (result.success) {
     _state.extraAttempts[challengeId] = (_state.extraAttempts[challengeId] || 0) + 1;
     await save();
@@ -450,7 +559,7 @@ export function getXPMultiplier() {
 export async function purchaseXpBoost(type, price, durationHours, multiplier = 1.5) {
   ensureLoaded();
   const sku = type === '1hr' ? 'com.unyield.xpboost.1hr' : 'com.unyield.xpboost.24hr';
-  const result = await purchaseSKU(sku);
+  const result = await purchaseSKU(sku, { durationHours, multiplier });
   if (result.success) {
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + durationHours);
